@@ -32,7 +32,11 @@ def create_app(test_config=None):
     @app.route("/")
     @require_auth
     def home_page():
+        from flask import session
+        from .db import get_user_balance, get_transaction_history
+        
         db = get_db()
+        current_username = session.get('username')
         
         try:
             total_coins = db.execute('SELECT SUM(coin_balance) as total FROM users').fetchone()
@@ -40,14 +44,26 @@ def create_app(test_config=None):
             transaction_volume = db.execute('SELECT COUNT(*) as count, SUM(amount) as volume FROM transactions').fetchone()
             top_performers = db.execute('SELECT username, coin_balance FROM users ORDER BY coin_balance DESC LIMIT 3').fetchall()
             
+            # Get current user's data
+            current_user_balance = get_user_balance(current_username) if current_username else 0
+            recent_transactions = get_transaction_history(current_username, 5) if current_username else []
+            
+            # Get all users for recipient dropdown (excluding current user)
+            all_users = db.execute('SELECT username FROM users WHERE username != ? ORDER BY username', (current_username,)).fetchall()
+            available_recipients = [dict(user) for user in all_users] if all_users else []
+            
             market_cap = total_coins['total'] or 0
             stakeholder_count = user_count['count'] or 0
             tx_count = transaction_volume['count'] or 0
             volume = transaction_volume['volume'] or 0
             top_performers = [dict(performer) for performer in top_performers] if top_performers else []
-        except:
+        except Exception as e:
+            current_app.logger.error(f"Database error in home_page: {e}")
             market_cap = stakeholder_count = tx_count = volume = 0
             top_performers = []
+            current_user_balance = 0
+            recent_transactions = []
+            available_recipients = []
         
         return render_template(
             "home.jinja2",
@@ -57,7 +73,11 @@ def create_app(test_config=None):
             stakeholder_count=stakeholder_count,
             volume=volume,
             tx_count=tx_count,
-            top_performers=top_performers
+            top_performers=top_performers,
+            current_username=current_username,
+            current_user_balance=current_user_balance,
+            recent_transactions=recent_transactions,
+            available_recipients=available_recipients
         )
 
     @app.errorhandler(404)
