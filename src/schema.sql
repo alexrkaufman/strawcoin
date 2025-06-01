@@ -1,0 +1,55 @@
+-- Straw Coin Database Schema
+-- Enterprise-grade data infrastructure for revolutionary comedy tokenization
+-- Optimized for maximum scalability and shareholder value generation
+
+-- Core stakeholder registry for The Short Straw economy
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    coin_balance INTEGER NOT NULL DEFAULT 10000,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Comprehensive transaction ledger for market transparency and analytics
+CREATE TABLE transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_id INTEGER NOT NULL,
+    recipient_id INTEGER NOT NULL,
+    amount INTEGER NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users (id),
+    FOREIGN KEY (recipient_id) REFERENCES users (id)
+);
+
+-- Performance optimization indexes for high-frequency trading operations
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_transactions_sender ON transactions(sender_id);
+CREATE INDEX idx_transactions_recipient ON transactions(recipient_id);
+CREATE INDEX idx_transactions_timestamp ON transactions(timestamp);
+
+-- Market analytics view for real-time portfolio tracking
+CREATE VIEW user_stats AS
+SELECT 
+    u.username,
+    u.coin_balance,
+    u.created_at,
+    COALESCE(sent.total_sent, 0) as total_sent,
+    COALESCE(received.total_received, 0) as total_received,
+    COALESCE(sent.transaction_count, 0) + COALESCE(received.transaction_count, 0) as total_transactions
+FROM users u
+LEFT JOIN (
+    SELECT 
+        sender_id,
+        SUM(amount) as total_sent,
+        COUNT(*) as transaction_count
+    FROM transactions 
+    GROUP BY sender_id
+) sent ON u.id = sent.sender_id
+LEFT JOIN (
+    SELECT 
+        recipient_id,
+        SUM(amount) as total_received,
+        COUNT(*) as transaction_count
+    FROM transactions 
+    GROUP BY recipient_id
+) received ON u.id = received.recipient_id;
