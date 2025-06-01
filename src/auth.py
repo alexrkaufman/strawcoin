@@ -205,6 +205,7 @@ def session_status():
     """
     Provides real-time session status for mobile client monitoring
     Essential for maintaining trading continuity during The Short Straw
+    NOTE: Does NOT reset activity timer to allow proper timeout testing
     """
     if not is_authenticated():
         return jsonify({
@@ -223,7 +224,7 @@ def session_status():
     )
     time_remaining = timeout_seconds - (datetime.now() - last_activity).total_seconds()
     
-    update_activity()  # Reset timer on status check
+    # DO NOT update activity here - status checks should not reset timer
     
     return jsonify({
         'authenticated': True,
@@ -247,21 +248,114 @@ def session_expired():
     )
 
 
+@bp.route('/debug-middleware')
+def debug_middleware():
+    """
+    Debug endpoint to check middleware status and configuration
+    """
+    public_endpoints = [
+        'auth.register', 
+        'auth.session_expired', 
+        'auth.login', 
+        'auth.session_status', 
+        'auth.update_activity_endpoint', 
+        'auth.debug_middleware',
+        'api.register_user'
+    ]
+    
+    return jsonify({
+        'current_endpoint': request.endpoint,
+        'current_path': request.path,
+        'public_endpoints': public_endpoints,
+        'is_current_public': request.endpoint in public_endpoints,
+        'has_username_session': 'username' in session,
+        'session_keys': list(session.keys()),
+        'debug_mode': current_app.debug,
+        'status': 'middleware_debug_active'
+    })
+
+
+@bp.route('/update-activity', methods=['POST'])
+def update_activity_endpoint():
+    """
+    Dedicated endpoint for updating user activity and resetting session timer
+    Called by frontend on real user interactions (touch, scroll, etc.)
+    """
+    if not is_authenticated():
+        return jsonify({
+            'error': 'Session expired - authentication required',
+            'status': 'session_expired'
+        }), 401
+    
+    update_activity()
+    
+    # Calculate remaining time after update
+    last_activity = datetime.fromisoformat(session['last_activity'])
+    timeout_seconds = (
+        SESSION_TIMEOUT_DEBUG_SECONDS 
+        if current_app.debug 
+        else SESSION_TIMEOUT_MINUTES * 60
+    )
+    time_remaining = timeout_seconds
+    
+    return jsonify({
+        'message': 'Activity updated successfully',
+        'time_remaining_seconds': time_remaining,
+        'status': 'activity_updated'
+    }), 200
+
+
 @bp.before_app_request
 def track_activity():
     """
     Middleware for tracking stakeholder activity across all requests
     Optimized for mobile touch events and API interactions
     """
-    # Skip activity tracking for static files and auth endpoints
-    if (request.endpoint and 
-        (request.endpoint.startswith('static') or 
-         request.endpoint in ['auth.register', 'auth.session_expired', 'auth.login', 'api.register_user'])):
+    # Skip middleware entirely in debug mode to allow testing
+    if current_app.debug and request.args.get('skip_auth') == 'true':
         return
     
-    # Track activity for authenticated users
+    # Skip activity tracking for static files and public endpoints
+    public_endpoints = [
+        'auth.register', 
+        'auth.session_expired', 
+        'auth.login', 
+        'auth.session_status', 
+        'auth.update_activity_endpoint', 
+        'auth.debug_middleware',
+        'api.register_user'
+    ]
+    
+    # Debug logging only in debug mode
+    if current_app.debug:
+        print(f"🔍 MIDDLEWARE DEBUG:")
+        print(f"   Request URL: {request.url}")
+        print(f"   Request path: {request.path}")
+        print(f"   Request endpoint: {request.endpoint}")
+        print(f"   Request method: {request.method}")
+        print(f"   Has session username: {'username' in session}")
+        print(f"   Public endpoints: {public_endpoints}")
+        print(f"   Is static: {request.endpoint and request.endpoint.startswith('static')}")
+        print(f"   Is in public list: {request.endpoint in public_endpoints}")
+    
+    # Allow all public endpoints without any checks
+    if (request.endpoint and 
+        (request.endpoint.startswith('static') or 
+         request.endpoint in public_endpoints)):
+        if current_app.debug:
+            print(f"   ✅ ALLOWED: Public endpoint")
+        return
+    
+    if current_app.debug:
+        print(f"   🔒 CHECKING AUTHENTICATION...")
+    
+    # Only check authentication for users who have attempted to log in
     if 'username' in session:
+        if current_app.debug:
+            print(f"   Username in session: {session.get('username')}")
         if not is_authenticated():
+            if current_app.debug:
+                print(f"   ❌ AUTHENTICATION FAILED - redirecting")
             # Session expired - redirect to appropriate page
             if request.is_json:
                 return jsonify({
@@ -272,5 +366,11 @@ def track_activity():
             
             return redirect(url_for('auth.session_expired'))
         
+        if current_app.debug:
+            print(f"   ✅ AUTHENTICATED - updating activity")
         # Update activity timestamp for valid sessions
         update_activity()
+    else:
+        if current_app.debug:
+            print(f"   ⚠️ NO USERNAME IN SESSION - proceeding to route")
+    # If no username in session, allow request to proceed (will be handled by @require_auth decorator)

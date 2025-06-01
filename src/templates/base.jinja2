@@ -145,26 +145,32 @@
         }
 
         function startSessionMonitoring() {
-            // Check session status every 10 seconds for mobile optimization (frequent in debug mode)
+            // Check session status every 5 seconds for mobile optimization (frequent in debug mode)
             sessionCheckInterval = setInterval(() => {
                 fetch('/session-status')
                     .then(response => {
                         if (response.status === 401) {
                             clearInterval(sessionCheckInterval);
                             window.location.href = '/session-expired';
+                            return null;
                         }
                         return response.json();
                     })
                     .then(data => {
-                        if (data && data.time_remaining_seconds < 10) {
+                        if (data && data.time_remaining_seconds <= 10) {
                             // Show warning for last 10 seconds (works for both debug and production)
                             showSessionWarning(data.time_remaining_seconds);
+                        }
+                        if (data && data.time_remaining_seconds <= 0) {
+                            // Force logout if time is up
+                            clearInterval(sessionCheckInterval);
+                            window.location.href = '/session-expired';
                         }
                     })
                     .catch(error => {
                         console.error('Session monitoring error:', error);
                     });
-            }, 10000);
+            }, 5000);
         }
 
         function setupActivityTracking() {
@@ -192,8 +198,16 @@
             isActive = false;
             setTimeout(() => { isActive = true; }, 1000);
 
-            // Update session activity
-            fetch('/session-status', { method: 'GET' })
+            // Update session activity using dedicated endpoint
+            fetch('/update-activity', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = '/session-expired';
+                    }
+                })
                 .catch(error => {
                     console.error('Activity update failed:', error);
                 });
@@ -225,6 +239,11 @@
             warning.innerHTML = `⚠️ Session expires in ${seconds}s - Tap to extend!`;
             
             warning.addEventListener('click', () => {
+                handleActivity();
+                warning.remove();
+            });
+
+            warning.addEventListener('touchstart', () => {
                 handleActivity();
                 warning.remove();
             });
