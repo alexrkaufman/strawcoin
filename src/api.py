@@ -124,3 +124,105 @@ def get_market_stats():
         } if top_performer else None,
         'status': 'success'
     })
+
+
+@bp.route('/leaderboard-history', methods=['GET'])
+@require_auth
+def get_leaderboard_history():
+    from .db import get_balance_history, get_current_leaderboard_with_snapshots
+    
+    # Get hours parameter, default to 0.5 hours (30 minutes)
+    hours = float(request.args.get('hours', 0.5))
+    hours = min(hours, 6.0)  # Limit to 6 hours max
+    
+    # Get historical data
+    history = get_balance_history(hours)
+    
+    # Get current leaderboard to ensure we have recent snapshots
+    current_leaders = get_current_leaderboard_with_snapshots()
+    
+    # Process data for chart format
+    chart_data = {}
+    time_points = set()
+    
+    # Process historical snapshots
+    for snapshot in history:
+        username = snapshot['username']
+        timestamp = snapshot['timestamp']
+        balance = snapshot['balance']
+        
+        if username not in chart_data:
+            chart_data[username] = {}
+        
+        chart_data[username][timestamp] = balance
+        time_points.add(timestamp)
+    
+    # Sort time points
+    time_points = sorted(list(time_points))
+    
+    # Format for Chart.js
+    datasets = []
+    colors = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+        '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+    ]
+    
+    for i, username in enumerate(sorted(chart_data.keys())):
+        user_data = []
+        for timestamp in time_points:
+            if timestamp in chart_data[username]:
+                user_data.append({
+                    'x': timestamp,
+                    'y': chart_data[username][timestamp]
+                })
+        
+        if user_data:  # Only include users with data
+            datasets.append({
+                'label': username,
+                'data': user_data,
+                'borderColor': colors[i % len(colors)],
+                'backgroundColor': colors[i % len(colors)] + '20',
+                'tension': 0.4,
+                'fill': False
+            })
+    
+    return jsonify({
+        'datasets': datasets,
+        'current_leaders': current_leaders[:10],  # Top 10
+        'time_range_hours': hours,
+        'total_data_points': len(time_points),
+        'status': 'success'
+    })
+
+
+@bp.route('/leaderboard-snapshot', methods=['POST'])
+@require_auth
+def create_leaderboard_snapshot():
+    from .db import create_balance_snapshots_for_all_users
+    
+    success = create_balance_snapshots_for_all_users()
+    
+    if success:
+        return jsonify({
+            'message': 'Balance snapshots created for all users',
+            'status': 'success'
+        }), 200
+    else:
+        return jsonify({
+            'error': 'Failed to create balance snapshots',
+            'status': 'error'
+        }), 500
+
+
+@bp.route('/leaderboard-realtime', methods=['GET'])
+@require_auth
+def get_realtime_leaderboard():
+    from .db import get_current_leaderboard_with_snapshots
+    
+    leaders = get_current_leaderboard_with_snapshots()
+    
+    return jsonify({
+        'leaders': leaders,
+        'timestamp': __import__('datetime').datetime.now().isoformat(),
+        'status': 'success'
+    })

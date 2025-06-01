@@ -51,6 +51,46 @@ Deploy exclusively during **The Short Straw** live performances to create scarci
 
 Traditional comedy criticism based on "artistic merit" poses zero threat to our market-based valuation model. Straw Coin transcends subjective taste by embracing objective market forces.
 
+
+
+## Database Management Commands
+
+The platform includes comprehensive database management tools for optimal comedy market operations:
+
+### Core Commands
+
+- `flask init-db` - Initialize database with automatic migration detection
+- `flask reset-db` - Complete platform reset (⚠️ DESTROYS ALL DATA)
+- `flask reset-balances` - Reset all user balances to 10,000 coins
+- `flask create-snapshots` - Generate balance snapshots for real-time charts
+- `flask cleanup-snapshots` - Remove old snapshot data (keeps last 6 hours)
+
+### Usage Examples
+
+```bash
+# Fresh installation
+python -m flask --app src init-db
+
+# Reset everything for new comedy show
+python -m flask --app src reset-db
+
+# Reset balances but keep users
+python -m flask --app src reset-balances
+
+# Generate snapshots for leaderboard
+python -m flask --app src create-snapshots
+```
+
+### Smart Migration System
+
+The `init-db` command automatically:
+- Detects existing database schema
+- Applies missing table migrations
+- Creates initial balance snapshots
+- Preserves existing user data
+
+No more manual migrations - maximum operational efficiency for **The Short Straw** performances!
+
 ---
 
 **"To the Moon! 🌙" - Disrupting Comedy, One Coin at a Time**

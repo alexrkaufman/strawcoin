@@ -27,6 +27,19 @@ CREATE INDEX idx_transactions_sender ON transactions(sender_id);
 CREATE INDEX idx_transactions_recipient ON transactions(recipient_id);
 CREATE INDEX idx_transactions_timestamp ON transactions(timestamp);
 
+-- Balance snapshots for real-time leaderboard tracking
+CREATE TABLE balance_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    balance INTEGER NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+-- Index for efficient querying of balance history
+CREATE INDEX idx_balance_snapshots_user_time ON balance_snapshots(user_id, timestamp);
+CREATE INDEX idx_balance_snapshots_timestamp ON balance_snapshots(timestamp);
+
 -- Market analytics view for real-time portfolio tracking
 CREATE VIEW user_stats AS
 SELECT 

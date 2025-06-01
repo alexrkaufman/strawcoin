@@ -80,6 +80,23 @@ def create_app(test_config=None):
             available_recipients=available_recipients
         )
 
+    @app.route("/leaderboard")
+    @require_auth
+    def leaderboard_page():
+        from flask import session
+        from .db import get_user_balance
+        
+        current_username = session.get('username')
+        current_user_balance = get_user_balance(current_username) if current_username else 0
+        
+        return render_template(
+            "leaderboard.jinja2",
+            title="Real-Time Leaderboard - Straw Coin Racing",
+            page_class="leaderboard",
+            current_username=current_username,
+            current_user_balance=current_user_balance
+        )
+
     @app.errorhandler(404)
     def page_not_found(error):
         return render_template("404.jinja2"), 404

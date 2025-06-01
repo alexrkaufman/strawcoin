@@ -9,6 +9,13 @@
         <h3 style="margin: 0;">💰 Welcome back, {{ current_username }}!</h3>
         <p style="font-size: 1.5rem; font-weight: bold; margin: 10px 0;">{{ "{:,}".format(current_user_balance) }} Straw Coins</p>
     </div>
+
+    <!-- Navigation Links -->
+    <div style="margin: 20px 0;">
+        <a href="/leaderboard" style="background: linear-gradient(45deg, #9b59b6, #8e44ad); color: white; text-decoration: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; margin: 0 10px; display: inline-block; transition: transform 0.2s;">
+            📊 Real-Time Leaderboard
+        </a>
+    </div>
     {% endif %}
 </div>
 
@@ -134,14 +141,6 @@
     <p style="margin-bottom: 15px;">📊 <strong>Track your portfolio</strong> and climb the leaderboard</p>
     <p style="margin-bottom: 25px;">🏆 <strong>Become a comedy market leader</strong> through strategic trading!</p>
     {% endif %}
-
-    <div style="background: linear-gradient(45deg, #f39c12, #e67e22); padding: 15px; border-radius: 10px; margin: 20px 0;">
-        <h3 style="margin-bottom: 10px;">API Endpoints for Maximum Market Participation:</h3>
-        <p><strong>Register:</strong> POST /api/users</p>
-        <p><strong>Check Balance:</strong> GET /api/users/&lt;username&gt;/balance</p>
-        <p><strong>Transfer Coins:</strong> POST /api/transfer</p>
-        <p><strong>View Leaderboard:</strong> GET /api/leaderboard</p>
-    </div>
 </div>
 
 <script>

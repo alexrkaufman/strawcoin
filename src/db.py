@@ -22,8 +22,53 @@ def close_db(e=None):
 
 def init_db():
     db = get_db()
-    with current_app.open_resource('schema.sql') as f:
-        db.executescript(f.read().decode('utf8'))
+    
+    # Check if database exists and has tables
+    tables = db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+    existing_tables = [table['name'] for table in tables]
+    
+    if not existing_tables:
+        # Fresh database - create all tables
+        with current_app.open_resource('schema.sql') as f:
+            db.executescript(f.read().decode('utf8'))
+        
+        # Create initial snapshots for any existing users (shouldn't be any in fresh DB)
+        create_balance_snapshots_for_all_users()
+        click.echo('Created fresh database with all tables')
+    else:
+        # Existing database - check for missing tables and migrate
+        required_tables = ['users', 'transactions', 'balance_snapshots']
+        missing_tables = [table for table in required_tables if table not in existing_tables]
+        
+        if missing_tables:
+            click.echo(f'Found existing database, migrating missing tables: {missing_tables}')
+            
+            # Add missing tables
+            if 'balance_snapshots' in missing_tables:
+                db.execute('''
+                    CREATE TABLE balance_snapshots (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        balance INTEGER NOT NULL,
+                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )
+                ''')
+                db.execute('CREATE INDEX idx_balance_snapshots_user_time ON balance_snapshots(user_id, timestamp)')
+                db.execute('CREATE INDEX idx_balance_snapshots_timestamp ON balance_snapshots(timestamp)')
+                click.echo('Added balance_snapshots table')
+            
+            db.commit()
+            
+            # Create initial snapshots for existing users
+            users = db.execute('SELECT id, coin_balance FROM users').fetchall()
+            if users:
+                for user in users:
+                    create_balance_snapshot(user['id'], user['coin_balance'])
+                db.commit()
+                click.echo(f'Created initial snapshots for {len(users)} existing users')
+        else:
+            click.echo('Database is up to date')
 
 
 @click.command('init-db')
@@ -33,9 +78,102 @@ def init_db_command():
     click.echo('Initialized Straw Coin database 🚀')
 
 
+@click.command('reset-db')
+@click.confirmation_option(prompt='Are you sure you want to reset the database? This will delete ALL data!')
+@with_appcontext
+def reset_db_command():
+    """Reset the database by dropping all tables and recreating them."""
+    db = get_db()
+    
+    # Drop all tables
+    tables = db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+    for table in tables:
+        db.execute(f'DROP TABLE IF EXISTS {table["name"]}')
+    
+    # Drop all indexes
+    indexes = db.execute("SELECT name FROM sqlite_master WHERE type='index'").fetchall()
+    for index in indexes:
+        if not index['name'].startswith('sqlite_'):  # Don't drop system indexes
+            db.execute(f'DROP INDEX IF EXISTS {index["name"]}')
+    
+    db.commit()
+    
+    # Recreate database
+    with current_app.open_resource('schema.sql') as f:
+        db.executescript(f.read().decode('utf8'))
+    
+    click.echo('🗑️  Database reset complete - all data deleted and tables recreated')
+
+
+@click.command('reset-balances')
+@click.confirmation_option(prompt='Are you sure you want to reset all user balances to 10,000?')
+@with_appcontext
+def reset_balances_command():
+    """Reset all user balances to 10,000 coins."""
+    db = get_db()
+    
+    try:
+        # Reset all balances
+        db.execute('UPDATE users SET coin_balance = 10000')
+        
+        # Clear all transactions
+        db.execute('DELETE FROM transactions')
+        
+        # Clear all balance snapshots
+        db.execute('DELETE FROM balance_snapshots')
+        
+        # Create fresh snapshots
+        users = db.execute('SELECT id FROM users').fetchall()
+        for user in users:
+            create_balance_snapshot(user['id'], 10000)
+        
+        db.commit()
+        click.echo(f'💰 Reset balances for {len(users)} users to 10,000 coins each')
+        
+    except Exception as e:
+        db.rollback()
+        click.echo(f'❌ Failed to reset balances: {e}')
+
+
+@click.command('create-snapshots')
+@with_appcontext
+def create_snapshots_command():
+    """Create balance snapshots for all users."""
+    success = create_balance_snapshots_for_all_users()
+    if success:
+        click.echo('✅ Balance snapshots created for all users')
+    else:
+        click.echo('❌ Failed to create balance snapshots')
+
+
+@click.command('cleanup-snapshots')
+@click.option('--hours', default=6, help='Number of hours of snapshots to keep')
+@with_appcontext
+def cleanup_snapshots_command(hours):
+    """Clean up old balance snapshots."""
+    success = cleanup_old_snapshots(hours)
+    if success:
+        click.echo(f'✅ Cleaned up snapshots older than {hours} hours')
+    else:
+        click.echo('❌ Failed to clean up snapshots')
+
+
+@click.command('migrate-db')
+@with_appcontext
+def migrate_db_command():
+    """Migrate database to add missing tables (now handled automatically by init-db)."""
+    click.echo('⚠️  migrate-db is deprecated. Use "flask init-db" instead - it now handles migrations automatically.')
+    init_db()
+
+
 def init_app(app):
     app.teardown_appcontext(close_db)
     app.cli.add_command(init_db_command)
+    app.cli.add_command(reset_db_command)
+    app.cli.add_command(reset_balances_command)
+    app.cli.add_command(create_snapshots_command)
+    app.cli.add_command(cleanup_snapshots_command)
+    app.cli.add_command(migrate_db_command)
 
 
 def create_user(username):
@@ -45,8 +183,13 @@ def create_user(username):
             'INSERT INTO users (username, coin_balance) VALUES (?, ?)',
             (username, 10000)
         )
+        user_id = cursor.lastrowid
+        
+        # Create initial balance snapshot
+        create_balance_snapshot(user_id, 10000)
+        
         db.commit()
-        return cursor.lastrowid
+        return user_id
     except sqlite3.IntegrityError:
         return None
 
@@ -96,6 +239,17 @@ def transfer_coins(sender_username, recipient_username, amount):
             (sender['id'], recipient['id'], amount)
         )
         db.commit()
+        
+        # Create balance snapshots after successful transaction
+        sender_new_balance = sender['coin_balance'] - amount
+        recipient_new_balance = db.execute(
+            'SELECT coin_balance FROM users WHERE username = ?',
+            (recipient_username,)
+        ).fetchone()['coin_balance']
+        
+        create_balance_snapshot(sender['id'], sender_new_balance)
+        create_balance_snapshot(recipient['id'], recipient_new_balance)
+        
         return 'success'
     except sqlite3.Error:
         db.rollback()
@@ -138,3 +292,99 @@ def get_transaction_history(username=None, limit=50):
         ).fetchall()
     
     return [dict(transaction) for transaction in transactions]
+
+
+def create_balance_snapshot(user_id, balance):
+    """Create a balance snapshot for tracking historical data."""
+    db = get_db()
+    try:
+        db.execute(
+            'INSERT INTO balance_snapshots (user_id, balance) VALUES (?, ?)',
+            (user_id, balance)
+        )
+        db.commit()
+        return True
+    except sqlite3.Error:
+        return False
+
+
+def create_balance_snapshots_for_all_users():
+    """Create balance snapshots for all users at the current time."""
+    db = get_db()
+    try:
+        users = db.execute('SELECT id, coin_balance FROM users').fetchall()
+        for user in users:
+            db.execute(
+                'INSERT INTO balance_snapshots (user_id, balance) VALUES (?, ?)',
+                (user['id'], user['coin_balance'])
+            )
+        db.commit()
+        return True
+    except sqlite3.Error:
+        return False
+
+
+def get_balance_history(hours_back=0.5):
+    """Get balance history for all users over the specified time period."""
+    db = get_db()
+    
+    # Get snapshots from the last X hours
+    snapshots = db.execute(
+        '''
+        SELECT bs.timestamp, u.username, bs.balance
+        FROM balance_snapshots bs
+        JOIN users u ON bs.user_id = u.id
+        WHERE bs.timestamp >= datetime('now', '-' || ? || ' hours')
+        ORDER BY bs.timestamp ASC
+        ''',
+        (hours_back,)
+    ).fetchall()
+    
+    return [dict(snapshot) for snapshot in snapshots]
+
+
+def get_current_leaderboard_with_snapshots():
+    """Get current leaderboard with latest balance snapshots."""
+    db = get_db()
+    
+    # Get current balances and create snapshots if none exist recently
+    users = db.execute(
+        '''
+        SELECT u.id, u.username, u.coin_balance, u.created_at,
+               bs.timestamp as last_snapshot
+        FROM users u
+        LEFT JOIN (
+            SELECT user_id, MAX(timestamp) as timestamp
+            FROM balance_snapshots
+            GROUP BY user_id
+        ) bs ON u.id = bs.user_id
+        ORDER BY u.coin_balance DESC
+        '''
+    ).fetchall()
+    
+    # Create snapshots for users who don't have recent ones (within last 5 minutes)
+    current_time = db.execute("SELECT datetime('now') as now").fetchone()['now']
+    
+    for user in users:
+        if (not user['last_snapshot'] or 
+            db.execute(
+                "SELECT (julianday(?) - julianday(?)) * 24 * 60 as minutes_diff",
+                (current_time, user['last_snapshot'])
+            ).fetchone()['minutes_diff'] > 5):
+            create_balance_snapshot(user['id'], user['coin_balance'])
+    
+    return [dict(user) for user in users]
+
+
+def cleanup_old_snapshots(hours_to_keep=6):
+    """Clean up balance snapshots older than specified hours."""
+    db = get_db()
+    try:
+        db.execute(
+            "DELETE FROM balance_snapshots WHERE timestamp < datetime('now', '-' || ? || ' hours')",
+            (hours_to_keep,)
+        )
+        db.commit()
+        return True
+    except sqlite3.Error:
+        return False

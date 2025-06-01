@@ -67,6 +67,13 @@ def login():
         if user_id is None:
             return jsonify({'error': 'Username already exists', 'status': 'duplicate_stakeholder'}), 409
         balance = 10000
+    else:
+        # Create balance snapshot for existing user login
+        from .db import get_db, create_balance_snapshot
+        db = get_db()
+        user = db.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+        if user:
+            create_balance_snapshot(user['id'], balance)
     
     session['username'] = username
     session['user_balance'] = balance
