@@ -1,5 +1,6 @@
 # Straw Coin 🚀📈
-*Disrupting Live Comedy Through Blockchain-Adjacent Market Solutions*
+
+_Disrupting Live Comedy Through Blockchain-Adjacent Market Solutions_
 
 ## Executive Summary
 
@@ -19,7 +20,7 @@ To create a frictionless, scalable ecosystem where **The Short Straw** audience 
 ## Technology Infrastructure
 
 - **Backend**: Flask-powered API endpoints for maximum scalability
-- **Cloud Deployment**: PythonAnywhere hosting ensures 99.9% uptime during **The Short Straw** performances
+- **Cloud Deployment**: PythonAnywhere hosting ensures two nines of uptime during **The Short Straw** performances
 - **Mobile-First UX**: Optimized for smartphone trading during live shows
 - **Real-Time Analytics**: Live market data and transaction monitoring
 
@@ -54,4 +55,4 @@ Traditional comedy criticism based on "artistic merit" poses zero threat to our 
 
 **"To the Moon! 🌙" - Disrupting Comedy, One Coin at a Time**
 
-*Straw Coin: Where Market Cap Meets Comedy Cap*
+_Straw Coin: Where Market Cap Meets Comedy Cap_
