@@ -24,8 +24,8 @@ def main():
     print(f"Debug mode: {debug}")
     print(f"Performer redistribution: {redistribution}")
     
-    if timeout != 300:
-        print("⚠️  WARNING: Expected 300s timeout for production!")
+    if timeout != 60:
+        print("⚠️  WARNING: Expected 60s timeout for production!")
         print("Check that Flask is not running in debug mode.")
         return 1
     
