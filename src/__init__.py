@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template
+from flask import Flask, render_template, current_app
 
 from .auth import require_auth
 from .config import DevelopmentConfig, ProductionConfig
