@@ -437,6 +437,50 @@ function updateMarketStatus(data) {
     if (activeTradersElement && data.current_leaders) {
         activeTradersElement.textContent = data.current_leaders.length.toString();
     }
+    
+    // Check for market status updates
+    checkMarketStatus();
+}
+
+async function checkMarketStatus() {
+    try {
+        const response = await fetch('/api/market-status');
+        if (response.ok) {
+            const data = await response.json();
+            updateMarketStatusDisplay(data.market_status);
+        }
+    } catch (error) {
+        console.log('Market status check failed:', error);
+    }
+}
+
+function updateMarketStatusDisplay(marketStatus) {
+    // Find market status elements
+    const statusElements = document.querySelectorAll('[style*="MARKET STATUS"]');
+    
+    statusElements.forEach(element => {
+        const statusSpan = element.querySelector('span:last-child');
+        const parentDiv = element.parentElement;
+        
+        if (statusSpan && parentDiv) {
+            statusSpan.textContent = marketStatus.status_text;
+            parentDiv.style.color = marketStatus.status_color;
+            
+            // Add redistribution status indicator
+            if (!document.getElementById('redistributionStatus')) {
+                const redistStatus = document.createElement('div');
+                redistStatus.id = 'redistributionStatus';
+                redistStatus.style.cssText = 'font-size: 0.8rem; opacity: 0.8; margin-top: 4px;';
+                redistStatus.textContent = marketStatus.redistribution_active ? 
+                    '⚡ Redistributions Active' : '⏸️ Redistributions Paused';
+                element.appendChild(redistStatus);
+            } else {
+                const redistStatus = document.getElementById('redistributionStatus');
+                redistStatus.textContent = marketStatus.redistribution_active ? 
+                    '⚡ Redistributions Active' : '⏸️ Redistributions Paused';
+            }
+        }
+    });
 }
 
 function startAutoUpdate() {

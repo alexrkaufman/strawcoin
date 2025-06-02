@@ -331,6 +331,9 @@ def init_app(app):
     app.cli.add_command(create_quant_command)
     app.cli.add_command(run_production_command)
     app.cli.add_command(create_fake_users_command)
+    app.cli.add_command(toggle_market_command)
+    app.cli.add_command(market_status_command)
+    app.cli.add_command(reset_market_command)
 
 
 def create_user(username, is_performer=False):
@@ -899,6 +902,151 @@ def run_production_command(host, port):
     app.run(host=host, port=port, debug=False)
 
 
+def _get_market_override_file():
+    """Get the path to the market override file."""
+    import os
+    from flask import current_app
+    instance_path = current_app.instance_path
+    return os.path.join(instance_path, 'market_override.txt')
+
+def _read_market_override():
+    """Read market override from file."""
+    import os
+    try:
+        override_file = _get_market_override_file()
+        if os.path.exists(override_file):
+            with open(override_file, 'r') as f:
+                content = f.read().strip()
+                if content == 'OPEN':
+                    return True
+                elif content == 'CLOSED':
+                    return False
+        return None
+    except Exception:
+        return None
+
+def _write_market_override(status):
+    """Write market override to file."""
+    import os
+    try:
+        override_file = _get_market_override_file()
+        os.makedirs(os.path.dirname(override_file), exist_ok=True)
+        
+        if status is None:
+            # Remove override file
+            if os.path.exists(override_file):
+                os.remove(override_file)
+        else:
+            # Write status to file
+            with open(override_file, 'w') as f:
+                f.write('OPEN' if status else 'CLOSED')
+    except Exception:
+        pass
+
+def is_market_open():
+    """Check if the market is currently open based on configuration and time."""
+    from datetime import datetime
+    from flask import current_app
+    
+    # Check for persistent file override first
+    override = _read_market_override()
+    if override is not None:
+        return override
+    
+    # Check if market is manually set to open/closed in config
+    market_open = current_app.config.get('MARKET_OPEN', True)
+    if not market_open:
+        return False
+    
+    # Check market hours (optional - if configured)
+    market_hours = current_app.config.get('MARKET_OPEN_HOURS')
+    if market_hours:
+        now = datetime.now()
+        current_hour = now.hour
+        start_hour = market_hours.get('start', 0)
+        end_hour = market_hours.get('end', 23)
+        
+        # Handle overnight markets (e.g., start=22, end=2)
+        if start_hour <= end_hour:
+            return start_hour <= current_hour <= end_hour
+        else:
+            return current_hour >= start_hour or current_hour <= end_hour
+    
+    return True
+
+
+def get_market_status():
+    """Get market status with details for display."""
+    is_open = is_market_open()
+    
+    market_info = {
+        'is_open': is_open,
+        'status_text': '🟢 OPEN' if is_open else '🔴 CLOSED',
+        'status_color': '#00D084' if is_open else '#F23645',
+        'redistribution_active': is_open
+    }
+    
+    # Add market hours info if configured
+    from flask import current_app
+    market_hours = current_app.config.get('MARKET_OPEN_HOURS')
+    if market_hours:
+        start = market_hours.get('start', 0)
+        end = market_hours.get('end', 23)
+        market_info['hours'] = f"{start:02d}:00 - {end:02d}:00"
+    
+    return market_info
+
+
+@click.command("toggle-market")
+def toggle_market_command():
+    """Toggle market open/closed status."""
+    # Get current status using the is_market_open function
+    current_status = is_market_open()
+    new_status = not current_status
+    
+    # Persist the override to file
+    _write_market_override(new_status)
+    
+    status_text = "OPEN" if new_status else "CLOSED"
+    click.echo(f"📊 Market status changed to: {status_text}")
+    
+    if new_status:
+        click.echo("✅ Performer redistributions will now occur")
+    else:
+        click.echo("🛑 Performer redistributions paused until market reopens")
+    
+    click.echo("💡 Use 'flask market-status' to check current status")
+
+
+@click.command("market-status")
+def market_status_command():
+    """Check current market status."""
+    market_info = get_market_status()
+    override = _read_market_override()
+    
+    click.echo("📊 STRAW COIN MARKET STATUS")
+    click.echo("=" * 30)
+    click.echo(f"Status: {market_info['status_text']}")
+    
+    if override is not None:
+        click.echo(f"Override: {'FORCED OPEN' if override else 'FORCED CLOSED'}")
+    
+    if 'hours' in market_info:
+        click.echo(f"Market Hours: {market_info['hours']}")
+    
+    click.echo(f"Redistributions: {'ACTIVE' if market_info['redistribution_active'] else 'PAUSED'}")
+    
+    if market_info['is_open']:
+        click.echo("✅ Performer coin redistributions are occurring")
+    else:
+        click.echo("🛑 Performer coin redistributions are paused")
+    
+    if override is None:
+        click.echo("💡 Use 'flask toggle-market' to manually override market status")
+    else:
+        click.echo("💡 Use 'flask reset-market' to remove override and use time-based status")
+
+
 @click.command("create-fake-users")
 @click.option("--performers", default=3, help="Number of performers to create")
 @click.option("--audience", default=8, help="Number of audience members to create")
@@ -1008,3 +1156,16 @@ def create_fake_users_command(performers, audience, clear):
     click.echo(f"   Performers: {total_performers}")
     click.echo(f"   Audience: {total_audience}")
     click.echo(f"\n✅ Fake users ready for trading platform testing!")
+
+
+@click.command("reset-market")
+def reset_market_command():
+    """Reset market status to use time-based rules (remove override)."""
+    _write_market_override(None)
+    
+    click.echo("📊 Market status override removed")
+    click.echo("✅ Market will now follow time-based rules")
+    
+    # Show current status after reset
+    market_info = get_market_status()
+    click.echo(f"Current status: {market_info['status_text']}")

@@ -10,7 +10,9 @@ from .db import (
     get_performers,
     get_audience_members,
     performer_redistribution,
+    cleanup_expired_sessions,
 )
+from datetime import datetime
 from .auth import require_auth, require_quant
 
 bp = Blueprint("api", __name__, url_prefix="/api")
@@ -367,6 +369,21 @@ def get_performers_list():
             "status": "success",
         }
     )
+
+
+@bp.route("/market-status", methods=["GET"])
+@require_auth
+def get_market_status_api():
+    """Get current market status."""
+    from .db import get_market_status
+    
+    market_status = get_market_status()
+    
+    return jsonify({
+        "status": "success",
+        "market_status": market_status,
+        "timestamp": datetime.now().isoformat()
+    })
 
 
 @bp.route("/performers/redistribute", methods=["POST"])

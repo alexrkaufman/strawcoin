@@ -136,12 +136,15 @@ def create_app(test_config=None):
     def leaderboard_page():
         from flask import session
 
-        from .db import get_user_balance
+        from .db import get_user_balance, get_market_status
 
         current_username = session.get("username")
         current_user_balance = (
             get_user_balance(current_username) if current_username else 0
         )
+        
+        # Get current market status
+        market_status = get_market_status()
 
         return render_template(
             "leaderboard.jinja2",
@@ -149,6 +152,7 @@ def create_app(test_config=None):
             page_class="leaderboard",
             current_username=current_username,
             current_user_balance=current_user_balance,
+            market_status=market_status,
         )
 
     @app.route("/quant")

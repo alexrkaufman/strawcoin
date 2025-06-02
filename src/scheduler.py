@@ -65,11 +65,16 @@ class PerformerRedistributionScheduler:
     def _perform_redistribution(self):
         """Perform the actual coin redistribution."""
         try:
-            from .db import performer_redistribution, cleanup_expired_sessions
+            from .db import performer_redistribution, cleanup_expired_sessions, is_market_open
             
             # Clean up expired sessions first
             timeout_seconds = current_app.config.get("SESSION_TIMEOUT_SECONDS", 300)
             cleanup_expired_sessions(timeout_seconds)
+            
+            # Check if market is open before performing redistribution
+            if not is_market_open():
+                current_app.logger.info("🔴 Market closed - redistribution paused")
+                return
             
             # Perform redistribution
             result = performer_redistribution()
