@@ -18,7 +18,8 @@ from .db import (
     create_session, 
     update_session_activity, 
     remove_session,
-    get_user_performer_status
+    get_user_performer_status,
+    user_exists
 )
 
 bp = Blueprint("auth", __name__)
@@ -58,6 +59,20 @@ def require_auth(f):
                 ), 401
             return redirect(url_for("auth.register"))
 
+        # Verify user still exists in database
+        current_username = session.get("username")
+        if current_username and not user_exists(current_username):
+            # User was deleted, clear their session
+            current_app.logger.warning(f"Orphaned session detected for deleted user: {current_username}. Cleaning up session.")
+            if "session_id" in session:
+                remove_session(session["session_id"])
+            session.clear()
+            if request.is_json:
+                return jsonify(
+                    {"error": "User account no longer exists", "status": "user_deleted"}
+                ), 401
+            return redirect(url_for("auth.register"))
+
         update_activity()
         return f(*args, **kwargs)
 
@@ -74,8 +89,21 @@ def require_quant(f):
                 ), 401
             return redirect(url_for("auth.register"))
 
-        # Check if user is The CHANCELLOR
+        # Verify user still exists in database
         current_username = session.get("username")
+        if current_username and not user_exists(current_username):
+            # User was deleted, clear their session
+            current_app.logger.warning(f"Orphaned CHANCELLOR session detected for deleted user: {current_username}. Cleaning up session.")
+            if "session_id" in session:
+                remove_session(session["session_id"])
+            session.clear()
+            if request.is_json:
+                return jsonify(
+                    {"error": "User account no longer exists", "status": "user_deleted"}
+                ), 401
+            return redirect(url_for("auth.register"))
+
+        # Check if user is The CHANCELLOR
         quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
         quant_enabled = current_app.config.get("QUANT_ENABLED", False)
         

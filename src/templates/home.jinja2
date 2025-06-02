@@ -7,7 +7,7 @@
     {% if current_username %}
     <div class="user-balance-card" data-username="{{ current_username }}">
         <h3>💰 Welcome back, {{ current_username }}!</h3>
-        <p class="balance-amount">{{ "{:,}".format(current_user_balance) }} Straw Coins</p>
+        <p class="balance-amount">{{ current_user_balance | safe_format }} Straw Coins</p>
     </div>
 
     <!-- Navigation Links -->
@@ -157,7 +157,7 @@
                 {% set medals = ["🥇", "🥈", "🥉"] %}
                 <div class="leaderboard-item{% if performer.username == current_username %} current-user{% endif %}">
                     <span class="font-bold">{{ medals[loop.index0] }} {{ performer.username }}</span>
-                    <span class="font-bold">{{ "{:,}".format(performer.coin_balance) }} Straw Coins</span>
+                    <span class="font-bold">{{ performer.coin_balance | safe_format }} Straw Coins</span>
                 </div>
             {% endfor %}
         {% else %}

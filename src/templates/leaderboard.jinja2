@@ -37,7 +37,7 @@
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <p style="margin: 0; color: #ffffff; font-size: 1.8rem; font-weight: bold;">{{ "{:,}".format(current_user_balance) }}</p>
+                <p style="margin: 0; color: #ffffff; font-size: 1.8rem; font-weight: bold;">{{ current_user_balance | safe_format }}</p>
                 <p style="margin: 0; color: #b0b0b0; font-size: 0.9rem;">STRAW COINS</p>
             </div>
             <div style="text-align: right;">
