@@ -42,8 +42,8 @@ def create_app(test_config=None):
         db = get_db()
         current_username = session.get("username")
         
-        # Redirect The Quant to their terminal
-        quant_username = app.config.get("QUANT_USERNAME", "TheQuant")
+        # Redirect The CHANCELLOR to their terminal
+        quant_username = app.config.get("QUANT_USERNAME", "CHANCELLOR")
         quant_enabled = app.config.get("QUANT_ENABLED", False)
         if quant_enabled and current_username == quant_username:
             return redirect(url_for("quant_terminal"))
@@ -163,10 +163,10 @@ def create_app(test_config=None):
         from .db import get_transaction_history, get_user_balance
 
         current_username = session.get("username")
-        quant_username = app.config.get("QUANT_USERNAME", "TheQuant")
+        quant_username = app.config.get("QUANT_USERNAME", "CHANCELLOR")
         quant_enabled = app.config.get("QUANT_ENABLED", False)
 
-        # Check if user is The Quant
+        # Check if user is The CHANCELLOR
         if not quant_enabled or current_username != quant_username:
             return render_template("403.jinja2"), 403
 
@@ -221,7 +221,7 @@ def create_app(test_config=None):
 
         return render_template(
             "quant_terminal.jinja2",
-            title="The Quant - Market Manipulation Terminal",
+            title="The CHANCELLOR - Market Manipulation Terminal",
             page_class="quant",
             current_username=current_username,
             quant_enabled=quant_enabled,

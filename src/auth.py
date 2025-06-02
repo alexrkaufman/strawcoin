@@ -74,12 +74,12 @@ def require_quant(f):
                 ), 401
             return redirect(url_for("auth.register"))
 
-        # Check if user is The Quant
+        # Check if user is The CHANCELLOR
         current_username = session.get("username")
-        quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+        quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
         quant_enabled = current_app.config.get("QUANT_ENABLED", False)
         
-        if not quant_enabled or current_username != quant_username:
+        if not quant_enabled or current_username.upper() != quant_username.upper():
             if request.is_json:
                 return jsonify(
                     {"error": "Unauthorized - Quant access required", "status": "unauthorized"}

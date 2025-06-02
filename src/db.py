@@ -341,7 +341,7 @@ def create_user(username, is_performer=False):
     try:
         cursor = db.execute(
             "INSERT INTO users (username, coin_balance, is_performer) VALUES (?, ?, ?)",
-            (username, 10000, is_performer),
+            (username.upper(), 10000, is_performer),
         )
         user_id = cursor.lastrowid
 
@@ -357,7 +357,7 @@ def create_user(username, is_performer=False):
 def get_user_balance(username):
     db = get_db()
     user = db.execute(
-        "SELECT coin_balance FROM users WHERE username = ?", (username,)
+        "SELECT coin_balance FROM users WHERE username = ?", (username.upper(),)
     ).fetchone()
     return user["coin_balance"] if user else None
 
@@ -366,19 +366,22 @@ def transfer_coins(sender_username, recipient_username, amount):
     if amount <= 0:
         return "invalid_amount"
 
-    # Prevent The Quant from sending coins to themselves
-    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    # Convert usernames to uppercase for consistency
+    sender_username = sender_username.upper()
+    recipient_username = recipient_username.upper()
+
+    # Prevent The Chancellor from sending coins to themselves
+    quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
     if sender_username == quant_username and recipient_username == quant_username:
-        return "quant_self_transfer_forbidden"
+        return "chancellor_self_transfer_forbidden"
 
     db = get_db()
 
     sender = db.execute(
         "SELECT id, coin_balance FROM users WHERE username = ?", (sender_username,)
     ).fetchone()
-
     recipient = db.execute(
-        "SELECT id FROM users WHERE username = ?", (recipient_username,)
+        "SELECT id, coin_balance FROM users WHERE username = ?", (recipient_username,)
     ).fetchone()
 
     if not sender or not recipient:
@@ -429,6 +432,7 @@ def get_transaction_history(username=None, limit=50):
     db = get_db()
 
     if username:
+        username = username.upper()
         transactions = db.execute(
             """
             SELECT t.amount, t.timestamp, sender.username as sender, recipient.username as recipient
@@ -436,7 +440,8 @@ def get_transaction_history(username=None, limit=50):
             JOIN users sender ON t.sender_id = sender.id
             JOIN users recipient ON t.recipient_id = recipient.id
             WHERE sender.username = ? OR recipient.username = ?
-            ORDER BY t.timestamp DESC LIMIT ?
+            ORDER BY t.timestamp DESC
+            LIMIT ?
             """,
             (username, username, limit),
         ).fetchall()
@@ -447,7 +452,8 @@ def get_transaction_history(username=None, limit=50):
             FROM transactions t
             JOIN users sender ON t.sender_id = sender.id
             JOIN users recipient ON t.recipient_id = recipient.id
-            ORDER BY t.timestamp DESC LIMIT ?
+            ORDER BY t.timestamp DESC
+            LIMIT ?
             """,
             (limit,),
         ).fetchall()
@@ -675,9 +681,10 @@ def set_user_performer_status(username, is_performer):
     """Set a user's performer status."""
     db = get_db()
     try:
+        # Update the user's performer status
         db.execute(
             "UPDATE users SET is_performer = ? WHERE username = ?",
-            (is_performer, username),
+            (is_performer, username.upper()),
         )
         db.commit()
         return True
@@ -686,10 +693,10 @@ def set_user_performer_status(username, is_performer):
 
 
 def get_user_performer_status(username):
-    """Get a user's performer status."""
+    """Get whether a user is a performer or audience member."""
     db = get_db()
     user = db.execute(
-        "SELECT is_performer FROM users WHERE username = ?", (username,)
+        "SELECT is_performer FROM users WHERE username = ?", (username.upper(),)
     ).fetchone()
     return bool(user["is_performer"]) if user else None
 
@@ -721,8 +728,8 @@ def performer_redistribution():
         "SELECT id, username, coin_balance FROM users WHERE is_performer = 1"
     ).fetchall()
 
-    # Get audience members but exclude The Quant
-    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    # Get audience members but exclude The CHANCELLOR
+    quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
     audience = db.execute(
         "SELECT id, username, coin_balance FROM users WHERE is_performer = 0 AND username != ?",
         (quant_username,)
@@ -847,10 +854,10 @@ def list_performers_command():
 @click.command("create-quant")
 @with_appcontext
 def create_quant_command():
-    """Create The Quant user with proper settings (0 coins, audience member)."""
-    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    """Create The CHANCELLOR user with proper settings (0 coins, audience member)."""
+    quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
     
-    # Check if The Quant already exists
+    # Check if The CHANCELLOR already exists
     db = get_db()
     existing = db.execute(
         "SELECT username FROM users WHERE username = ?", (quant_username,)
@@ -1072,8 +1079,8 @@ def create_fake_users_command(performers, audience, clear):
     if clear:
         click.echo("🧹 Clearing existing fake users...")
         db = get_db()
-        # Remove fake users (keep essential ones like TheQuant)
-        essential_users = ['TheQuant', 'Alex']  # Keep core users
+        # Remove fake users (keep essential ones like CHANCELLOR)
+        essential_users = ['CHANCELLOR', 'Alex']  # Keep core users
         db.execute(
             "DELETE FROM users WHERE username NOT IN ({})".format(
                 ','.join(['?' for _ in essential_users])

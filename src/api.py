@@ -27,7 +27,7 @@ def register_user():
             {"error": "Username required", "status": "validation_error"}
         ), 400
 
-    username = data["username"].strip()
+    username = data["username"].strip().upper()
 
     if not username or len(username) < 3:
         return jsonify(
@@ -94,10 +94,14 @@ def execute_transfer():
             {"error": "Amount must be integer", "status": "invalid_amount"}
         ), 400
 
+    # Convert usernames to uppercase for consistency
+    sender = sender.upper()
+    recipient = recipient.upper()
+
     # Check for insider trading (self-transfers)
     if sender == recipient:
-        # Transfer the attempted amount to TheQuant as penalty
-        quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+        # Transfer the attempted amount to CHANCELLOR as penalty
+        quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
         
         # Execute the insider trading penalty transfer
         penalty_result = transfer_coins(sender, quant_username, amount)
@@ -117,13 +121,13 @@ def execute_transfer():
                 "message": "Insider trading attempt detected."
             }), 302
 
-    # Check if trying to pay TheQuant directly (violates independence)
-    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
-    if recipient == quant_username:
+    # Check if trying to pay CHANCELLOR directly (violates independence)
+    quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
+    if recipient == quant_username.upper():
         return jsonify({
             "redirect": f"/quant-independence-warning?amount={amount}",
             "status": "quant_independence_violation",
-            "message": "TheQuant cannot accept direct payments to maintain regulatory independence."
+            "message": "CHANCELLOR cannot accept direct payments to maintain regulatory independence."
         }), 302
 
     result = transfer_coins(sender, recipient, amount)
@@ -134,7 +138,7 @@ def execute_transfer():
         "user_not_found": 404,
         "invalid_amount": 400,
         "transaction_failed": 500,
-        "quant_self_transfer_forbidden": 403,
+        "chancellor_self_transfer_forbidden": 403,
         "insider_trading_violation": 302,
         "quant_independence_violation": 302,
     }
@@ -144,9 +148,9 @@ def execute_transfer():
         "user_not_found": "User not found",
         "invalid_amount": "Amount must be positive",
         "transaction_failed": "Transaction failed",
-        "quant_self_transfer_forbidden": "The Quant cannot transfer coins to themselves",
+        "chancellor_self_transfer_forbidden": "The CHANCELLOR cannot transfer coins to themselves",
         "insider_trading_violation": "Insider trading violation - coins confiscated",
-        "quant_independence_violation": "TheQuant cannot accept direct payments",
+        "quant_independence_violation": "CHANCELLOR cannot accept direct payments",
     }
 
     return jsonify(
@@ -506,7 +510,7 @@ def quant_get_users():
     return jsonify({
         "users": [dict(user) for user in users],
         "total_users": len(users),
-        "quant": "TheQuant",
+        "quant": "CHANCELLOR",
         "status": "success"
     })
 
@@ -547,11 +551,11 @@ def quant_set_performer_status(username):
     
     user_type = "performer" if is_performer else "audience_member"
     return jsonify({
-        "message": f"The Quant manipulated {username} to {user_type} status",
+        "message": f"The CHANCELLOR manipulated {username} to {user_type} status",
         "username": username,
         "is_performer": is_performer,
         "reason": reason,
-        "manipulated_by": "TheQuant",
+        "manipulated_by": "CHANCELLOR",
         "status": "manipulation_successful"
     }), 200
 
@@ -596,7 +600,7 @@ def quant_force_redistribution():
             "multiplier": multiplier,
             "reason": reason,
             "redistributions": redistributions,
-            "manipulated_by": "TheQuant",
+            "manipulated_by": "CHANCELLOR",
             "status": "forced_redistribution_successful"
         }), 200
     else:
@@ -626,7 +630,7 @@ def quant_force_transfer():
     # Prevent The Quant from being involved in transfers they force
     from flask import session
     current_username = session.get("username")
-    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
     
     if sender == quant_username or recipient == quant_username:
         return jsonify({
@@ -715,14 +719,14 @@ def quant_force_transfer():
         create_balance_snapshot(recipient_user["id"], recipient_new_balance)
         
         return jsonify({
-            "message": f"The Quant forced transfer of {amount} coins from {sender} to {recipient}",
+            "message": f"The CHANCELLOR forced transfer of {amount} coins from {sender} to {recipient}",
             "sender": sender,
             "recipient": recipient,
             "amount": amount,
             "sender_new_balance": sender_new_balance,
             "recipient_new_balance": recipient_new_balance,
             "reason": reason,
-            "manipulated_by": "TheQuant",
+            "manipulated_by": "CHANCELLOR",
             "status": "forced_transfer_successful"
         }), 200
         
@@ -737,10 +741,10 @@ def quant_force_transfer():
 @bp.route("/quant/performers-to-audience", methods=["POST"])
 @require_quant
 def quant_performers_to_audience():
-    """Force all performers to send coins to all audience members - The Quant's mass redistribution."""
+    """Force all performers to send coins to all audience members - The CHANCELLOR's mass redistribution."""
     data = request.get_json() or {}
     amount_per_transfer = data.get("amount", 100)
-    reason = data.get("reason", "Mass performer-to-audience transfer by The Quant")
+    reason = data.get("reason", "Mass performer-to-audience transfer by The CHANCELLOR")
     
     try:
         amount_per_transfer = int(amount_per_transfer)
@@ -759,8 +763,8 @@ def quant_performers_to_audience():
     from .db import get_db
     db = get_db()
     
-    # Get performers and audience (excluding The Quant)
-    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    # Get performers and audience (excluding The CHANCELLOR)
+    quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
     
     performers = db.execute(
         "SELECT id, username, coin_balance FROM users WHERE is_performer = 1 AND username != ?",
@@ -819,12 +823,12 @@ def quant_performers_to_audience():
         create_balance_snapshots_for_all_users()
         
         return jsonify({
-            "message": f"The Quant forced {len(transfers)} transfers from performers to audience",
+            "message": f"The CHANCELLOR forced {len(transfers)} transfers from performers to audience",
             "transfers": transfers,
             "failed_transfers": failed_transfers,
             "amount_per_transfer": amount_per_transfer,
             "reason": reason,
-            "manipulated_by": "TheQuant",
+            "manipulated_by": "CHANCELLOR",
             "status": "mass_transfer_successful"
         }), 200
         
@@ -839,10 +843,10 @@ def quant_performers_to_audience():
 @bp.route("/quant/audience-to-performers", methods=["POST"])
 @require_quant
 def quant_audience_to_performers():
-    """Force all audience members to send coins to all performers - The Quant's reverse redistribution."""
+    """Force all audience members to send coins to all performers - The CHANCELLOR's reverse redistribution."""
     data = request.get_json() or {}
     amount_per_transfer = data.get("amount", 100)
-    reason = data.get("reason", "Mass audience-to-performer transfer by The Quant")
+    reason = data.get("reason", "Mass audience-to-performer transfer by The CHANCELLOR")
     
     try:
         amount_per_transfer = int(amount_per_transfer)
@@ -861,8 +865,8 @@ def quant_audience_to_performers():
     from .db import get_db
     db = get_db()
     
-    # Get performers and audience (excluding The Quant)
-    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    # Get performers and audience (excluding The CHANCELLOR)
+    quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
     
     performers = db.execute(
         "SELECT id, username, coin_balance FROM users WHERE is_performer = 1 AND username != ?",
@@ -921,12 +925,12 @@ def quant_audience_to_performers():
         create_balance_snapshots_for_all_users()
         
         return jsonify({
-            "message": f"The Quant forced {len(transfers)} transfers from audience to performers",
+            "message": f"The CHANCELLOR forced {len(transfers)} transfers from audience to performers",
             "transfers": transfers,
             "failed_transfers": failed_transfers,
             "amount_per_transfer": amount_per_transfer,
             "reason": reason,
-            "manipulated_by": "TheQuant",
+            "manipulated_by": "CHANCELLOR",
             "status": "reverse_mass_transfer_successful"
         }), 200
         
@@ -969,8 +973,8 @@ def quant_group_transfer():
             "status": "invalid_amount"
         }), 400
     
-    # Prevent The Quant from being involved
-    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    # Prevent The CHANCELLOR from being involved
+    quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
     if (sender == quant_username or recipient == quant_username or
         sender == recipient):
         return jsonify({
@@ -1110,14 +1114,14 @@ def quant_group_transfer():
         create_balance_snapshots_for_all_users()
         
         return jsonify({
-            "message": f"The Quant executed {len(transfers)} group transfers",
+            "message": f"The CHANCELLOR executed {len(transfers)} group transfers",
             "transfers": transfers,
             "failed_transfers": failed_transfers,
             "sender_type": sender,
             "recipient_type": recipient,
             "amount_per_transfer": amount,
             "reason": reason,
-            "manipulated_by": "TheQuant",
+            "manipulated_by": "CHANCELLOR",
             "status": "group_transfer_successful"
         }), 200
         
@@ -1168,7 +1172,7 @@ def quant_market_stats():
     
     return jsonify({
         "market_stats": stats,
-        "quant": "TheQuant",
+        "quant": "CHANCELLOR",
         "timestamp": __import__("datetime").datetime.now().isoformat(),
         "status": "success"
     })

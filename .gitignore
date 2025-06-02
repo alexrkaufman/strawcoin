@@ -104,7 +104,6 @@ dmypy.json
 logs/
 
 # Secret keys and configuration
-config.py
 .env.local
 .env.production
 secrets.py

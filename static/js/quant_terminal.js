@@ -1,9 +1,9 @@
-// The Quant Terminal - Market Manipulation JavaScript
-// Advanced controls for The Quant's market manipulation capabilities
+// The CHANCELLOR Terminal - Market Manipulation JavaScript
+// Advanced controls for The CHANCELLOR's market manipulation capabilities
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize The Quant Terminal
-    console.log('⚡ The Quant Terminal initializing...');
+    // Initialize The CHANCELLOR Terminal
+    console.log('🎛️ The CHANCELLOR Terminal initializing...');
     initializeQuantTerminal();
     
     // Auto-refresh market data every 30 seconds
@@ -18,7 +18,7 @@ function initializeQuantTerminal() {
     refreshMarketData();
     
     // Log terminal initialization
-    logQuantAction('SYSTEM', 'The Quant Terminal initialized successfully', 'info');
+    logQuantAction('SYSTEM', 'The CHANCELLOR Terminal initialized successfully', 'info');
 }
 
 function bindControlButtons() {
@@ -62,7 +62,7 @@ function bindControlButtons() {
 async function manipulatePerformerStatus() {
     const username = document.getElementById('statusUsername').value.trim();
     const isPerformer = document.getElementById('statusType').value === 'true';
-    const reason = document.getElementById('statusReason').value.trim() || 'Market manipulation by The Quant';
+    const reason = document.getElementById('statusReason').value.trim() || 'Market manipulation by The CHANCELLOR';
     
     if (!username) {
         showQuantStatus('Username required for status manipulation', 'error');
@@ -110,7 +110,7 @@ async function executeUniversalTransfer() {
     const sender = document.getElementById('transferSender').value.trim();
     const recipient = document.getElementById('transferRecipient').value.trim();
     const amount = parseInt(document.getElementById('transferAmount').value);
-    const reason = document.getElementById('transferReason').value.trim() || 'Universal transfer by The Quant';
+    const reason = document.getElementById('transferReason').value.trim() || 'Universal transfer by The CHANCELLOR';
     
     if (!sender || !recipient || !amount || amount <= 0) {
         showQuantStatus('Valid sender, recipient, and positive amount required', 'error');
@@ -208,7 +208,7 @@ function getTransferSuccessMessage(data, type) {
 
 async function forceMarketRedistribution() {
     const multiplier = parseFloat(document.getElementById('redistributionMultiplier').value) || 1;
-    const reason = document.getElementById('redistributionReason').value.trim() || 'Forced redistribution by The Quant';
+    const reason = document.getElementById('redistributionReason').value.trim() || 'Forced redistribution by The CHANCELLOR';
     
     if (multiplier <= 0 || multiplier > 10) {
         showQuantStatus('Multiplier must be between 0.1 and 10', 'error');
