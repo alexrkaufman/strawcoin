@@ -28,10 +28,10 @@ function bindControlButtons() {
         changeStatusBtn.addEventListener('click', manipulatePerformerStatus);
     }
     
-    // Force Transfer
+    // Universal Force Transfer
     const forceTransferBtn = document.getElementById('forceTransferBtn');
     if (forceTransferBtn) {
-        forceTransferBtn.addEventListener('click', forceUserTransfer);
+        forceTransferBtn.addEventListener('click', executeUniversalTransfer);
     }
     
     // Force Redistribution
@@ -40,16 +40,7 @@ function bindControlButtons() {
         forceRedistributionBtn.addEventListener('click', forceMarketRedistribution);
     }
     
-    // Mass Transfer Controls
-    const performersToAudienceBtn = document.getElementById('performersToAudienceBtn');
-    if (performersToAudienceBtn) {
-        performersToAudienceBtn.addEventListener('click', forcePerformersToAudience);
-    }
-    
-    const audienceToPerformersBtn = document.getElementById('audienceToPerformersBtn');
-    if (audienceToPerformersBtn) {
-        audienceToPerformersBtn.addEventListener('click', forceAudienceToPerformers);
-    }
+
     
     // Market Intelligence Controls
     const refreshStatsBtn = document.getElementById('refreshStatsBtn');
@@ -115,11 +106,11 @@ async function manipulatePerformerStatus() {
     }
 }
 
-async function forceUserTransfer() {
+async function executeUniversalTransfer() {
     const sender = document.getElementById('transferSender').value.trim();
     const recipient = document.getElementById('transferRecipient').value.trim();
     const amount = parseInt(document.getElementById('transferAmount').value);
-    const reason = document.getElementById('transferReason').value.trim() || 'Forced transfer by The Quant';
+    const reason = document.getElementById('transferReason').value.trim() || 'Universal transfer by The Quant';
     
     if (!sender || !recipient || !amount || amount <= 0) {
         showQuantStatus('Valid sender, recipient, and positive amount required', 'error');
@@ -131,27 +122,45 @@ async function forceUserTransfer() {
         return;
     }
     
+    // Determine transfer type based on sender and recipient
+    let transferType = 'individual';
+    let endpoint = '/api/quant/force-transfer';
+    let payload = { sender, recipient, amount, reason };
+    
+    if (sender === 'All Performers' && recipient === 'All Audience') {
+        transferType = 'performers-to-audience';
+        endpoint = '/api/quant/performers-to-audience';
+        payload = { amount, reason };
+    } else if (sender === 'All Audience' && recipient === 'All Performers') {
+        transferType = 'audience-to-performers';
+        endpoint = '/api/quant/audience-to-performers';
+        payload = { amount, reason };
+    } else if (sender === 'All Performers' || sender === 'All Audience' || 
+               recipient === 'All Performers' || recipient === 'All Audience') {
+        // Handle mixed group transfers (one group, one individual)
+        transferType = 'mixed-group';
+        endpoint = '/api/quant/group-transfer';
+        payload = { sender, recipient, amount, reason };
+    }
+    
     try {
-        showQuantStatus('💸 Forcing transfer...', 'info');
+        const statusMessage = getTransferStatusMessage(sender, recipient, amount, transferType);
+        showQuantStatus(statusMessage, 'info');
         
-        const response = await fetch('/api/quant/force-transfer', {
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                sender: sender,
-                recipient: recipient,
-                amount: amount,
-                reason: reason
-            })
+            body: JSON.stringify(payload)
         });
         
         const data = await response.json();
         
         if (response.ok) {
-            logQuantAction('FORCED_TRANSFER', `Forced ${amount} coins from ${sender} to ${recipient}`, 'manipulation');
-            showQuantStatus(`✅ Successfully forced transfer of ${amount} coins from ${sender} to ${recipient}`, 'success');
+            const successMessage = getTransferSuccessMessage(data, transferType);
+            logQuantAction('UNIVERSAL_TRANSFER', successMessage, 'manipulation');
+            showQuantStatus(`✅ ${successMessage}`, 'success');
             
             // Clear form
             document.getElementById('transferSender').value = '';
@@ -162,12 +171,38 @@ async function forceUserTransfer() {
             // Refresh market data
             setTimeout(refreshMarketData, 1000);
         } else {
-            throw new Error(data.error || 'Forced transfer failed');
+            throw new Error(data.error || 'Transfer failed');
         }
     } catch (error) {
-        console.error('Forced transfer error:', error);
-        logQuantAction('ERROR', `Forced transfer failed: ${error.message}`, 'error');
-        showQuantStatus(`❌ Forced transfer failed: ${error.message}`, 'error');
+        console.error('Universal transfer error:', error);
+        logQuantAction('ERROR', `Universal transfer failed: ${error.message}`, 'error');
+        showQuantStatus(`❌ Transfer failed: ${error.message}`, 'error');
+    }
+}
+
+function getTransferStatusMessage(sender, recipient, amount, type) {
+    switch (type) {
+        case 'performers-to-audience':
+            return '🎪➡️👥 Forcing mass transfer from all performers to all audience...';
+        case 'audience-to-performers':
+            return '👥➡️🎪 Forcing reverse transfer from all audience to all performers...';
+        case 'mixed-group':
+            return `💸 Forcing group transfer from ${sender} to ${recipient}...`;
+        default:
+            return `💸 Forcing transfer from ${sender} to ${recipient}...`;
+    }
+}
+
+function getTransferSuccessMessage(data, type) {
+    switch (type) {
+        case 'performers-to-audience':
+            return `Mass transfer completed: ${data.transfers?.length || 0} transfers from performers to audience`;
+        case 'audience-to-performers':
+            return `Reverse transfer completed: ${data.transfers?.length || 0} transfers from audience to performers`;
+        case 'mixed-group':
+            return `Group transfer completed: ${data.transfers?.length || 0} transfers`;
+        default:
+            return `Individual transfer completed: ${data.amount} coins from ${data.sender} to ${data.recipient}`;
     }
 }
 
@@ -216,101 +251,7 @@ async function forceMarketRedistribution() {
     }
 }
 
-async function forcePerformersToAudience() {
-    const amount = parseInt(document.getElementById('performersToAudienceAmount').value);
-    const reason = document.getElementById('performersToAudienceReason').value.trim() || 'Mass performer-to-audience transfer by The Quant';
-    
-    if (!amount || amount <= 0) {
-        showQuantStatus('Valid positive amount required', 'error');
-        return;
-    }
-    
-    try {
-        showQuantStatus('🎪➡️👥 Forcing mass transfer from performers to audience...', 'info');
-        
-        const response = await fetch('/api/quant/performers-to-audience', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                amount: amount,
-                reason: reason
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            logQuantAction('MASS_TRANSFER', `Forced ${data.transfers?.length || 0} transfers from performers to audience (${amount} coins each)`, 'manipulation');
-            showQuantStatus(`✅ Successfully forced ${data.transfers?.length || 0} transfers from performers to audience`, 'success');
-            
-            if (data.failed_transfers && data.failed_transfers.length > 0) {
-                logQuantAction('WARNING', `${data.failed_transfers.length} transfers failed due to insufficient funds`, 'warning');
-            }
-            
-            // Clear form
-            document.getElementById('performersToAudienceReason').value = '';
-            
-            // Refresh market data
-            setTimeout(refreshMarketData, 1000);
-        } else {
-            throw new Error(data.error || 'Mass transfer failed');
-        }
-    } catch (error) {
-        console.error('Mass transfer error:', error);
-        logQuantAction('ERROR', `Mass transfer failed: ${error.message}`, 'error');
-        showQuantStatus(`❌ Mass transfer failed: ${error.message}`, 'error');
-    }
-}
 
-async function forceAudienceToPerformers() {
-    const amount = parseInt(document.getElementById('audienceToPerformersAmount').value);
-    const reason = document.getElementById('audienceToPerformersReason').value.trim() || 'Mass audience-to-performer transfer by The Quant';
-    
-    if (!amount || amount <= 0) {
-        showQuantStatus('Valid positive amount required', 'error');
-        return;
-    }
-    
-    try {
-        showQuantStatus('👥➡️🎪 Forcing reverse transfer from audience to performers...', 'info');
-        
-        const response = await fetch('/api/quant/audience-to-performers', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                amount: amount,
-                reason: reason
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            logQuantAction('REVERSE_TRANSFER', `Forced ${data.transfers?.length || 0} transfers from audience to performers (${amount} coins each)`, 'manipulation');
-            showQuantStatus(`✅ Successfully forced ${data.transfers?.length || 0} transfers from audience to performers`, 'success');
-            
-            if (data.failed_transfers && data.failed_transfers.length > 0) {
-                logQuantAction('WARNING', `${data.failed_transfers.length} transfers failed due to insufficient funds`, 'warning');
-            }
-            
-            // Clear form
-            document.getElementById('audienceToPerformersReason').value = '';
-            
-            // Refresh market data
-            setTimeout(refreshMarketData, 1000);
-        } else {
-            throw new Error(data.error || 'Reverse transfer failed');
-        }
-    } catch (error) {
-        console.error('Reverse transfer error:', error);
-        logQuantAction('ERROR', `Reverse transfer failed: ${error.message}`, 'error');
-        showQuantStatus(`❌ Reverse transfer failed: ${error.message}`, 'error');
-    }
-}
 
 async function refreshMarketData() {
     try {

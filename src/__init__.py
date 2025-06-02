@@ -16,9 +16,16 @@ def create_app(test_config=None):
         template_folder="templates",
     )
 
-    # Load configuration
+    # Load configuration - check multiple environment variables for production detection
     env = os.environ.get("FLASK_ENV", "development")
-    if env == "production":
+    is_production = (
+        env == "production" or 
+        os.environ.get("ENVIRONMENT") == "production" or
+        os.environ.get("ENV") == "production" or
+        not app.debug
+    )
+    
+    if is_production:
         app.config.from_object(ProductionConfig)
     else:
         app.config.from_object(DevelopmentConfig)
@@ -243,6 +250,23 @@ def create_app(test_config=None):
     @app.errorhandler(403)
     def forbidden(error):
         return render_template("403.jinja2"), 403
+
+    @app.route("/debug/config")
+    def debug_config():
+        """Debug endpoint to check which configuration is loaded."""
+        config_info = {
+            "session_timeout_seconds": app.config.get("SESSION_TIMEOUT_SECONDS"),
+            "debug": app.debug,
+            "flask_env": os.environ.get("FLASK_ENV", "not set"),
+            "environment": os.environ.get("ENVIRONMENT", "not set"),
+            "env": os.environ.get("ENV", "not set"),
+            "config_class": app.config.__class__.__name__ if hasattr(app.config, '__class__') else "unknown",
+            "redistribution_enabled": app.config.get("ENABLE_PERFORMER_REDISTRIBUTION"),
+            "session_cookie_secure": app.config.get("SESSION_COOKIE_SECURE")
+        }
+        
+        from flask import jsonify
+        return jsonify(config_info)
 
     # Register blueprints
     from . import api, auth, db

@@ -142,11 +142,13 @@
             </div>
             
             <div class="quant-control-card">
-                <h4>💸 Force Transfer</h4>
+                <h4>💸 Universal Force Transfer</h4>
                 <div class="form-group">
                     <label class="form-label">From (Sender):</label>
-                    <input type="text" id="transferSender" class="form-input" placeholder="Enter sender username..." list="allUsersList2">
-                    <datalist id="allUsersList2">
+                    <input type="text" id="transferSender" class="form-input" placeholder="Enter sender or select group..." list="senderList">
+                    <datalist id="senderList">
+                        <option value="All Performers">All Performers (mass transfer from all performers)</option>
+                        <option value="All Audience">All Audience (mass transfer from all audience)</option>
                         {% for user in all_users %}
                         <option value="{{ user.username }}">{{ user.username }} ({{ "{:,}".format(user.coin_balance) }} coins)</option>
                         {% endfor %}
@@ -154,8 +156,10 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">To (Recipient):</label>
-                    <input type="text" id="transferRecipient" class="form-input" placeholder="Enter recipient username..." list="allUsersList3">
-                    <datalist id="allUsersList3">
+                    <input type="text" id="transferRecipient" class="form-input" placeholder="Enter recipient or select group..." list="recipientList">
+                    <datalist id="recipientList">
+                        <option value="All Performers">All Performers (distribute to all performers)</option>
+                        <option value="All Audience">All Audience (distribute to all audience)</option>
                         {% for user in all_users %}
                         <option value="{{ user.username }}">{{ user.username }} ({{ "{:,}".format(user.coin_balance) }} coins)</option>
                         {% endfor %}
@@ -163,22 +167,29 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Amount:</label>
-                    <input type="number" id="transferAmount" class="form-input" placeholder="Enter amount...">
+                    <input type="number" id="transferAmount" class="form-input" placeholder="Enter amount per transfer...">
+                    <small class="form-hint">For group transfers: amount each sender gives to each recipient</small>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Reason:</label>
                     <input type="text" id="transferReason" class="form-input" placeholder="Transfer reason...">
                 </div>
                 <button id="forceTransferBtn" class="quant-btn quant-btn-danger">
-                    💸 FORCE TRANSFER
+                    💸 EXECUTE TRANSFER
                 </button>
+                <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.8;">
+                    <strong>Examples:</strong><br>
+                    • Individual: "performer1" → "audience2" (100 coins)<br>
+                    • Mass: "All Performers" → "All Audience" (50 coins each)<br>
+                    • Mixed: "All Audience" → "performer1" (25 coins each)
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Transfer Manipulation Panel -->
-    <div class="quant-panel">
-        <h3 class="quant-panel-title">📈 Transfer Manipulation</h3>
+        <div class="quant-panel">
+            <h3 class="quant-panel-title">📈 Advanced Transfer Controls</h3>
         <div class="quant-control-grid">
             <div class="quant-control-card">
                 <h4>🔄 Force Redistribution</h4>
@@ -210,40 +221,7 @@
             </div>
         </div>
         
-        <!-- Mass Transfer Controls -->
-        <div class="quant-control-grid" style="margin-top: 20px;">
-            <div class="quant-control-card">
-                <h4>🎪➡️👥 Performers to Audience</h4>
-                <div class="form-group">
-                    <label class="form-label">Amount per transfer:</label>
-                    <input type="number" id="performersToAudienceAmount" class="form-input" value="100" min="1">
-                    <small class="form-hint">Each performer sends this amount to each audience member</small>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Reason:</label>
-                    <input type="text" id="performersToAudienceReason" class="form-input" placeholder="Mass transfer reason...">
-                </div>
-                <button id="performersToAudienceBtn" class="quant-btn quant-btn-secondary">
-                    🎪➡️👥 FORCE MASS TRANSFER
-                </button>
-            </div>
-            
-            <div class="quant-control-card">
-                <h4>👥➡️🎪 Audience to Performers</h4>
-                <div class="form-group">
-                    <label class="form-label">Amount per transfer:</label>
-                    <input type="number" id="audienceToPerformersAmount" class="form-input" value="100" min="1">
-                    <small class="form-hint">Each audience member sends this amount to each performer</small>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Reason:</label>
-                    <input type="text" id="audienceToPerformersReason" class="form-input" placeholder="Reverse transfer reason...">
-                </div>
-                <button id="audienceToPerformersBtn" class="quant-btn quant-btn-secondary">
-                    👥➡️🎪 FORCE REVERSE TRANSFER
-                </button>
-            </div>
-        </div>
+
     </div>
 
     <!-- All Users Registry -->

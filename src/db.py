@@ -59,10 +59,12 @@ def init_db():
             table for table in required_tables if table not in existing_tables
         ]
 
-        # Check if users table needs is_performer column
-        user_columns = db.execute("PRAGMA table_info(users)").fetchall()
-        column_names = [col["name"] for col in user_columns]
-        needs_performer_column = "is_performer" not in column_names
+        # Check if users table needs is_performer column (only if users table exists)
+        needs_performer_column = False
+        if "users" not in missing_tables:
+            user_columns = db.execute("PRAGMA table_info(users)").fetchall()
+            column_names = [col["name"] for col in user_columns]
+            needs_performer_column = "is_performer" not in column_names
 
         if missing_tables or needs_performer_column:
             if missing_tables:
@@ -73,6 +75,36 @@ def init_db():
                 click.echo("Adding is_performer column to users table")
 
             # Add missing tables
+            if "users" in missing_tables:
+                db.execute("""
+                    CREATE TABLE users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT UNIQUE NOT NULL,
+                        coin_balance INTEGER NOT NULL DEFAULT 10000,
+                        is_performer BOOLEAN NOT NULL DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                db.execute("CREATE INDEX idx_users_username ON users(username)")
+                click.echo("Added users table")
+
+            if "transactions" in missing_tables:
+                db.execute("""
+                    CREATE TABLE transactions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        sender_id INTEGER NOT NULL,
+                        recipient_id INTEGER NOT NULL,
+                        amount INTEGER NOT NULL,
+                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (sender_id) REFERENCES users (id),
+                        FOREIGN KEY (recipient_id) REFERENCES users (id)
+                    )
+                """)
+                db.execute("CREATE INDEX idx_transactions_sender ON transactions(sender_id)")
+                db.execute("CREATE INDEX idx_transactions_recipient ON transactions(recipient_id)")
+                db.execute("CREATE INDEX idx_transactions_timestamp ON transactions(timestamp)")
+                click.echo("Added transactions table")
+
             if "balance_snapshots" in missing_tables:
                 db.execute("""
                     CREATE TABLE balance_snapshots (
@@ -296,6 +328,8 @@ def init_app(app):
     app.cli.add_command(set_performer_command)
     app.cli.add_command(list_performers_command)
     app.cli.add_command(migrate_db_command)
+    app.cli.add_command(create_quant_command)
+    app.cli.add_command(run_production_command)
 
 
 def create_user(username, is_performer=False):
@@ -804,3 +838,63 @@ def list_performers_command():
             click.echo(f"  ... and {len(audience) - 5} more")
     else:
         click.echo("No audience members found")
+
+
+@click.command("create-quant")
+@with_appcontext
+def create_quant_command():
+    """Create The Quant user with proper settings (0 coins, audience member)."""
+    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    
+    # Check if The Quant already exists
+    db = get_db()
+    existing = db.execute(
+        "SELECT username FROM users WHERE username = ?", (quant_username,)
+    ).fetchone()
+    
+    if existing:
+        click.echo(f"❌ {quant_username} already exists")
+        return
+    
+    # Create The Quant user
+    user_id = create_user(quant_username, is_performer=False)
+    if user_id:
+        # Set balance to 0 (they should start with no coins)
+        db.execute('UPDATE users SET coin_balance = 0 WHERE username = ?', (quant_username,))
+        db.commit()
+        click.echo(f"✅ Created {quant_username} with 0 coins (audience member)")
+    else:
+        click.echo(f"❌ Failed to create {quant_username}")
+
+
+@click.command("run-production")
+@click.option("--host", default="0.0.0.0", help="Host to bind to")
+@click.option("--port", default=5000, help="Port to bind to")
+def run_production_command(host, port):
+    """Run the app in production mode with correct configuration."""
+    import os
+    
+    # Set production environment variables
+    os.environ["FLASK_ENV"] = "production"
+    os.environ["ENVIRONMENT"] = "production"
+    
+    click.echo("🚀 Starting Straw Coin in production mode...")
+    click.echo(f"   Host: {host}")
+    click.echo(f"   Port: {port}")
+    click.echo(f"   Session timeout: 5 minutes (300 seconds)")
+    click.echo(f"   Debug mode: OFF")
+    click.echo(f"   Performer redistribution: ON")
+    
+    # Import here to ensure environment variables are set
+    from . import create_app
+    app = create_app()
+    
+    # Verify production config is loaded
+    timeout = app.config.get("SESSION_TIMEOUT_SECONDS", 0)
+    if timeout == 300:
+        click.echo("✅ Production configuration loaded successfully")
+    else:
+        click.echo(f"⚠️  Warning: Session timeout is {timeout}s (expected 300s)")
+    
+    # Run the app
+    app.run(host=host, port=port, debug=False)

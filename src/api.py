@@ -834,6 +834,197 @@ def quant_audience_to_performers():
         }), 500
 
 
+@bp.route("/quant/group-transfer", methods=["POST"])
+@require_quant
+def quant_group_transfer():
+    """Handle mixed group transfers - group to individual or individual to group."""
+    data = request.get_json()
+    
+    if not data or "sender" not in data or "recipient" not in data or "amount" not in data:
+        return jsonify({
+            "error": "sender, recipient, and amount fields required",
+            "status": "validation_error"
+        }), 400
+    
+    sender = data["sender"]
+    recipient = data["recipient"]
+    amount = data["amount"]
+    reason = data.get("reason", "Group transfer by The Quant")
+    
+    try:
+        amount = int(amount)
+    except (ValueError, TypeError):
+        return jsonify({
+            "error": "Amount must be an integer",
+            "status": "validation_error"
+        }), 400
+    
+    if amount <= 0:
+        return jsonify({
+            "error": "Amount must be positive",
+            "status": "invalid_amount"
+        }), 400
+    
+    # Prevent The Quant from being involved
+    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    if (sender == quant_username or recipient == quant_username or
+        sender == recipient):
+        return jsonify({
+            "error": "Invalid transfer configuration",
+            "status": "invalid_transfer"
+        }), 400
+    
+    from .db import get_db
+    db = get_db()
+    
+    transfers = []
+    failed_transfers = []
+    
+    try:
+        # Determine transfer type and get appropriate users
+        if sender == "All Performers":
+            # All performers to specific recipient
+            senders = db.execute(
+                "SELECT id, username, coin_balance FROM users WHERE is_performer = 1 AND username != ?",
+                (quant_username,)
+            ).fetchall()
+            
+            recipient_user = db.execute(
+                "SELECT id, username FROM users WHERE username = ?", (recipient,)
+            ).fetchone()
+            
+            if not recipient_user:
+                return jsonify({
+                    "error": f"Recipient '{recipient}' not found",
+                    "status": "recipient_not_found"
+                }), 404
+            
+            recipients = [recipient_user]
+            
+        elif sender == "All Audience":
+            # All audience to specific recipient
+            senders = db.execute(
+                "SELECT id, username, coin_balance FROM users WHERE is_performer = 0 AND username != ?",
+                (quant_username,)
+            ).fetchall()
+            
+            recipient_user = db.execute(
+                "SELECT id, username FROM users WHERE username = ?", (recipient,)
+            ).fetchone()
+            
+            if not recipient_user:
+                return jsonify({
+                    "error": f"Recipient '{recipient}' not found",
+                    "status": "recipient_not_found"
+                }), 404
+            
+            recipients = [recipient_user]
+            
+        elif recipient == "All Performers":
+            # Specific sender to all performers
+            sender_user = db.execute(
+                "SELECT id, username, coin_balance FROM users WHERE username = ?", (sender,)
+            ).fetchone()
+            
+            if not sender_user:
+                return jsonify({
+                    "error": f"Sender '{sender}' not found",
+                    "status": "sender_not_found"
+                }), 404
+            
+            senders = [sender_user]
+            recipients = db.execute(
+                "SELECT id, username FROM users WHERE is_performer = 1 AND username != ?",
+                (quant_username,)
+            ).fetchall()
+            
+        elif recipient == "All Audience":
+            # Specific sender to all audience
+            sender_user = db.execute(
+                "SELECT id, username, coin_balance FROM users WHERE username = ?", (sender,)
+            ).fetchone()
+            
+            if not sender_user:
+                return jsonify({
+                    "error": f"Sender '{sender}' not found",
+                    "status": "sender_not_found"
+                }), 404
+            
+            senders = [sender_user]
+            recipients = db.execute(
+                "SELECT id, username FROM users WHERE is_performer = 0 AND username != ?",
+                (quant_username,)
+            ).fetchall()
+            
+        else:
+            return jsonify({
+                "error": "Invalid group transfer configuration",
+                "status": "invalid_configuration"
+            }), 400
+        
+        if not senders or not recipients:
+            return jsonify({
+                "error": "No valid senders or recipients found",
+                "status": "insufficient_users"
+            }), 400
+        
+        # Perform transfers
+        for sender_user in senders:
+            total_needed = amount * len(recipients)
+            if sender_user["coin_balance"] < total_needed:
+                failed_transfers.append({
+                    "sender": sender_user["username"],
+                    "reason": f"Insufficient funds ({sender_user['coin_balance']} < {total_needed})"
+                })
+                continue
+            
+            # Transfer to each recipient
+            for recipient_user in recipients:
+                db.execute(
+                    "UPDATE users SET coin_balance = coin_balance - ? WHERE id = ?",
+                    (amount, sender_user["id"]),
+                )
+                db.execute(
+                    "UPDATE users SET coin_balance = coin_balance + ? WHERE id = ?",
+                    (amount, recipient_user["id"]),
+                )
+                db.execute(
+                    "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
+                    (sender_user["id"], recipient_user["id"], amount),
+                )
+                
+                transfers.append({
+                    "sender": sender_user["username"],
+                    "recipient": recipient_user["username"],
+                    "amount": amount
+                })
+        
+        db.commit()
+        
+        # Create balance snapshots
+        from .db import create_balance_snapshots_for_all_users
+        create_balance_snapshots_for_all_users()
+        
+        return jsonify({
+            "message": f"The Quant executed {len(transfers)} group transfers",
+            "transfers": transfers,
+            "failed_transfers": failed_transfers,
+            "sender_type": sender,
+            "recipient_type": recipient,
+            "amount_per_transfer": amount,
+            "reason": reason,
+            "manipulated_by": "TheQuant",
+            "status": "group_transfer_successful"
+        }), 200
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({
+            "error": f"Group transfer failed: {str(e)}",
+            "status": "group_transfer_failed"
+        }), 500
+
+
 @bp.route("/quant/market-stats", methods=["GET"])
 @require_quant
 def quant_market_stats():
