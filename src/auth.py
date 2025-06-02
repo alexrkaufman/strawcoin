@@ -61,17 +61,20 @@ def require_auth(f):
 
         # Verify user still exists in database
         current_username = session.get("username")
-        if current_username and not user_exists(current_username):
-            # User was deleted, clear their session
-            current_app.logger.warning(f"Orphaned session detected for deleted user: {current_username}. Cleaning up session.")
-            if "session_id" in session:
-                remove_session(session["session_id"])
-            session.clear()
-            if request.is_json:
-                return jsonify(
-                    {"error": "User account no longer exists", "status": "user_deleted"}
-                ), 401
-            return redirect(url_for("auth.register"))
+        if current_username:
+            user_exists_result = user_exists(current_username)
+            current_app.logger.info(f"Auth check - Username: {current_username}, Exists: {user_exists_result}")
+            if not user_exists_result:
+                # User was deleted, clear their session
+                current_app.logger.warning(f"Orphaned session detected for deleted user: {current_username}. Cleaning up session.")
+                if "session_id" in session:
+                    remove_session(session["session_id"])
+                session.clear()
+                if request.is_json:
+                    return jsonify(
+                        {"error": "User account no longer exists", "status": "user_deleted"}
+                    ), 401
+                return redirect(url_for("auth.register"))
 
         update_activity()
         return f(*args, **kwargs)
@@ -161,8 +164,11 @@ def login():
 
     balance = get_user_balance(username)
     performer_status = get_user_performer_status(username)
+    
+    current_app.logger.info(f"Login attempt - Username: {username}, Balance: {balance}, Performer: {performer_status}")
 
     if balance is None:
+        current_app.logger.info(f"Creating new user - Username: {username}")
         user_id = create_user(username, is_performer)
         if user_id is None:
             return jsonify(
@@ -190,18 +196,20 @@ def login():
             {"error": "Failed to create session", "status": "session_error"}
         ), 500
 
-    session["username"] = username
+    session["username"] = username.upper()
     session["user_balance"] = balance
     session["session_id"] = session_id
     session["last_activity"] = datetime.now().isoformat()
     session["session_start"] = datetime.now().isoformat()
     session.permanent = True
 
+    current_app.logger.info(f"Session created - Username: {session['username']}, Balance: {balance}, Session ID: {session_id}")
+
     user_type = "performer" if performer_status else "audience member"
     return jsonify(
         {
             "message": f"User {username} successfully registered as {user_type}",
-            "username": username,
+            "username": username.upper(),
             "balance": balance,
             "is_performer": performer_status,
             "user_type": user_type,

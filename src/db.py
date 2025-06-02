@@ -359,7 +359,7 @@ def get_user_balance(username):
     user = db.execute(
         "SELECT coin_balance FROM users WHERE username = ?", (username.upper(),)
     ).fetchone()
-    return user["coin_balance"] if user else 0
+    return user["coin_balance"] if user else None
 
 
 def transfer_coins(sender_username, recipient_username, amount):
