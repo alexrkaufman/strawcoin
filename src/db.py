@@ -330,6 +330,7 @@ def init_app(app):
     app.cli.add_command(migrate_db_command)
     app.cli.add_command(create_quant_command)
     app.cli.add_command(run_production_command)
+    app.cli.add_command(create_fake_users_command)
 
 
 def create_user(username, is_performer=False):
@@ -896,3 +897,114 @@ def run_production_command(host, port):
     
     # Run the app
     app.run(host=host, port=port, debug=False)
+
+
+@click.command("create-fake-users")
+@click.option("--performers", default=3, help="Number of performers to create")
+@click.option("--audience", default=8, help="Number of audience members to create")
+@click.option("--clear", is_flag=True, help="Clear existing fake users first")
+def create_fake_users_command(performers, audience, clear):
+    """Create fake users for testing and validation."""
+    import random
+    
+    performer_names = [
+        "ComedyKing", "JokeQueen", "StandUpStar", "LaughMaster", "WittyWiz",
+        "PunchlinePro", "HumorHero", "SatireSage", "QuipQueen", "BanterBoss"
+    ]
+    
+    audience_names = [
+        "LaughLover", "ComedyFan", "HumorHunter", "JokeJunkie", "WitWatcher",
+        "SatireFan", "PunchlineAddict", "GiggleGuru", "ChuckleChamp", "SnickerStar",
+        "HahaHero", "LOLLegend", "ROFLRuler", "TickleExpert", "AmuseAce",
+        "MirthMaster", "JollyJudge", "FunnyFollower", "ComicCritic", "HilariousHero"
+    ]
+    
+    click.echo("🎭 Creating fake users for Straw Coin testing...")
+    
+    if clear:
+        click.echo("🧹 Clearing existing fake users...")
+        db = get_db()
+        # Remove fake users (keep essential ones like TheQuant)
+        essential_users = ['TheQuant', 'Alex']  # Keep core users
+        db.execute(
+            "DELETE FROM users WHERE username NOT IN ({})".format(
+                ','.join(['?' for _ in essential_users])
+            ),
+            essential_users
+        )
+        db.commit()
+        click.echo("✅ Existing fake users cleared")
+    
+    created_users = []
+    
+    # Create performers
+    click.echo(f"🎪 Creating {performers} performers...")
+    selected_performers = random.sample(performer_names, min(performers, len(performer_names)))
+    
+    for name in selected_performers:
+        user_id = create_user(name, is_performer=True)
+        if user_id:
+            # Give performers varied starting balances (8000-15000)
+            balance = random.randint(8000, 15000)
+            db = get_db()
+            db.execute(
+                "UPDATE users SET coin_balance = ? WHERE id = ?",
+                (balance, user_id)
+            )
+            db.commit()
+            created_users.append(f"🎭 {name} (Performer): {balance:,} coins")
+            click.echo(f"   ✅ Created performer: {name} with {balance:,} coins")
+        else:
+            click.echo(f"   ⚠️  Performer {name} already exists, skipping")
+    
+    # Create audience members
+    click.echo(f"👥 Creating {audience} audience members...")
+    selected_audience = random.sample(audience_names, min(audience, len(audience_names)))
+    
+    for name in selected_audience:
+        user_id = create_user(name, is_performer=False)
+        if user_id:
+            # Give audience varied starting balances (7000-12000)
+            balance = random.randint(7000, 12000)
+            db = get_db()
+            db.execute(
+                "UPDATE users SET coin_balance = ? WHERE id = ?",
+                (balance, user_id)
+            )
+            db.commit()
+            created_users.append(f"👤 {name} (Audience): {balance:,} coins")
+            click.echo(f"   ✅ Created audience member: {name} with {balance:,} coins")
+        else:
+            click.echo(f"   ⚠️  Audience member {name} already exists, skipping")
+    
+    # Create initial balance snapshots for trading platform
+    click.echo("📊 Creating initial balance snapshots...")
+    success = create_balance_snapshots_for_all_users()
+    if success:
+        click.echo("✅ Balance snapshots created")
+    else:
+        click.echo("⚠️  Failed to create balance snapshots")
+    
+    # Summary
+    click.echo("\n🎯 FAKE USER CREATION SUMMARY")
+    click.echo("=" * 40)
+    click.echo(f"Total users created: {len(created_users)}")
+    click.echo(f"Performers: {len(selected_performers)}")
+    click.echo(f"Audience members: {len(selected_audience)}")
+    
+    if created_users:
+        click.echo("\n📋 Created users:")
+        for user in created_users:
+            click.echo(f"   {user}")
+    
+    # Show current totals
+    db = get_db()
+    total_users = db.execute("SELECT COUNT(*) as count FROM users").fetchone()["count"]
+    total_performers = db.execute("SELECT COUNT(*) as count FROM users WHERE is_performer = 1").fetchone()["count"]
+    total_audience = db.execute("SELECT COUNT(*) as count FROM users WHERE is_performer = 0").fetchone()["count"]
+    
+    click.echo(f"\n📈 PLATFORM TOTALS:")
+    click.echo(f"   Total users: {total_users}")
+    click.echo(f"   Performers: {total_performers}")
+    click.echo(f"   Audience: {total_audience}")
+    click.echo(f"\n✅ Fake users ready for trading platform testing!")
