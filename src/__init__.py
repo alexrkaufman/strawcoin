@@ -12,7 +12,7 @@ def create_app(test_config=None):
     app = Flask(
         __name__,
         instance_relative_config=True,
-        static_folder="./static",
+        static_folder="../static",
         template_folder="templates",
     )
 
