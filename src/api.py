@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from .db import (
     create_user,
     get_user_balance,
@@ -11,7 +11,7 @@ from .db import (
     get_audience_members,
     performer_redistribution,
 )
-from .auth import require_auth
+from .auth import require_auth, require_quant
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -105,6 +105,7 @@ def execute_transfer():
         "user_not_found": 404,
         "invalid_amount": 400,
         "transaction_failed": 500,
+        "quant_self_transfer_forbidden": 403,
     }
     messages = {
         "success": f"Transferred {amount} coins from {sender} to {recipient}",
@@ -112,6 +113,7 @@ def execute_transfer():
         "user_not_found": "User not found",
         "invalid_amount": "Amount must be positive",
         "transaction_failed": "Transaction failed",
+        "quant_self_transfer_forbidden": "The Quant cannot transfer coins to themselves",
     }
 
     return jsonify(
@@ -383,3 +385,495 @@ def get_realtime_leaderboard():
             "status": "success",
         }
     )
+
+
+# THE QUANT - Market Manipulation API Endpoints
+@bp.route("/quant/users", methods=["GET"])
+@require_quant
+def quant_get_users():
+    """Get all users with their performer status for The Quant."""
+    from .db import get_db
+    
+    db = get_db()
+    users = db.execute(
+        "SELECT username, coin_balance, is_performer, created_at FROM users ORDER BY username"
+    ).fetchall()
+    
+    return jsonify({
+        "users": [dict(user) for user in users],
+        "total_users": len(users),
+        "quant": "TheQuant",
+        "status": "success"
+    })
+
+
+@bp.route("/quant/users/<username>/performer-status", methods=["PUT"])
+@require_quant
+def quant_set_performer_status(username):
+    """Set a user's performer status - The Quant's market manipulation."""
+    data = request.get_json()
+    
+    if not data or "is_performer" not in data:
+        return jsonify({
+            "error": "is_performer field required",
+            "status": "validation_error"
+        }), 400
+    
+    is_performer = bool(data["is_performer"])
+    reason = data.get("reason", "Market manipulation by The Quant")
+    
+    success = set_user_performer_status(username, is_performer)
+    
+    if not success:
+        return jsonify({
+            "error": "Failed to update performer status",
+            "status": "update_failed"
+        }), 500
+    
+    # Log the manipulation
+    from .db import get_db
+    db = get_db()
+    try:
+        db.execute(
+            "INSERT INTO transactions (sender_id, recipient_id, amount, timestamp) VALUES (?, ?, ?, datetime('now')) ",
+            (0, 0, 0)  # Special transaction for logging
+        )
+    except:
+        pass  # Don't fail if logging fails
+    
+    user_type = "performer" if is_performer else "audience_member"
+    return jsonify({
+        "message": f"The Quant manipulated {username} to {user_type} status",
+        "username": username,
+        "is_performer": is_performer,
+        "reason": reason,
+        "manipulated_by": "TheQuant",
+        "status": "manipulation_successful"
+    }), 200
+
+
+@bp.route("/quant/force-redistribution", methods=["POST"])
+@require_quant
+def quant_force_redistribution():
+    """Force immediate coin redistribution from performers to audience - The Quant's market manipulation."""
+    data = request.get_json() or {}
+    multiplier = data.get("multiplier", 1)  # Default 1x redistribution
+    reason = data.get("reason", "Forced redistribution by The Quant")
+    
+    # Validate multiplier
+    if not isinstance(multiplier, (int, float)) or multiplier <= 0 or multiplier > 10:
+        return jsonify({
+            "error": "Multiplier must be between 0.1 and 10",
+            "status": "validation_error"
+        }), 400
+    
+    # Perform multiple redistributions based on multiplier
+    total_redistributed = 0
+    redistributions = []
+    
+    for i in range(int(multiplier)):
+        result = performer_redistribution()
+        if result["success"]:
+            redistributions.append(result)
+            total_redistributed += result["total_redistributed"]
+        else:
+            break
+    
+    # Handle fractional multiplier
+    if multiplier % 1 != 0:
+        fractional_part = multiplier % 1
+        # Custom fractional redistribution logic here if needed
+        pass
+    
+    if redistributions:
+        return jsonify({
+            "message": f"The Quant forced {len(redistributions)} redistribution cycles",
+            "total_redistributed": total_redistributed,
+            "multiplier": multiplier,
+            "reason": reason,
+            "redistributions": redistributions,
+            "manipulated_by": "TheQuant",
+            "status": "forced_redistribution_successful"
+        }), 200
+    else:
+        return jsonify({
+            "error": "No redistributions could be performed",
+            "status": "redistribution_failed"
+        }), 500
+
+
+@bp.route("/quant/force-transfer", methods=["POST"])
+@require_quant
+def quant_force_transfer():
+    """Force transfers between users - The Quant's market manipulation power."""
+    data = request.get_json()
+    
+    if not data or "sender" not in data or "recipient" not in data or "amount" not in data:
+        return jsonify({
+            "error": "sender, recipient, and amount fields required",
+            "status": "validation_error"
+        }), 400
+    
+    sender = data["sender"]
+    recipient = data["recipient"]
+    amount = data["amount"]
+    reason = data.get("reason", "Forced transfer by The Quant")
+    
+    # Prevent The Quant from being involved in transfers they force
+    from flask import session
+    current_username = session.get("username")
+    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    
+    if sender == quant_username or recipient == quant_username:
+        return jsonify({
+            "error": "The Quant cannot force transfers involving themselves",
+            "status": "quant_transfer_forbidden"
+        }), 403
+    
+    if sender == recipient:
+        return jsonify({
+            "error": "Cannot force transfer from user to themselves",
+            "status": "invalid_transfer"
+        }), 400
+    
+    try:
+        amount = int(amount)
+    except (ValueError, TypeError):
+        return jsonify({
+            "error": "Amount must be an integer",
+            "status": "validation_error"
+        }), 400
+    
+    if amount <= 0:
+        return jsonify({
+            "error": "Amount must be positive",
+            "status": "invalid_amount"
+        }), 400
+    
+    # Use the existing transfer_coins function but bypass normal restrictions
+    from .db import get_db
+    db = get_db()
+    
+    # Get sender and recipient info
+    sender_user = db.execute(
+        "SELECT id, coin_balance FROM users WHERE username = ?", (sender,)
+    ).fetchone()
+    
+    recipient_user = db.execute(
+        "SELECT id FROM users WHERE username = ?", (recipient,)
+    ).fetchone()
+    
+    if not sender_user:
+        return jsonify({
+            "error": f"Sender '{sender}' not found",
+            "status": "sender_not_found"
+        }), 404
+    
+    if not recipient_user:
+        return jsonify({
+            "error": f"Recipient '{recipient}' not found",
+            "status": "recipient_not_found"
+        }), 404
+    
+    if sender_user["coin_balance"] < amount:
+        return jsonify({
+            "error": f"Sender '{sender}' has insufficient funds ({sender_user['coin_balance']} coins)",
+            "status": "insufficient_funds"
+        }), 400
+    
+    try:
+        # Perform the forced transfer
+        db.execute(
+            "UPDATE users SET coin_balance = coin_balance - ? WHERE username = ?",
+            (amount, sender),
+        )
+        db.execute(
+            "UPDATE users SET coin_balance = coin_balance + ? WHERE username = ?",
+            (amount, recipient),
+        )
+        
+        # Create transaction record with special note
+        db.execute(
+            "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
+            (sender_user["id"], recipient_user["id"], amount),
+        )
+        
+        db.commit()
+        
+        # Create balance snapshots
+        from .db import create_balance_snapshot
+        sender_new_balance = sender_user["coin_balance"] - amount
+        recipient_new_balance = db.execute(
+            "SELECT coin_balance FROM users WHERE username = ?", (recipient,)
+        ).fetchone()["coin_balance"]
+        
+        create_balance_snapshot(sender_user["id"], sender_new_balance)
+        create_balance_snapshot(recipient_user["id"], recipient_new_balance)
+        
+        return jsonify({
+            "message": f"The Quant forced transfer of {amount} coins from {sender} to {recipient}",
+            "sender": sender,
+            "recipient": recipient,
+            "amount": amount,
+            "sender_new_balance": sender_new_balance,
+            "recipient_new_balance": recipient_new_balance,
+            "reason": reason,
+            "manipulated_by": "TheQuant",
+            "status": "forced_transfer_successful"
+        }), 200
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({
+            "error": f"Forced transfer failed: {str(e)}",
+            "status": "transfer_failed"
+        }), 500
+
+
+@bp.route("/quant/performers-to-audience", methods=["POST"])
+@require_quant
+def quant_performers_to_audience():
+    """Force all performers to send coins to all audience members - The Quant's mass redistribution."""
+    data = request.get_json() or {}
+    amount_per_transfer = data.get("amount", 100)
+    reason = data.get("reason", "Mass performer-to-audience transfer by The Quant")
+    
+    try:
+        amount_per_transfer = int(amount_per_transfer)
+    except (ValueError, TypeError):
+        return jsonify({
+            "error": "Amount must be an integer",
+            "status": "validation_error"
+        }), 400
+    
+    if amount_per_transfer <= 0:
+        return jsonify({
+            "error": "Amount must be positive",
+            "status": "invalid_amount"
+        }), 400
+    
+    from .db import get_db
+    db = get_db()
+    
+    # Get performers and audience (excluding The Quant)
+    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    
+    performers = db.execute(
+        "SELECT id, username, coin_balance FROM users WHERE is_performer = 1 AND username != ?",
+        (quant_username,)
+    ).fetchall()
+    
+    audience = db.execute(
+        "SELECT id, username, coin_balance FROM users WHERE is_performer = 0 AND username != ?",
+        (quant_username,)
+    ).fetchall()
+    
+    if not performers or not audience:
+        return jsonify({
+            "error": "Need at least one performer and one audience member",
+            "status": "insufficient_users"
+        }), 400
+    
+    transfers = []
+    failed_transfers = []
+    
+    try:
+        for performer in performers:
+            total_needed = amount_per_transfer * len(audience)
+            if performer["coin_balance"] < total_needed:
+                failed_transfers.append({
+                    "performer": performer["username"],
+                    "reason": f"Insufficient funds ({performer['coin_balance']} < {total_needed})"
+                })
+                continue
+            
+            # Transfer to each audience member
+            for audience_member in audience:
+                db.execute(
+                    "UPDATE users SET coin_balance = coin_balance - ? WHERE id = ?",
+                    (amount_per_transfer, performer["id"]),
+                )
+                db.execute(
+                    "UPDATE users SET coin_balance = coin_balance + ? WHERE id = ?",
+                    (amount_per_transfer, audience_member["id"]),
+                )
+                db.execute(
+                    "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
+                    (performer["id"], audience_member["id"], amount_per_transfer),
+                )
+                
+                transfers.append({
+                    "sender": performer["username"],
+                    "recipient": audience_member["username"],
+                    "amount": amount_per_transfer
+                })
+        
+        db.commit()
+        
+        # Create balance snapshots
+        from .db import create_balance_snapshots_for_all_users
+        create_balance_snapshots_for_all_users()
+        
+        return jsonify({
+            "message": f"The Quant forced {len(transfers)} transfers from performers to audience",
+            "transfers": transfers,
+            "failed_transfers": failed_transfers,
+            "amount_per_transfer": amount_per_transfer,
+            "reason": reason,
+            "manipulated_by": "TheQuant",
+            "status": "mass_transfer_successful"
+        }), 200
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({
+            "error": f"Mass transfer failed: {str(e)}",
+            "status": "mass_transfer_failed"
+        }), 500
+
+
+@bp.route("/quant/audience-to-performers", methods=["POST"])
+@require_quant
+def quant_audience_to_performers():
+    """Force all audience members to send coins to all performers - The Quant's reverse redistribution."""
+    data = request.get_json() or {}
+    amount_per_transfer = data.get("amount", 100)
+    reason = data.get("reason", "Mass audience-to-performer transfer by The Quant")
+    
+    try:
+        amount_per_transfer = int(amount_per_transfer)
+    except (ValueError, TypeError):
+        return jsonify({
+            "error": "Amount must be an integer",
+            "status": "validation_error"
+        }), 400
+    
+    if amount_per_transfer <= 0:
+        return jsonify({
+            "error": "Amount must be positive",
+            "status": "invalid_amount"
+        }), 400
+    
+    from .db import get_db
+    db = get_db()
+    
+    # Get performers and audience (excluding The Quant)
+    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    
+    performers = db.execute(
+        "SELECT id, username, coin_balance FROM users WHERE is_performer = 1 AND username != ?",
+        (quant_username,)
+    ).fetchall()
+    
+    audience = db.execute(
+        "SELECT id, username, coin_balance FROM users WHERE is_performer = 0 AND username != ?",
+        (quant_username,)
+    ).fetchall()
+    
+    if not performers or not audience:
+        return jsonify({
+            "error": "Need at least one performer and one audience member",
+            "status": "insufficient_users"
+        }), 400
+    
+    transfers = []
+    failed_transfers = []
+    
+    try:
+        for audience_member in audience:
+            total_needed = amount_per_transfer * len(performers)
+            if audience_member["coin_balance"] < total_needed:
+                failed_transfers.append({
+                    "audience_member": audience_member["username"],
+                    "reason": f"Insufficient funds ({audience_member['coin_balance']} < {total_needed})"
+                })
+                continue
+            
+            # Transfer to each performer
+            for performer in performers:
+                db.execute(
+                    "UPDATE users SET coin_balance = coin_balance - ? WHERE id = ?",
+                    (amount_per_transfer, audience_member["id"]),
+                )
+                db.execute(
+                    "UPDATE users SET coin_balance = coin_balance + ? WHERE id = ?",
+                    (amount_per_transfer, performer["id"]),
+                )
+                db.execute(
+                    "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
+                    (audience_member["id"], performer["id"], amount_per_transfer),
+                )
+                
+                transfers.append({
+                    "sender": audience_member["username"],
+                    "recipient": performer["username"],
+                    "amount": amount_per_transfer
+                })
+        
+        db.commit()
+        
+        # Create balance snapshots
+        from .db import create_balance_snapshots_for_all_users
+        create_balance_snapshots_for_all_users()
+        
+        return jsonify({
+            "message": f"The Quant forced {len(transfers)} transfers from audience to performers",
+            "transfers": transfers,
+            "failed_transfers": failed_transfers,
+            "amount_per_transfer": amount_per_transfer,
+            "reason": reason,
+            "manipulated_by": "TheQuant",
+            "status": "reverse_mass_transfer_successful"
+        }), 200
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({
+            "error": f"Reverse mass transfer failed: {str(e)}",
+            "status": "reverse_mass_transfer_failed"
+        }), 500
+
+
+@bp.route("/quant/market-stats", methods=["GET"])
+@require_quant
+def quant_market_stats():
+    """Get comprehensive market statistics for The Quant."""
+    from .db import get_db
+    
+    db = get_db()
+    
+    # Get comprehensive stats
+    stats = {}
+    
+    # Basic stats
+    stats["total_coins"] = db.execute("SELECT SUM(coin_balance) as total FROM users").fetchone()["total"]
+    stats["total_users"] = db.execute("SELECT COUNT(*) as count FROM users").fetchone()["count"]
+    stats["performers"] = db.execute("SELECT COUNT(*) as count FROM users WHERE is_performer = 1").fetchone()["count"]
+    stats["audience"] = db.execute("SELECT COUNT(*) as count FROM users WHERE is_performer = 0").fetchone()["count"]
+    
+    # Transaction stats
+    stats["total_transactions"] = db.execute("SELECT COUNT(*) as count FROM transactions").fetchone()["count"]
+    stats["total_volume"] = db.execute("SELECT SUM(amount) as volume FROM transactions").fetchone()["volume"] or 0
+    
+    # Top holders
+    top_users = db.execute(
+        "SELECT username, coin_balance, is_performer FROM users ORDER BY coin_balance DESC LIMIT 10"
+    ).fetchall()
+    stats["top_users"] = [dict(user) for user in top_users]
+    
+    # Recent transactions
+    recent_txs = db.execute(
+        """SELECT t.amount, t.timestamp, s.username as sender, r.username as recipient
+           FROM transactions t
+           LEFT JOIN users s ON t.sender_id = s.id  
+           LEFT JOIN users r ON t.recipient_id = r.id
+           ORDER BY t.timestamp DESC LIMIT 20"""
+    ).fetchall()
+    stats["recent_transactions"] = [dict(tx) for tx in recent_txs]
+    
+    return jsonify({
+        "market_stats": stats,
+        "quant": "TheQuant",
+        "timestamp": __import__("datetime").datetime.now().isoformat(),
+        "status": "success"
+    })

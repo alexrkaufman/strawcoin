@@ -128,13 +128,13 @@
     {% if current_user_is_performer %}
     <div class="performer-status-card performer">
         <h3>🎭 You are a PERFORMER</h3>
-        <p class="opacity-90">You lose 5 coins every minute to audience members</p>
+        <p class="opacity-90">You lose 5 coins to each audience member every minute</p>
         <p class="opacity-70" style="font-size: 0.9rem;">Make them laugh to earn coins back through tips!</p>
     </div>
     {% else %}
     <div class="performer-status-card audience">
         <h3>👥 You are AUDIENCE</h3>
-        <p class="opacity-90">You receive coins from performers every minute</p>
+        <p class="opacity-90">You receive 5 coins from each performer every minute</p>
         <p class="opacity-70" style="font-size: 0.9rem;">Send coins to performers to show appreciation!</p>
     </div>
     {% endif %}
@@ -143,7 +143,7 @@
     <div class="redistribution-info">
         <p class="opacity-80" style="font-size: 0.9rem;">
             ⏰ Automatic redistribution every minute | 
-            💰 5 coins per performer → audience members
+            💰 5 coins from each performer → each audience member
         </p>
     </div>
     {% endif %}

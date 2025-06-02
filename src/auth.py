@@ -64,6 +64,34 @@ def require_auth(f):
     return decorated_function
 
 
+def require_quant(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not is_authenticated():
+            if request.is_json:
+                return jsonify(
+                    {"error": "Authentication required", "status": "session_expired"}
+                ), 401
+            return redirect(url_for("auth.register"))
+
+        # Check if user is The Quant
+        current_username = session.get("username")
+        quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+        quant_enabled = current_app.config.get("QUANT_ENABLED", False)
+        
+        if not quant_enabled or current_username != quant_username:
+            if request.is_json:
+                return jsonify(
+                    {"error": "Unauthorized - Quant access required", "status": "unauthorized"}
+                ), 403
+            return render_template("403.jinja2"), 403
+
+        update_activity()
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
 @bp.route("/register")
 def register():
     if is_authenticated():

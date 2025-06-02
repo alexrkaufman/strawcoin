@@ -1,0 +1,324 @@
+{% extends "base.jinja2" %}
+
+{% block content %}
+<div class="welcome-section">
+    <h1 class="welcome-title">⚡ The Quant Terminal ⚡</h1>
+    <p class="welcome-subtitle">Market Transfer Manipulation Command Center</p>
+    <div class="user-balance-card" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
+        <h3>🎯 Welcome, {{ current_username }}</h3>
+        <p class="balance-amount">{{ "{:,}".format(current_user_balance) }} Straw Coins</p>
+        <p style="font-size: 0.9rem; opacity: 0.9;">TRANSFER MANIPULATION ACTIVE</p>
+    </div>
+</div>
+
+<!-- Market Overview Dashboard -->
+<div class="quant-panel">
+    <h2 class="quant-panel-title">📊 Market Intelligence Dashboard</h2>
+    <div class="market-stats-grid">
+        <div class="stat-card">
+            <h3>💰 Market Cap</h3>
+            <p class="stat-value" data-stat="market-cap">{{ "{:,}".format(market_cap) }}</p>
+            <p>Total Straw Coins</p>
+        </div>
+        <div class="stat-card">
+            <h3>👥 Active Stakeholders</h3>
+            <p class="stat-value" data-stat="user-count">{{ stakeholder_count }}</p>
+            <p>Market Participants</p>
+        </div>
+        <div class="stat-card">
+            <h3>📊 Trading Volume</h3>
+            <p class="stat-value" data-stat="volume">{{ "{:,}".format(volume) }}</p>
+            <p>Total Coins Transferred</p>
+        </div>
+        <div class="stat-card">
+            <h3>🔄 Total Transactions</h3>
+            <p class="stat-value" data-stat="tx-count">{{ tx_count }}</p>
+            <p>Market Activity</p>
+        </div>
+    </div>
+</div>
+
+<!-- Performer Economy Status -->
+<div class="quant-panel">
+    <h2 class="quant-panel-title">🎭 Performer Economy Monitor</h2>
+    <div class="performer-stats-grid">
+        <div class="stat-card">
+            <h3>🎪 Performers</h3>
+            <p class="stat-value">{{ performer_count }}</p>
+            <p>Active on Stage</p>
+        </div>
+        <div class="stat-card">
+            <h3>👥 Audience</h3>
+            <p class="stat-value">{{ audience_count }}</p>
+            <p>Market Participants</p>
+        </div>
+        <div class="stat-card">
+            <h3>⚡ Redistribution</h3>
+            <p class="stat-value">{{ "ON" if redistribution_enabled else "OFF" }}</p>
+            <p>{{ "5 coins from each performer to each audience member/min" if redistribution_enabled else "Disabled" }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Market Leaders -->
+<div class="quant-panel">
+    <h2 class="quant-panel-title">🏆 Market Leaders</h2>
+    <div class="leaderboard-grid">
+        {% if top_performers %}
+            {% for performer in top_performers %}
+                {% set medals = ["🥇", "🥈", "🥉", "🎖️", "🏅"] %}
+                <div class="leaderboard-item{% if performer.username == current_username %} current-user{% endif %}">
+                    <span class="font-bold">{{ medals[loop.index0] if loop.index0 < 5 else "👤" }} {{ performer.username }}</span>
+                    <span class="font-bold">{{ "{:,}".format(performer.coin_balance) }} Straw Coins</span>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-center opacity-70">No stakeholders yet</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Market Activity -->
+{% if recent_transactions %}
+<div class="quant-panel">
+    <h2 class="quant-panel-title">📈 Recent Market Activity</h2>
+    <div style="display: grid; gap: 10px; max-height: 300px; overflow-y: auto;">
+        {% for transaction in recent_transactions %}
+        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
+            <div>
+                {% if transaction.sender == current_username %}
+                <span style="color: #e74c3c;">📤 Sent to {{ transaction.recipient }}</span>
+                {% else %}
+                <span style="color: #2ecc71;">📥 Received from {{ transaction.sender }}</span>
+                {% endif %}
+                <div style="font-size: 0.9rem; opacity: 0.8;">{{ transaction.timestamp.strftime('%Y-%m-%d %H:%M') }}</div>
+            </div>
+            <span style="font-weight: bold; font-size: 1.1rem;">
+                {% if transaction.sender == current_username %}
+                <span style="color: #e74c3c;">-{{ "{:,}".format(transaction.amount) }}</span>
+                {% else %}
+                <span style="color: #2ecc71;">+{{ "{:,}".format(transaction.amount) }}</span>
+                {% endif %}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Market Transfer Controls -->
+<div class="quant-terminal-section">
+    <h2 class="text-center mb-20">🕹️ Transfer Control Panel</h2>
+    
+    <!-- User Management Panel -->
+    <div class="quant-panel">
+        <h3 class="quant-panel-title">👥 User Status Management</h3>
+        <div class="quant-control-grid">
+            <div class="quant-control-card">
+                <h4>🎭 Performer Status Control</h4>
+                <div class="form-group">
+                    <label class="form-label">Target User:</label>
+                    <input type="text" id="statusUsername" class="form-input" placeholder="Enter username..." list="allUsersList">
+                    <datalist id="allUsersList">
+                        {% for user in all_users %}
+                        <option value="{{ user.username }}">{{ user.username }} ({{ "{:,}".format(user.coin_balance) }} coins)</option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">New Status:</label>
+                    <select id="statusType" class="form-input">
+                        <option value="true">🎪 Make Performer</option>
+                        <option value="false">👥 Make Audience</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reason:</label>
+                    <input type="text" id="statusReason" class="form-input" placeholder="Market manipulation reason...">
+                </div>
+                <button id="changeStatusBtn" class="quant-btn quant-btn-primary">
+                    ⚡ MANIPULATE STATUS
+                </button>
+            </div>
+            
+            <div class="quant-control-card">
+                <h4>💸 Force Transfer</h4>
+                <div class="form-group">
+                    <label class="form-label">From (Sender):</label>
+                    <input type="text" id="transferSender" class="form-input" placeholder="Enter sender username..." list="allUsersList2">
+                    <datalist id="allUsersList2">
+                        {% for user in all_users %}
+                        <option value="{{ user.username }}">{{ user.username }} ({{ "{:,}".format(user.coin_balance) }} coins)</option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">To (Recipient):</label>
+                    <input type="text" id="transferRecipient" class="form-input" placeholder="Enter recipient username..." list="allUsersList3">
+                    <datalist id="allUsersList3">
+                        {% for user in all_users %}
+                        <option value="{{ user.username }}">{{ user.username }} ({{ "{:,}".format(user.coin_balance) }} coins)</option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount:</label>
+                    <input type="number" id="transferAmount" class="form-input" placeholder="Enter amount...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reason:</label>
+                    <input type="text" id="transferReason" class="form-input" placeholder="Transfer reason...">
+                </div>
+                <button id="forceTransferBtn" class="quant-btn quant-btn-danger">
+                    💸 FORCE TRANSFER
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Manipulation Panel -->
+    <div class="quant-panel">
+        <h3 class="quant-panel-title">📈 Transfer Manipulation</h3>
+        <div class="quant-control-grid">
+            <div class="quant-control-card">
+                <h4>🔄 Force Redistribution</h4>
+                <div class="form-group">
+                    <label class="form-label">Multiplier:</label>
+                    <input type="number" id="redistributionMultiplier" class="form-input" value="1" min="0.1" max="10" step="0.1">
+                    <small class="form-hint">How many redistribution cycles (0.1 - 10x)</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reason:</label>
+                    <input type="text" id="redistributionReason" class="form-input" placeholder="Redistribution reason...">
+                </div>
+                <button id="forceRedistributionBtn" class="quant-btn quant-btn-warning">
+                    ⚡ FORCE REDISTRIBUTION
+                </button>
+            </div>
+            
+            <div class="quant-control-card">
+                <h4>📊 Market Intelligence</h4>
+                <button id="refreshStatsBtn" class="quant-btn quant-btn-info mb-10">
+                    🔄 Refresh Market Data
+                </button>
+                <button id="getAllUsersBtn" class="quant-btn quant-btn-info mb-10">
+                    👥 Get All Users
+                </button>
+                <button id="getMarketStatsBtn" class="quant-btn quant-btn-info">
+                    📈 Detailed Market Stats
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mass Transfer Controls -->
+        <div class="quant-control-grid" style="margin-top: 20px;">
+            <div class="quant-control-card">
+                <h4>🎪➡️👥 Performers to Audience</h4>
+                <div class="form-group">
+                    <label class="form-label">Amount per transfer:</label>
+                    <input type="number" id="performersToAudienceAmount" class="form-input" value="100" min="1">
+                    <small class="form-hint">Each performer sends this amount to each audience member</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reason:</label>
+                    <input type="text" id="performersToAudienceReason" class="form-input" placeholder="Mass transfer reason...">
+                </div>
+                <button id="performersToAudienceBtn" class="quant-btn quant-btn-secondary">
+                    🎪➡️👥 FORCE MASS TRANSFER
+                </button>
+            </div>
+            
+            <div class="quant-control-card">
+                <h4>👥➡️🎪 Audience to Performers</h4>
+                <div class="form-group">
+                    <label class="form-label">Amount per transfer:</label>
+                    <input type="number" id="audienceToPerformersAmount" class="form-input" value="100" min="1">
+                    <small class="form-hint">Each audience member sends this amount to each performer</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reason:</label>
+                    <input type="text" id="audienceToPerformersReason" class="form-input" placeholder="Reverse transfer reason...">
+                </div>
+                <button id="audienceToPerformersBtn" class="quant-btn quant-btn-secondary">
+                    👥➡️🎪 FORCE REVERSE TRANSFER
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Users Registry -->
+    <div class="quant-panel">
+        <h3 class="quant-panel-title">👥 Complete User Registry</h3>
+        <div class="quant-users-registry">
+            {% if all_users %}
+            <div style="display: grid; gap: 10px; max-height: 400px; overflow-y: auto;">
+                {% for user in all_users %}
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
+                    <div>
+                        <span style="font-weight: bold;">
+                            {% if user.is_performer %}🎪{% else %}👥{% endif %} {{ user.username }}
+                        </span>
+                        <div style="font-size: 0.9rem; opacity: 0.8;">
+                            {{ "Performer" if user.is_performer else "Audience" }} | 
+                            Joined: {{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'Unknown' }}
+                        </div>
+                    </div>
+                    <span style="font-weight: bold; font-size: 1.1rem;">
+                        {{ "{:,}".format(user.coin_balance) }} coins
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-center opacity-70">No users found</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Live Market Data Display -->
+    <div class="quant-panel">
+        <h3 class="quant-panel-title">📊 Live Market Data</h3>
+        <div id="marketDataDisplay" class="quant-data-display">
+            <div class="market-stats-grid">
+                <div class="stat-card">
+                    <h4>💰 Total Coins</h4>
+                    <p class="stat-value" id="totalCoins">{{ "{:,}".format(market_cap) }}</p>
+                </div>
+                <div class="stat-card">
+                    <h4>👥 Total Users</h4>
+                    <p class="stat-value" id="totalUsers">{{ stakeholder_count }}</p>
+                </div>
+                <div class="stat-card">
+                    <h4>🎪 Performers</h4>
+                    <p class="stat-value" id="totalPerformers">{{ performer_count }}</p>
+                </div>
+                <div class="stat-card">
+                    <h4>👁️ Audience</h4>
+                    <p class="stat-value" id="totalAudience">{{ audience_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terminal Log -->
+    <div class="quant-panel">
+        <h3 class="quant-panel-title">📝 Transfer Manipulation Log</h3>
+        <div id="quantLog" class="quant-terminal-log">
+            <div class="log-entry log-info">
+                <span class="log-timestamp">[SYSTEM]</span>
+                <span class="log-message">The Quant Terminal initialized successfully</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Display -->
+<div id="quantStatus" class="message"></div>
+
+<script>
+    // Pass current username to JavaScript
+    window.currentUsername = '{{ current_username }}';
+    window.quantEnabled = {{ 'true' if quant_enabled else 'false' }};
+</script>
+<script src="{{ url_for('static', filename='js/quant_terminal.js') }}"></script>
+{% endblock %}

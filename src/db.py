@@ -1,4 +1,5 @@
 import sqlite3
+
 import click
 from flask import current_app, g
 from flask.cli import with_appcontext
@@ -23,6 +24,7 @@ def cleanup_sessions_on_startup():
     """Clean up expired sessions when the app starts."""
     try:
         from flask import current_app
+
         if current_app:
             timeout_seconds = current_app.config.get("SESSION_TIMEOUT_SECONDS", 300)
             cleanup_expired_sessions(timeout_seconds)
@@ -47,7 +49,12 @@ def init_db():
         click.echo("Created fresh database with all tables")
     else:
         # Existing database - check for missing tables and migrate
-        required_tables = ["users", "transactions", "balance_snapshots", "active_sessions"]
+        required_tables = [
+            "users",
+            "transactions",
+            "balance_snapshots",
+            "active_sessions",
+        ]
         missing_tables = [
             table for table in required_tables if table not in existing_tables
         ]
@@ -108,7 +115,9 @@ def init_db():
 
             # Add is_performer column to users table if missing
             if needs_performer_column:
-                db.execute("ALTER TABLE users ADD COLUMN is_performer BOOLEAN NOT NULL DEFAULT 0")
+                db.execute(
+                    "ALTER TABLE users ADD COLUMN is_performer BOOLEAN NOT NULL DEFAULT 0"
+                )
                 click.echo("Added is_performer column to users table")
 
             db.commit()
@@ -235,11 +244,13 @@ def list_sessions_command():
     sessions = db.execute(
         "SELECT username, session_id, last_activity, created_at FROM active_sessions ORDER BY last_activity DESC"
     ).fetchall()
-    
+
     if sessions:
         click.echo("Active Sessions:")
         for session in sessions:
-            click.echo(f"  {session['username']} - Last activity: {session['last_activity']} (Created: {session['created_at']})")
+            click.echo(
+                f"  {session['username']} - Last activity: {session['last_activity']} (Created: {session['created_at']})"
+            )
     else:
         click.echo("No active sessions")
 
@@ -251,7 +262,9 @@ def clear_sessions_command():
     """Clear all active sessions."""
     db = get_db()
     try:
-        count = db.execute("SELECT COUNT(*) as count FROM active_sessions").fetchone()["count"]
+        count = db.execute("SELECT COUNT(*) as count FROM active_sessions").fetchone()[
+            "count"
+        ]
         db.execute("DELETE FROM active_sessions")
         db.commit()
         click.echo(f"✅ Cleared {count} active sessions")
@@ -314,6 +327,11 @@ def get_user_balance(username):
 def transfer_coins(sender_username, recipient_username, amount):
     if amount <= 0:
         return "invalid_amount"
+
+    # Prevent The Quant from sending coins to themselves
+    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    if sender_username == quant_username and recipient_username == quant_username:
+        return "quant_self_transfer_forbidden"
 
     db = get_db()
 
@@ -554,53 +572,53 @@ def cleanup_expired_sessions(timeout_seconds):
 def has_active_session(username):
     """Check if a user has an active session."""
     from flask import current_app
-    
+
     db = get_db()
-    
+
     # First cleanup expired sessions
     timeout_seconds = current_app.config.get("SESSION_TIMEOUT_SECONDS", 300)
     cleanup_expired_sessions(timeout_seconds)
-    
+
     # Check for active sessions
     session = db.execute(
         "SELECT session_id FROM active_sessions WHERE username = ? AND last_activity > datetime('now', '-' || ? || ' seconds')",
         (username, timeout_seconds),
     ).fetchone()
-    
+
     return session is not None
 
 
 def get_active_session_count():
     """Get the total number of active sessions."""
     from flask import current_app
-    
+
     db = get_db()
     timeout_seconds = current_app.config.get("SESSION_TIMEOUT_SECONDS", 300)
-    
+
     # First cleanup expired sessions
     cleanup_expired_sessions(timeout_seconds)
-    
+
     # Count active sessions
     count = db.execute(
         "SELECT COUNT(*) as count FROM active_sessions WHERE last_activity > datetime('now', '-' || ? || ' seconds')",
         (timeout_seconds,),
     ).fetchone()
-    
+
     return count["count"] if count else 0
 
 
 def get_user_session_id(username):
     """Get the session ID for a user if they have an active session."""
     from flask import current_app
-    
+
     db = get_db()
     timeout_seconds = current_app.config.get("SESSION_TIMEOUT_SECONDS", 300)
-    
+
     session = db.execute(
         "SELECT session_id FROM active_sessions WHERE username = ? AND last_activity > datetime('now', '-' || ? || ' seconds')",
         (username, timeout_seconds),
     ).fetchone()
-    
+
     return session["session_id"] if session else None
 
 
@@ -611,7 +629,7 @@ def get_session_info(session_id):
         "SELECT username, last_activity, created_at FROM active_sessions WHERE session_id = ?",
         (session_id,),
     ).fetchone()
-    
+
     return dict(session) if session else None
 
 
@@ -657,70 +675,73 @@ def get_audience_members():
 
 
 def performer_redistribution():
-    """Redistribute 5 coins from each performer to all audience members every minute."""
+    """Redistribute 5 coins from each performer to every audience member."""
     db = get_db()
-    
+
     # Get all performers and audience members
     performers = db.execute(
         "SELECT id, username, coin_balance FROM users WHERE is_performer = 1"
     ).fetchall()
-    
+
+    # Get audience members but exclude The Quant
+    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
     audience = db.execute(
-        "SELECT id, username, coin_balance FROM users WHERE is_performer = 0"
+        "SELECT id, username, coin_balance FROM users WHERE is_performer = 0 AND username != ?",
+        (quant_username,)
     ).fetchall()
-    
+
     if not performers or not audience:
         return {"success": False, "message": "No performers or audience members found"}
-    
+
     audience_count = len(audience)
     performer_count = len(performers)
-    coins_per_performer = 5
-    total_coins_redistributed = performer_count * coins_per_performer
-    coins_per_audience_member = total_coins_redistributed // audience_count
-    
+    coins_per_performer_to_each_audience = 5
+    total_coins_needed_per_performer = coins_per_performer_to_each_audience * audience_count
+    total_coins_redistributed = 0
+
     try:
         # Start transaction
         for performer in performers:
             # Check if performer has enough coins
-            if performer["coin_balance"] < coins_per_performer:
+            if performer["coin_balance"] < total_coins_needed_per_performer:
                 continue  # Skip performers who don't have enough coins
-            
-            # Deduct coins from performer
+
+            # Deduct total coins from performer
             db.execute(
                 "UPDATE users SET coin_balance = coin_balance - ? WHERE id = ?",
-                (coins_per_performer, performer["id"]),
+                (total_coins_needed_per_performer, performer["id"]),
             )
-            
-            # Create transaction record for each audience member
+
+            # Give 5 coins to each audience member
             for audience_member in audience:
-                coins_for_this_member = coins_per_performer // audience_count
-                if coins_for_this_member > 0:
-                    db.execute(
-                        "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
-                        (performer["id"], audience_member["id"], coins_for_this_member),
-                    )
-        
-        # Add coins to audience members
-        if coins_per_audience_member > 0:
-            db.execute(
-                "UPDATE users SET coin_balance = coin_balance + ? WHERE is_performer = 0",
-                (coins_per_audience_member,),
-            )
-        
+                # Add coins to audience member
+                db.execute(
+                    "UPDATE users SET coin_balance = coin_balance + ? WHERE id = ?",
+                    (coins_per_performer_to_each_audience, audience_member["id"]),
+                )
+                
+                # Create transaction record
+                db.execute(
+                    "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
+                    (performer["id"], audience_member["id"], coins_per_performer_to_each_audience),
+                )
+
+            total_coins_redistributed += total_coins_needed_per_performer
+
         db.commit()
-        
+
         # Create balance snapshots for all users after redistribution
         create_balance_snapshots_for_all_users()
-        
+
         return {
             "success": True,
             "performer_count": performer_count,
             "audience_count": audience_count,
-            "coins_per_performer": coins_per_performer,
-            "coins_per_audience_member": coins_per_audience_member,
-            "total_redistributed": total_coins_redistributed
+            "coins_per_performer_to_each_audience": coins_per_performer_to_each_audience,
+            "total_coins_needed_per_performer": total_coins_needed_per_performer,
+            "total_redistributed": total_coins_redistributed,
         }
-        
+
     except sqlite3.Error as e:
         db.rollback()
         return {"success": False, "message": f"Database error: {e}"}
@@ -732,16 +753,24 @@ def redistribute_performer_coins_command():
     """Manually trigger performer coin redistribution."""
     result = performer_redistribution()
     if result["success"]:
-        click.echo(f"✅ Redistributed {result['total_redistributed']} coins from {result['performer_count']} performers to {result['audience_count']} audience members")
-        click.echo(f"   Each performer lost {result['coins_per_performer']} coins")
-        click.echo(f"   Each audience member gained {result['coins_per_audience_member']} coins")
+        click.echo(
+            f"✅ Redistributed {result['total_redistributed']} coins from {result['performer_count']} performers to {result['audience_count']} audience members"
+        )
+        click.echo(f"   Each performer lost {result['total_coins_needed_per_performer']} coins")
+        click.echo(
+            f"   Each audience member gained {result['coins_per_performer_to_each_audience']} coins from each performer"
+        )
     else:
         click.echo(f"❌ Redistribution failed: {result['message']}")
 
 
 @click.command("set-performer")
 @click.argument("username")
-@click.option("--performer/--audience", default=True, help="Set as performer (default) or audience member")
+@click.option(
+    "--performer/--audience",
+    default=True,
+    help="Set as performer (default) or audience member",
+)
 @with_appcontext
 def set_performer_command(username, performer):
     """Set a user's performer status."""
@@ -759,14 +788,14 @@ def list_performers_command():
     """List all performers."""
     performers = get_performers()
     audience = get_audience_members()
-    
+
     if performers:
         click.echo("🎭 Performers:")
         for performer in performers:
             click.echo(f"  {performer['username']} - {performer['coin_balance']} coins")
     else:
         click.echo("No performers found")
-    
+
     if audience:
         click.echo(f"\n👥 Audience Members ({len(audience)}):")
         for member in audience[:5]:  # Show first 5
