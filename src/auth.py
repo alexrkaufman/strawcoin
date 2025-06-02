@@ -1,5 +1,5 @@
 from functools import wraps
-from datetime import datetime, timedelta
+from datetime import datetime
 import secrets
 from flask import (
     Blueprint,
@@ -16,37 +16,24 @@ from .db import (
     get_user_balance, 
     has_active_session, 
     create_session, 
-    update_session_activity, 
     remove_session,
-    get_user_performer_status,
-    user_exists
+    get_user_performer_status
 )
 
 bp = Blueprint("auth", __name__)
 
 
 def is_authenticated():
-    if "username" not in session or "last_activity" not in session:
-        return False
-
-    last_activity = datetime.fromisoformat(session["last_activity"])
-    timeout_threshold = datetime.now() - timedelta(
-        seconds=current_app.config["SESSION_TIMEOUT_SECONDS"]
-    )
-
-    if last_activity < timeout_threshold:
-        session.clear()
-        return False
-
-    return True
+    # Simplified authentication - only check if user is logged in
+    # Client handles session timeout
+    return "username" in session and "session_id" in session
 
 
 def update_activity():
+    # Activity updates removed - session timeout handled client-side
+    # Only keep session permanent flag
     if "username" in session and "session_id" in session:
-        session["last_activity"] = datetime.now().isoformat()
         session.permanent = True
-        # Update session activity in database
-        update_session_activity(session["session_id"])
 
 
 def require_auth(f):
@@ -58,23 +45,6 @@ def require_auth(f):
                     {"error": "Authentication required", "status": "session_expired"}
                 ), 401
             return redirect(url_for("auth.register"))
-
-        # Verify user still exists in database
-        current_username = session.get("username")
-        if current_username:
-            user_exists_result = user_exists(current_username)
-            current_app.logger.info(f"Auth check - Username: {current_username}, Exists: {user_exists_result}")
-            if not user_exists_result:
-                # User was deleted, clear their session
-                current_app.logger.warning(f"Orphaned session detected for deleted user: {current_username}. Cleaning up session.")
-                if "session_id" in session:
-                    remove_session(session["session_id"])
-                session.clear()
-                if request.is_json:
-                    return jsonify(
-                        {"error": "User account no longer exists", "status": "user_deleted"}
-                    ), 401
-                return redirect(url_for("auth.register"))
 
         update_activity()
         return f(*args, **kwargs)
@@ -92,25 +62,12 @@ def require_quant(f):
                 ), 401
             return redirect(url_for("auth.register"))
 
-        # Verify user still exists in database
-        current_username = session.get("username")
-        if current_username and not user_exists(current_username):
-            # User was deleted, clear their session
-            current_app.logger.warning(f"Orphaned CHANCELLOR session detected for deleted user: {current_username}. Cleaning up session.")
-            if "session_id" in session:
-                remove_session(session["session_id"])
-            session.clear()
-            if request.is_json:
-                return jsonify(
-                    {"error": "User account no longer exists", "status": "user_deleted"}
-                ), 401
-            return redirect(url_for("auth.register"))
-
         # Check if user is The CHANCELLOR
+        current_username = session.get("username")
         quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
         quant_enabled = current_app.config.get("QUANT_ENABLED", False)
         
-        if not quant_enabled or current_username.upper() != quant_username.upper():
+        if not quant_enabled or not current_username or current_username.upper() != quant_username.upper():
             if request.is_json:
                 return jsonify(
                     {"error": "Unauthorized - Quant access required", "status": "unauthorized"}
@@ -142,7 +99,7 @@ def login():
             {"error": "Username required", "status": "invalid_credentials"}
         ), 400
 
-    username = data["username"].strip()
+    username = data["username"].strip().upper() if data["username"] else ""
     is_performer = data.get("is_performer", False)
 
     if not username or len(username) < 3:
@@ -164,11 +121,8 @@ def login():
 
     balance = get_user_balance(username)
     performer_status = get_user_performer_status(username)
-    
-    current_app.logger.info(f"Login attempt - Username: {username}, Balance: {balance}, Performer: {performer_status}")
 
     if balance is None:
-        current_app.logger.info(f"Creating new user - Username: {username}")
         user_id = create_user(username, is_performer)
         if user_id is None:
             return jsonify(
@@ -196,24 +150,21 @@ def login():
             {"error": "Failed to create session", "status": "session_error"}
         ), 500
 
-    session["username"] = username.upper()
+    session["username"] = username
     session["user_balance"] = balance
     session["session_id"] = session_id
-    session["last_activity"] = datetime.now().isoformat()
     session["session_start"] = datetime.now().isoformat()
     session.permanent = True
-
-    current_app.logger.info(f"Session created - Username: {session['username']}, Balance: {balance}, Session ID: {session_id}")
 
     user_type = "performer" if performer_status else "audience member"
     return jsonify(
         {
             "message": f"User {username} successfully registered as {user_type}",
-            "username": username.upper(),
+            "username": username,
             "balance": balance,
             "is_performer": performer_status,
             "user_type": user_type,
-            "session_timeout_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
+            "total_timeout_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
             "debug_mode": current_app.debug,
             "status": "authentication_successful",
         }
@@ -225,17 +176,11 @@ def session_status():
     if not is_authenticated():
         return jsonify({"authenticated": False, "status": "session_expired"}), 401
 
-    last_activity = datetime.fromisoformat(session["last_activity"])
-    time_remaining = (
-        current_app.config["SESSION_TIMEOUT_SECONDS"]
-        - (datetime.now() - last_activity).total_seconds()
-    )
-
     return jsonify(
         {
             "authenticated": True,
             "username": session["username"],
-            "time_remaining_seconds": max(0, int(time_remaining)),
+            "total_timeout_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
             "status": "session_active",
         }
     ), 200
@@ -253,15 +198,14 @@ def update_activity_endpoint():
     if not is_authenticated():
         return jsonify({"error": "Session expired", "status": "session_expired"}), 401
 
-    update_activity()
-
+    # Activity updates removed - client handles session timeout
     return jsonify(
         {
-            "message": "Activity updated",
-            "time_remaining_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
-            "status": "activity_updated",
+            "message": "Activity received (client-managed)",
+            "total_timeout_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
+            "status": "client_managed",
         }
-    ), 200
+    )
 
 
 @bp.route("/logout", methods=["POST"])
@@ -281,33 +225,4 @@ def logout():
     ), 200
 
 
-@bp.before_app_request
-def track_activity():
-    public_endpoints = [
-        "auth.register",
-        "auth.session_expired", 
-        "auth.login",
-        "auth.logout",
-        "auth.session_status",
-        "auth.update_activity_endpoint",
-        "api.register_user",
-    ]
-
-    if request.endpoint and (
-        request.endpoint.startswith("static") or request.endpoint in public_endpoints
-    ):
-        return
-
-    if "username" in session:
-        if not is_authenticated():
-            # Clean up session record if session expired
-            if "session_id" in session:
-                remove_session(session["session_id"])
-            session.clear()
-            
-            if request.is_json:
-                return jsonify(
-                    {"error": "Session expired", "status": "session_timeout"}
-                ), 401
-            return redirect(url_for("auth.session_expired"))
-        update_activity()
+# Activity tracking removed - session timeout now handled client-side

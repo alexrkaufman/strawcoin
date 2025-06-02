@@ -28,13 +28,6 @@ def create_app(test_config=None):
     # Ensure instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
-    @app.template_filter('safe_format')
-    def safe_format(value, format_spec="{:,}"):
-        """Safely format numbers, returning 0 for None values."""
-        if value is None:
-            value = 0
-        return format_spec.format(value)
-
     @app.context_processor
     def inject_sitename():
         return {"site_name": app.config["SITE_NAME"], "tagline": app.config["TAGLINE"]}
@@ -71,9 +64,6 @@ def create_app(test_config=None):
             current_user_balance = (
                 get_user_balance(current_username) if current_username else 0
             )
-            # Ensure balance is always a number
-            if current_user_balance is None:
-                current_user_balance = 0
             recent_transactions = (
                 get_transaction_history(current_username, 5) if current_username else []
             )
@@ -152,9 +142,6 @@ def create_app(test_config=None):
         current_user_balance = (
             get_user_balance(current_username) if current_username else 0
         )
-        # Ensure balance is always a number
-        if current_user_balance is None:
-            current_user_balance = 0
         
         # Get current market status
         market_status = get_market_status()
@@ -200,9 +187,6 @@ def create_app(test_config=None):
 
             # Get current user's data
             current_user_balance = get_user_balance(current_username)
-            # Ensure balance is always a number
-            if current_user_balance is None:
-                current_user_balance = 0
             recent_transactions = get_transaction_history(current_username, 10)
 
             # Get all users for manipulation targets

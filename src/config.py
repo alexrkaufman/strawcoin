@@ -64,8 +64,8 @@ class ProductionConfig(Config):
     DEBUG = False
     SESSION_COOKIE_SECURE = True
 
-    # Short timeout for production (1 minute)
-    SESSION_TIMEOUT_SECONDS = 60
+    # Full timeout for live shows (5 minutes)
+    SESSION_TIMEOUT_SECONDS = 300
 
     # Enable redistribution in production
     ENABLE_PERFORMER_REDISTRIBUTION = True

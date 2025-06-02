@@ -693,20 +693,12 @@ def set_user_performer_status(username, is_performer):
 
 
 def get_user_performer_status(username):
+    """Get whether a user is a performer or audience member."""
     db = get_db()
     user = db.execute(
         "SELECT is_performer FROM users WHERE username = ?", (username.upper(),)
     ).fetchone()
-    return user["is_performer"] if user else False
-
-
-def user_exists(username):
-    """Check if a user exists in the database."""
-    db = get_db()
-    user = db.execute(
-        "SELECT 1 FROM users WHERE username = ?", (username.upper(),)
-    ).fetchone()
-    return user is not None
+    return bool(user["is_performer"]) if user else None
 
 
 def get_performers():

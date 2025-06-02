@@ -6,7 +6,7 @@
     <p class="welcome-subtitle">Market Transfer Manipulation Command Center</p>
     <div class="user-balance-card" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
         <h3>🎯 Welcome, {{ current_username }}</h3>
-        <p class="balance-amount">{{ current_user_balance | safe_format }} Authority Coins</p>
+        <p class="balance-amount">{{ "{:,}".format(current_user_balance) }} Authority Coins</p>
         <p style="font-size: 0.9rem; opacity: 0.9;">TRANSFER MANIPULATION ACTIVE</p>
     </div>
 </div>
@@ -69,7 +69,7 @@
                 {% set medals = ["🥇", "🥈", "🥉", "🎖️", "🏅"] %}
                 <div class="leaderboard-item{% if performer.username == current_username %} current-user{% endif %}">
                     <span class="font-bold">{{ medals[loop.index0] if loop.index0 < 5 else "👤" }} {{ performer.username }}</span>
-                    <span class="font-bold">{{ performer.coin_balance | safe_format }} Straw Coins</span>
+                    <span class="font-bold">{{ "{:,}".format(performer.coin_balance) }} Straw Coins</span>
                 </div>
             {% endfor %}
         {% else %}
@@ -121,7 +121,7 @@
                     <input type="text" id="statusUsername" class="form-input" placeholder="Enter username..." list="allUsersList">
                     <datalist id="allUsersList">
                         {% for user in all_users %}
-                        <option value="{{ user.username }}">{{ user.username }} ({{ user.coin_balance | safe_format }} coins)</option>
+                        <option value="{{ user.username }}">{{ user.username }} ({{ "{:,}".format(user.coin_balance) }} coins)</option>
                         {% endfor %}
                     </datalist>
                 </div>
@@ -150,7 +150,7 @@
                         <option value="All Performers">All Performers (mass transfer from all performers)</option>
                         <option value="All Audience">All Audience (mass transfer from all audience)</option>
                         {% for user in all_users %}
-                        <option value="{{ user.username }}">{{ user.username }} ({{ user.coin_balance | safe_format }} coins)</option>
+                        <option value="{{ user.username }}">{{ user.username }} ({{ "{:,}".format(user.coin_balance) }} coins)</option>
                         {% endfor %}
                     </datalist>
                 </div>
@@ -161,7 +161,7 @@
                         <option value="All Performers">All Performers (distribute to all performers)</option>
                         <option value="All Audience">All Audience (distribute to all audience)</option>
                         {% for user in all_users %}
-                        <option value="{{ user.username }}">{{ user.username }} ({{ user.coin_balance | safe_format }} coins)</option>
+                        <option value="{{ user.username }}">{{ user.username }} ({{ "{:,}".format(user.coin_balance) }} coins)</option>
                         {% endfor %}
                     </datalist>
                 </div>
@@ -242,7 +242,7 @@
                         </div>
                     </div>
                     <span style="font-weight: bold; font-size: 1.1rem;">
-                        {{ user.coin_balance | safe_format }} coins
+                        {{ "{:,}".format(user.coin_balance) }} coins
                     </span>
                 </div>
                 {% endfor %}
