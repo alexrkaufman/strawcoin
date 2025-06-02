@@ -146,6 +146,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     setTimeout(() => {
                         window.location.reload();
                     }, 2000);
+                } else if (data.redirect) {
+                    // Handle redirects (quant independence, insider trading warnings)
+                    window.location.href = data.redirect;
+                    return;
                 } else {
                     showStatus(`Error: ${data.message || 'Transfer failed'}`, 'error');
                 }
