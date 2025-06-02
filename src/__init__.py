@@ -16,19 +16,11 @@ def create_app(test_config=None):
         template_folder="templates",
     )
 
-    # Load configuration - check multiple environment variables for production detection
-    env = os.environ.get("FLASK_ENV", "development")
-    is_production = (
-        env == "production" or 
-        os.environ.get("ENVIRONMENT") == "production" or
-        os.environ.get("ENV") == "production" or
-        not app.debug
-    )
-    
-    if is_production:
-        app.config.from_object(ProductionConfig)
-    else:
+    # Load configuration based on Flask's debug mode
+    if app.debug:
         app.config.from_object(DevelopmentConfig)
+    else:
+        app.config.from_object(ProductionConfig)
 
     if test_config:
         app.config.from_mapping(test_config)
@@ -257,9 +249,6 @@ def create_app(test_config=None):
         config_info = {
             "session_timeout_seconds": app.config.get("SESSION_TIMEOUT_SECONDS"),
             "debug": app.debug,
-            "flask_env": os.environ.get("FLASK_ENV", "not set"),
-            "environment": os.environ.get("ENVIRONMENT", "not set"),
-            "env": os.environ.get("ENV", "not set"),
             "config_class": app.config.__class__.__name__ if hasattr(app.config, '__class__') else "unknown",
             "redistribution_enabled": app.config.get("ENABLE_PERFORMER_REDISTRIBUTION"),
             "session_cookie_secure": app.config.get("SESSION_COOKIE_SECURE")

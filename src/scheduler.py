@@ -93,8 +93,8 @@ def init_scheduler(app):
     """Initialize and start the performer redistribution scheduler."""
     scheduler.init_app(app)
     
-    # Only start in production or if explicitly enabled
-    if app.config.get('ENABLE_PERFORMER_REDISTRIBUTION', False) or not app.debug:
+    # Only start if explicitly enabled in config
+    if app.config.get('ENABLE_PERFORMER_REDISTRIBUTION', False):
         scheduler.start()
         
         # Register cleanup on app teardown

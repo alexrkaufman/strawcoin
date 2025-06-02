@@ -190,6 +190,9 @@ def get_market_stats():
 @bp.route("/leaderboard-history", methods=["GET"])
 @require_auth
 def get_leaderboard_history():
+    import random
+    import hashlib
+    from datetime import datetime, timedelta
     from .db import get_balance_history, get_current_leaderboard_with_snapshots
 
     # Get hours parameter, default to 0.5 hours (30 minutes)
@@ -202,38 +205,88 @@ def get_leaderboard_history():
     # Get current leaderboard to ensure we have recent snapshots
     current_leaders = get_current_leaderboard_with_snapshots()
 
-    # Process data for chart format
+    # Process data for chart format with market-like fluctuations
     chart_data = {}
     time_points = set()
 
-    # Process historical snapshots
+    # Process historical snapshots and add trading-style data points
     for snapshot in history:
         username = snapshot["username"]
         timestamp = snapshot["timestamp"]
         balance = snapshot["balance"]
 
+        # Convert datetime to ISO string for Chart.js
+        timestamp_str = timestamp.isoformat() if hasattr(timestamp, 'isoformat') else str(timestamp)
+
         if username not in chart_data:
             chart_data[username] = {}
 
-        chart_data[username][timestamp] = balance
-        time_points.add(timestamp)
+        chart_data[username][timestamp_str] = balance
+        time_points.add(timestamp_str)
 
-    # Sort time points
+    # Generate additional market-like data points for trading simulation
     time_points = sorted(list(time_points))
+    if time_points:
+        start_time = datetime.fromisoformat(time_points[0].replace('Z', '+00:00') if 'Z' in time_points[0] else time_points[0])
+        end_time = datetime.fromisoformat(time_points[-1].replace('Z', '+00:00') if 'Z' in time_points[-1] else time_points[-1])
+        
+        # Add intermediate points every 30 seconds for smooth trading curves
+        current_time = start_time
+        interval = timedelta(seconds=30)
+        
+        enhanced_chart_data = {}
+        for username in chart_data.keys():
+            enhanced_chart_data[username] = {}
+            
+            # Get user's actual data points
+            user_timestamps = sorted(chart_data[username].keys())
+            
+            # Create seed for consistent randomness per user
+            user_seed = int(hashlib.md5(username.encode()).hexdigest()[:8], 16)
+            user_random = random.Random(user_seed)
+            
+            current_time = start_time
+            while current_time <= end_time:
+                timestamp_str = current_time.isoformat()
+                
+                # Find the closest actual balance
+                base_balance = 10000  # Default
+                for ts in user_timestamps:
+                    if ts <= timestamp_str:
+                        base_balance = chart_data[username][ts]
+                
+                # Add market-like fluctuations (±2-5% volatility)
+                volatility = user_random.uniform(0.02, 0.05)  # 2-5% volatility
+                noise_factor = user_random.uniform(-volatility, volatility)
+                
+                # Add some trending behavior based on time
+                time_factor = (current_time - start_time).total_seconds() / 3600  # hours
+                trend = user_random.uniform(-0.01, 0.01) * time_factor  # slight trend over time
+                
+                # Apply fluctuations
+                fluctuated_balance = base_balance * (1 + noise_factor + trend)
+                fluctuated_balance = max(0, int(fluctuated_balance))  # Ensure non-negative
+                
+                enhanced_chart_data[username][timestamp_str] = fluctuated_balance
+                current_time += interval
 
-    # Format for Chart.js
+    # Use enhanced data for chart
+    chart_data = enhanced_chart_data if 'enhanced_chart_data' in locals() else chart_data
+    time_points = sorted(set().union(*[list(user_data.keys()) for user_data in chart_data.values()]))
+
+    # Format for Chart.js with trading platform styling
     datasets = []
-    colors = [
-        "#FF6384",
-        "#36A2EB",
-        "#FFCE56",
-        "#4BC0C0",
-        "#9966FF",
-        "#FF9F40",
-        "#FF6384",
-        "#C9CBCF",
-        "#4BC0C0",
-        "#FF6384",
+    trading_colors = [
+        "#00D084",  # Green (bullish)
+        "#F23645",  # Red (bearish)
+        "#FFA726",  # Orange
+        "#42A5F5",  # Blue
+        "#AB47BC",  # Purple
+        "#26C6DA",  # Cyan
+        "#66BB6A",  # Light Green
+        "#EF5350",  # Light Red
+        "#FFCA28",  # Amber
+        "#5C6BC0",  # Indigo
     ]
 
     for i, username in enumerate(sorted(chart_data.keys())):
@@ -247,10 +300,13 @@ def get_leaderboard_history():
                 {
                     "label": username,
                     "data": user_data,
-                    "borderColor": colors[i % len(colors)],
-                    "backgroundColor": colors[i % len(colors)] + "20",
-                    "tension": 0.4,
+                    "borderColor": trading_colors[i % len(trading_colors)],
+                    "backgroundColor": trading_colors[i % len(trading_colors)] + "10",
+                    "tension": 0.1,  # Less smooth for more realistic trading curves
                     "fill": False,
+                    "borderWidth": 2,
+                    "pointRadius": 0,  # Hide points for cleaner trading look
+                    "pointHoverRadius": 4,
                 }
             )
 

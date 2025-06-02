@@ -872,11 +872,6 @@ def create_quant_command():
 @click.option("--port", default=5000, help="Port to bind to")
 def run_production_command(host, port):
     """Run the app in production mode with correct configuration."""
-    import os
-    
-    # Set production environment variables
-    os.environ["FLASK_ENV"] = "production"
-    os.environ["ENVIRONMENT"] = "production"
     
     click.echo("🚀 Starting Straw Coin in production mode...")
     click.echo(f"   Host: {host}")
@@ -885,16 +880,19 @@ def run_production_command(host, port):
     click.echo(f"   Debug mode: OFF")
     click.echo(f"   Performer redistribution: ON")
     
-    # Import here to ensure environment variables are set
+    # Import and create app
     from . import create_app
     app = create_app()
     
-    # Verify production config is loaded
+    # Verify production config is loaded (should be loaded when app.debug is False)
     timeout = app.config.get("SESSION_TIMEOUT_SECONDS", 0)
-    if timeout == 300:
+    if timeout == 300 and not app.debug:
         click.echo("✅ Production configuration loaded successfully")
     else:
-        click.echo(f"⚠️  Warning: Session timeout is {timeout}s (expected 300s)")
+        if app.debug:
+            click.echo(f"⚠️  Warning: App is in debug mode! Use 'flask run' without --debug for production.")
+        if timeout != 300:
+            click.echo(f"⚠️  Warning: Session timeout is {timeout}s (expected 300s)")
     
     # Run the app
     app.run(host=host, port=port, debug=False)
