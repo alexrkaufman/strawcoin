@@ -134,4 +134,8 @@ def create_app(test_config=None):
     app.register_blueprint(auth.bp)
     db.init_app(app)
 
+    # Clean up expired sessions on startup
+    with app.app_context():
+        db.cleanup_sessions_on_startup()
+
     return app

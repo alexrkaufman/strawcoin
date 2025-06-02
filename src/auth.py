@@ -1,5 +1,6 @@
 from functools import wraps
 from datetime import datetime, timedelta
+import secrets
 from flask import (
     Blueprint,
     request,
@@ -10,7 +11,14 @@ from flask import (
     jsonify,
     current_app,
 )
-from .db import create_user, get_user_balance
+from .db import (
+    create_user, 
+    get_user_balance, 
+    has_active_session, 
+    create_session, 
+    update_session_activity, 
+    remove_session
+)
 
 bp = Blueprint("auth", __name__)
 
@@ -32,9 +40,11 @@ def is_authenticated():
 
 
 def update_activity():
-    if "username" in session:
+    if "username" in session and "session_id" in session:
         session["last_activity"] = datetime.now().isoformat()
         session.permanent = True
+        # Update session activity in database
+        update_session_activity(session["session_id"])
 
 
 def require_auth(f):
@@ -82,6 +92,15 @@ def login():
             }
         ), 400
 
+    # Check for active session before allowing login
+    if has_active_session(username):
+        return jsonify(
+            {
+                "error": f"User {username} is already logged in. Only one session per user is allowed.",
+                "status": "session_conflict"
+            }
+        ), 409
+
     balance = get_user_balance(username)
 
     if balance is None:
@@ -102,8 +121,18 @@ def login():
         if user:
             create_balance_snapshot(user["id"], balance)
 
+    # Generate unique session ID
+    session_id = secrets.token_urlsafe(32)
+    
+    # Create session record in database
+    if not create_session(username, session_id):
+        return jsonify(
+            {"error": "Failed to create session", "status": "session_error"}
+        ), 500
+
     session["username"] = username
     session["user_balance"] = balance
+    session["session_id"] = session_id
     session["last_activity"] = datetime.now().isoformat()
     session["session_start"] = datetime.now().isoformat()
     session.permanent = True
@@ -164,12 +193,30 @@ def update_activity_endpoint():
     ), 200
 
 
+@bp.route("/logout", methods=["POST"])
+def logout():
+    """Manually log out and clean up session."""
+    if "session_id" in session:
+        remove_session(session["session_id"])
+    
+    username = session.get("username", "Unknown")
+    session.clear()
+    
+    return jsonify(
+        {
+            "message": f"User {username} successfully logged out",
+            "status": "logout_successful"
+        }
+    ), 200
+
+
 @bp.before_app_request
 def track_activity():
     public_endpoints = [
         "auth.register",
-        "auth.session_expired",
+        "auth.session_expired", 
         "auth.login",
+        "auth.logout",
         "auth.session_status",
         "auth.update_activity_endpoint",
         "api.register_user",
@@ -182,6 +229,11 @@ def track_activity():
 
     if "username" in session:
         if not is_authenticated():
+            # Clean up session record if session expired
+            if "session_id" in session:
+                remove_session(session["session_id"])
+            session.clear()
+            
             if request.is_json:
                 return jsonify(
                     {"error": "Session expired", "status": "session_timeout"}
