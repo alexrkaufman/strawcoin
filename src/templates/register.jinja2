@@ -1,23 +1,23 @@
 {% extends "base.jinja2" %}
 
 {% block content %}
-<div style="text-align: center; padding: 20px;">
-    <div style="margin-bottom: 40px;">
-        <h1 style="font-size: 2.5rem; margin-bottom: 20px;">🚀 Join The Revolution</h1>
-        <p style="font-size: 1.3rem; margin-bottom: 30px;">Enter <strong>The Short Straw</strong> comedy tokenization ecosystem</p>
+<div class="registration-section">
+    <div class="registration-header">
+        <h1 class="registration-title">🚀 Join The Revolution</h1>
+        <p class="registration-subtitle">Enter <strong>The Short Straw</strong> comedy tokenization ecosystem</p>
     </div>
 
-    <div style="background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; max-width: 500px; margin: 0 auto; backdrop-filter: blur(10px);">
-        <form id="registrationForm" style="margin-bottom: 30px;">
-            <div style="margin-bottom: 25px;">
-                <label for="username" style="display: block; margin-bottom: 10px; font-size: 1.1rem; font-weight: bold;">Choose Your Market Identity:</label>
+    <div class="registration-form-container">
+        <form id="registrationForm" class="registration-form">
+            <div class="form-group">
+                <label for="username" class="form-label">Choose Your Market Identity:</label>
                 <input 
                     type="text" 
                     id="username" 
                     name="username" 
                     required
                     maxlength="20"
-                    style="width: 100%; padding: 15px; font-size: 1.1rem; border: none; border-radius: 10px; background: rgba(255,255,255,0.9); color: #333; box-sizing: border-box;"
+                    class="form-input"
                     placeholder="Enter username..."
                     autocomplete="off"
                     autocapitalize="none"
@@ -27,149 +27,37 @@
             <button 
                 type="submit" 
                 id="registerBtn"
-                style="width: 100%; padding: 15px; font-size: 1.2rem; font-weight: bold; background: linear-gradient(45deg, #f39c12, #e67e22); color: white; border: none; border-radius: 10px; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);"
+                class="register-btn"
             >
                 🌙 Launch to Moon Mission
             </button>
         </form>
 
-        <div id="errorMessage" style="display: none; background: rgba(255, 0, 0, 0.2); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid rgba(255, 0, 0, 0.5);">
-            <p style="color: #ff6b6b; margin: 0; font-weight: bold;"></p>
+        <div id="errorMessage" class="message error-message">
+            <p class="font-bold"></p>
         </div>
 
-        <div id="loadingMessage" style="display: none; padding: 20px;">
-            <div style="font-size: 2rem; margin-bottom: 10px;">⏳</div>
+        <div id="loadingMessage" class="message loading-message">
+            <div class="loading-emoji">⏳</div>
             <p>Initializing stakeholder account...</p>
         </div>
 
-        <div id="successMessage" style="display: none; background: rgba(0, 255, 0, 0.2); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid rgba(0, 255, 0, 0.5);">
-            <p style="color: #4CAF50; margin: 0; font-weight: bold;"></p>
+        <div id="successMessage" class="message success-message">
+            <p class="font-bold"></p>
         </div>
     </div>
 
-    <div style="margin-top: 40px; background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; max-width: 600px; margin-left: auto; margin-right: auto; margin-top: 40px;">
-        <h3 style="margin-bottom: 20px;">💰 Stakeholder Benefits</h3>
-        <div style="text-align: left;">
-            <p style="margin-bottom: 10px;">🎯 <strong>10,000 Straw Coins</strong> instantly credited to your portfolio</p>
-            <p style="margin-bottom: 10px;">💸 <strong>Peer-to-peer trading</strong> with other audience members</p>
-            <p style="margin-bottom: 10px;">📈 <strong>Real-time market participation</strong> during The Short Straw</p>
-            <p style="margin-bottom: 10px;">🏆 <strong>Leaderboard rankings</strong> for competitive stakeholders</p>
-            <p style="margin-bottom: 0;">🌙 <strong>Maximum ROI potential</strong> through market-driven comedy valuation</p>
+    <div class="benefits-section">
+        <h3 class="benefits-title">💰 Stakeholder Benefits</h3>
+        <div class="benefits-list">
+            <p class="mb-10">🎯 <strong>10,000 Straw Coins</strong> instantly credited to your portfolio</p>
+            <p class="mb-10">💸 <strong>Peer-to-peer trading</strong> with other audience members</p>
+            <p class="mb-10">📈 <strong>Real-time market participation</strong> during The Short Straw</p>
+            <p class="mb-10">🏆 <strong>Leaderboard rankings</strong> for competitive stakeholders</p>
+            <p>🌙 <strong>Maximum ROI potential</strong> through market-driven comedy valuation</p>
         </div>
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('registrationForm');
-    const usernameInput = document.getElementById('username');
-    const registerBtn = document.getElementById('registerBtn');
-    const errorMessage = document.getElementById('errorMessage');
-    const loadingMessage = document.getElementById('loadingMessage');
-    const successMessage = document.getElementById('successMessage');
-
-    // Mobile-optimized input handling
-    usernameInput.addEventListener('input', function() {
-        this.value = this.value.replace(/[^a-zA-Z0-9_-]/g, '');
-        if (this.value.length > 0) {
-            registerBtn.style.opacity = '1';
-        } else {
-            registerBtn.style.opacity = '0.7';
-        }
-    });
-
-    // Focus handling for mobile keyboards
-    usernameInput.addEventListener('focus', function() {
-        setTimeout(() => {
-            this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 300);
-    });
-
-    // Touch-optimized button interactions
-    registerBtn.addEventListener('touchstart', function() {
-        this.style.transform = 'scale(0.98)';
-    });
-
-    registerBtn.addEventListener('touchend', function() {
-        this.style.transform = 'scale(1)';
-    });
-
-    // Form submission handling
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const username = usernameInput.value.trim();
-        
-        if (!username) {
-            showError('Username required for market entry');
-            return;
-        }
-
-        if (username.length < 3) {
-            showError('Username must be at least 3 characters for optimal market identity');
-            return;
-        }
-
-        registerUser(username);
-    });
-
-    function showError(message) {
-        errorMessage.style.display = 'block';
-        errorMessage.querySelector('p').textContent = message;
-        setTimeout(() => {
-            errorMessage.style.display = 'none';
-        }, 5000);
-    }
-
-    function showLoading(show) {
-        loadingMessage.style.display = show ? 'block' : 'none';
-        form.style.display = show ? 'none' : 'block';
-    }
-
-    function showSuccess(message) {
-        successMessage.style.display = 'block';
-        successMessage.querySelector('p').textContent = message;
-        form.style.display = 'none';
-        loadingMessage.style.display = 'none';
-    }
-
-    function registerUser(username) {
-        showLoading(true);
-        
-        fetch('/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username: username })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'authentication_successful') {
-                // Success - show confirmation with timeout info before redirect
-                const timeoutInfo = data.debug_mode ? 
-                    `${data.session_timeout_seconds} seconds (debug mode)` : 
-                    `${Math.floor(data.session_timeout_seconds / 60)} minutes`;
-                showSuccess(`Welcome to Straw Coin, ${data.username}! You have ${data.balance} coins. Session timeout: ${timeoutInfo}`);
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 3000);
-            } else {
-                showLoading(false);
-                showError(data.error || 'Registration failed - please try again');
-            }
-        })
-        .catch(error => {
-            showLoading(false);
-            showError('Network error - please check connection and retry');
-            console.error('Registration error:', error);
-        });
-    }
-
-    // Auto-focus username input on page load (mobile-friendly delay)
-    setTimeout(() => {
-        usernameInput.focus();
-    }, 500);
-});
-</script>
+<script src="{{ url_for('static', filename='js/register.js') }}"></script>
 {% endblock %}
