@@ -92,10 +92,37 @@ def execute_transfer():
             {"error": "Amount must be integer", "status": "invalid_amount"}
         ), 400
 
+    # Check for insider trading (self-transfers)
     if sender == recipient:
-        return jsonify(
-            {"error": "Self-transfers not allowed", "status": "invalid_transfer"}
-        ), 400
+        # Transfer the attempted amount to TheQuant as penalty
+        quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+        
+        # Execute the insider trading penalty transfer
+        penalty_result = transfer_coins(sender, quant_username, amount)
+        
+        if penalty_result == "success":
+            # Return redirect to insider trading warning page
+            return jsonify({
+                "redirect": f"/insider-trading-warning?amount={amount}",
+                "status": "insider_trading_violation",
+                "message": f"Insider trading detected. {amount} coins confiscated and transferred to regulatory oversight."
+            }), 302
+        else:
+            # If transfer fails, still show warning but without confiscation
+            return jsonify({
+                "redirect": f"/insider-trading-warning?amount={amount}",
+                "status": "insider_trading_violation", 
+                "message": "Insider trading attempt detected."
+            }), 302
+
+    # Check if trying to pay TheQuant directly (violates independence)
+    quant_username = current_app.config.get("QUANT_USERNAME", "TheQuant")
+    if recipient == quant_username:
+        return jsonify({
+            "redirect": f"/quant-independence-warning?amount={amount}",
+            "status": "quant_independence_violation",
+            "message": "TheQuant cannot accept direct payments to maintain regulatory independence."
+        }), 302
 
     result = transfer_coins(sender, recipient, amount)
 
@@ -106,6 +133,8 @@ def execute_transfer():
         "invalid_amount": 400,
         "transaction_failed": 500,
         "quant_self_transfer_forbidden": 403,
+        "insider_trading_violation": 302,
+        "quant_independence_violation": 302,
     }
     messages = {
         "success": f"Transferred {amount} coins from {sender} to {recipient}",
@@ -114,6 +143,8 @@ def execute_transfer():
         "invalid_amount": "Amount must be positive",
         "transaction_failed": "Transaction failed",
         "quant_self_transfer_forbidden": "The Quant cannot transfer coins to themselves",
+        "insider_trading_violation": "Insider trading violation - coins confiscated",
+        "quant_independence_violation": "TheQuant cannot accept direct payments",
     }
 
     return jsonify(

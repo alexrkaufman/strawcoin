@@ -1,4 +1,4 @@
-// Straw Coin Home Page Functionality
+// Straw Coin Home Page JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
     const sendForm = document.getElementById('sendCoinsForm');
@@ -13,11 +13,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (recipientList) {
         const options = recipientList.querySelectorAll('option');
         options.forEach(option => {
-            if (option.value) {
-                validRecipients.push(option.value);
-            }
+            validRecipients.push(option.value);
         });
     }
+
+    // Get current username from the page
+    const currentUsername = window.currentUsername || '';
+
+    // Clean input validation without spoiling the surprises
 
     // Add recipient input validation and feedback
     if (recipientInput) {
@@ -44,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (partialMatch) {
                         this.style.borderColor = '#f39c12'; // Orange for partial match
                     } else {
-                        this.style.borderColor = '#e74c3c'; // Red for no match
+                        this.style.borderColor = '#e74c3c'; // Red for invalid
                     }
                 }
             }
@@ -52,19 +55,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Clear validation styling on focus
         recipientInput.addEventListener('focus', function() {
-            this.style.borderColor = '#3498db';
+            this.style.borderColor = '';
         });
     }
 
     // Quick send button functionality
     quickSendButtons.forEach(button => {
         button.addEventListener('click', function() {
-            const amount = this.getAttribute('data-amount');
-            amountInput.value = amount;
+            const amount = parseInt(this.dataset.amount);
+            const recipient = this.dataset.recipient;
 
-            // Highlight the selected amount
-            quickSendButtons.forEach(btn => btn.style.background = 'rgba(255,255,255,0.2)');
-            this.style.background = 'rgba(255,255,255,0.4)';
+            if (amountInput && recipientInput) {
+                amountInput.value = amount;
+                recipientInput.value = recipient;
+
+                // Trigger validation
+                recipientInput.dispatchEvent(new Event('input'));
+
+                // Visual feedback for clicked button
+                quickSendButtons.forEach(btn => btn.style.background = 'rgba(255,255,255,0.2)');
+                this.style.background = 'rgba(46, 204, 113, 0.3)';
+            }
         });
     });
 
@@ -73,50 +84,26 @@ document.addEventListener('DOMContentLoaded', function() {
         sendForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const recipient = recipientInput.value;
+            const recipient = recipientInput.value.trim();
             const amount = parseInt(amountInput.value);
 
             if (!recipient || !amount || amount <= 0) {
-                showStatus('Please enter a recipient and a valid amount', 'error');
+                showStatus('Please enter a valid recipient and amount', 'error');
                 return;
             }
 
-            // Validate that the recipient exists in the list (case-insensitive)
-            const trimmedRecipient = recipient.trim();
-            const isValidRecipient = validRecipients.some(validRecipient => 
-                validRecipient.toLowerCase() === trimmedRecipient.toLowerCase()
-            );
+            // Basic validation - let the API handle special cases
 
-            if (!isValidRecipient) {
-                showStatus('Please enter a valid recipient username', 'error');
-                recipientInput.style.borderColor = '#e74c3c';
-                return;
-            }
-
-            // Get current balance from the page
-            const balanceElement = document.querySelector('.balance-amount');
-            const currentBalance = balanceElement ? 
-                parseInt(balanceElement.textContent.replace(/[^0-9]/g, '')) : 0;
-
-            if (amount > currentBalance) {
-                showStatus('Insufficient funds! You only have ' + currentBalance.toLocaleString() + ' coins', 'error');
-                return;
-            }
+            const submitButton = sendForm.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
 
             try {
-                // Disable form during request
-                const submitButton = sendForm.querySelector('button[type="submit"]');
-                const originalText = submitButton.textContent;
-                submitButton.textContent = '🚀 Sending...';
+                // Disable form and show loading
+                submitButton.textContent = '🔄 Sending...';
                 submitButton.disabled = true;
 
-                // Get current username from the page
-                const usernameElement = document.querySelector('[data-username]');
-                const currentUsername = usernameElement ? 
-                    usernameElement.getAttribute('data-username') : 
-                    window.currentUsername;
-
-                // Use the exact case from the valid recipients list
+                // Find exact recipient match (case-insensitive)
+                const trimmedRecipient = recipient.toLowerCase();
                 const exactRecipient = validRecipients.find(validRecipient =>
                     validRecipient.toLowerCase() === trimmedRecipient.toLowerCase()
                 ) || trimmedRecipient;
@@ -134,6 +121,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 const data = await response.json();
+
+                // Handle redirects for violations
+                if (data.redirect) {
+                    if (data.status === 'insider_trading_violation') {
+                        // Show brief warning before redirect
+                        showStatus('🚨 INSIDER TRADING DETECTED! Redirecting to violation notice...', 'error');
+                        setTimeout(() => {
+                            window.location.href = data.redirect;
+                        }, 2000);
+                    } else if (data.status === 'quant_independence_violation') {
+                        // Show brief warning before redirect
+                        showStatus('⚖️ QUANT INDEPENDENCE VIOLATION! Redirecting to notice...', 'error');
+                        setTimeout(() => {
+                            window.location.href = data.redirect;
+                        }, 2000);
+                    } else {
+                        // Other redirects
+                        window.location.href = data.redirect;
+                    }
+                    return;
+                }
 
                 if (response.ok && data.status === 'success') {
                     showStatus(`🎉 Successfully sent ${amount.toLocaleString()} coins to ${recipient}!`, 'success');
@@ -181,74 +189,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         statusDiv.style.padding = '15px';
-        statusDiv.style.borderRadius = '10px';
-        statusDiv.style.margin = '20px 0';
-        statusDiv.style.textAlign = 'center';
+        statusDiv.style.borderRadius = '8px';
+        statusDiv.style.marginTop = '15px';
         statusDiv.style.fontWeight = 'bold';
 
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-            statusDiv.style.display = 'none';
-        }, 5000);
-    }
-
-    // Add hover effects to buttons
-    const allButtons = document.querySelectorAll('button');
-    allButtons.forEach(button => {
-        button.addEventListener('mouseenter', function() {
-            if (!this.disabled) {
-                this.style.transform = 'scale(1.05)';
-            }
-        });
-
-        button.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1)';
-        });
-    });
-
-    // Initialize tooltips for performer status
-    const performerCards = document.querySelectorAll('.performer-status-card');
-    performerCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'scale(1.02)';
-        });
-
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1)';
-        });
-    });
-
-    // Auto-refresh market stats every 30 seconds
-    setInterval(() => {
-        updateMarketStats();
-    }, 30000);
-
-    async function updateMarketStats() {
-        try {
-            const response = await fetch('/api/market-stats');
-            if (response.ok) {
-                const data = await response.json();
-                
-                // Update market cap
-                const marketCapElement = document.querySelector('[data-stat="market-cap"]');
-                if (marketCapElement) {
-                    marketCapElement.textContent = data.market_cap.toLocaleString();
-                }
-
-                // Update user count
-                const userCountElement = document.querySelector('[data-stat="user-count"]');
-                if (userCountElement) {
-                    userCountElement.textContent = data.total_users;
-                }
-
-                // Update transaction volume
-                const volumeElement = document.querySelector('[data-stat="volume"]');
-                if (volumeElement) {
-                    volumeElement.textContent = data.total_volume.toLocaleString();
-                }
-            }
-        } catch (error) {
-            console.log('Market stats update failed:', error);
+        // Auto-hide success messages
+        if (type === 'success') {
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
         }
     }
+
+    // Live balance updates (placeholder for future WebSocket implementation)
+    function startLiveUpdates() {
+        setInterval(() => {
+            // Could implement WebSocket or polling here for live balance updates
+            // For now, just update the timestamp if there's a balance display
+            const balanceTimestamp = document.querySelector('.balance-timestamp');
+            if (balanceTimestamp) {
+                balanceTimestamp.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+            }
+        }, 30000); // Every 30 seconds
+    }
+
+    // Initialize live updates
+    startLiveUpdates();
+
+    // Add current username to global scope for validation
+    window.currentUsername = currentUsername;
 });

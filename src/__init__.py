@@ -243,6 +243,39 @@ def create_app(test_config=None):
     def forbidden(error):
         return render_template("403.jinja2"), 403
 
+    @app.route("/insider-trading-warning")
+    @require_auth
+    def insider_trading_warning():
+        """Display insider trading violation warning page."""
+        from flask import session, request
+        from datetime import datetime
+        
+        username = session.get("username", "Unknown")
+        amount = request.args.get("amount", 0)
+        
+        return render_template(
+            "insider_trading_warning.jinja2",
+            username=username,
+            amount=amount,
+            timestamp=int(datetime.now().timestamp()),
+            current_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
+        )
+
+    @app.route("/quant-independence-warning")
+    @require_auth
+    def quant_independence_warning():
+        """Display Quant independence protection warning page."""
+        from flask import session, request
+        
+        username = session.get("username", "Unknown")
+        amount = request.args.get("amount", 0)
+        
+        return render_template(
+            "quant_independence_warning.jinja2",
+            username=username,
+            amount=amount
+        )
+
     @app.route("/debug/config")
     def debug_config():
         """Debug endpoint to check which configuration is loaded."""

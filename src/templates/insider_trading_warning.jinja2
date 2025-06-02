@@ -1,0 +1,97 @@
+{% extends "base.jinja2" %}
+
+{% block content %}
+<div style="min-height: 80vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a1a, #2d1b1b);">
+    <div style="max-width: 600px; text-align: center; padding: 40px; background: linear-gradient(135deg, #2d1b1b, #4a1515); border: 2px solid #F23645; border-radius: 20px; box-shadow: 0 10px 30px rgba(242, 54, 69, 0.3);">
+        
+        <!-- Warning Icon -->
+        <div style="font-size: 4rem; margin-bottom: 20px; animation: pulse 2s infinite;">
+            ⚠️🚨⚠️
+        </div>
+        
+        <!-- Main Warning -->
+        <h1 style="color: #F23645; font-size: 2.5rem; margin-bottom: 20px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+            INSIDER TRADING DETECTED
+        </h1>
+        
+        <!-- Regulatory Notice -->
+        <div style="background: rgba(242, 54, 69, 0.1); border: 1px solid #F23645; border-radius: 10px; padding: 20px; margin-bottom: 30px;">
+            <h2 style="color: #ffffff; font-size: 1.3rem; margin-bottom: 15px;">
+                🏛️ STRAW COIN REGULATORY COMMISSION ALERT
+            </h2>
+            <p style="color: #ffffff; font-size: 1.1rem; line-height: 1.6; margin-bottom: 15px;">
+                <strong>{{ username }}</strong>, you have been flagged for attempting to execute a <span style="color: #F23645; font-weight: bold;">SELF-TRANSFER</span> of <strong>{{ amount | default(0) }} Straw Coins</strong>.
+            </p>
+            <p style="color: #FFA726; font-size: 1rem; line-height: 1.6;">
+                This action constitutes <strong>INSIDER TRADING</strong> under Section 420.69 of the Straw Coin Market Regulations Act.
+            </p>
+        </div>
+        
+        <!-- Enforcement Action -->
+        <div style="background: rgba(0, 0, 0, 0.3); border-radius: 10px; padding: 25px; margin-bottom: 30px;">
+            <h3 style="color: #00D084; font-size: 1.2rem; margin-bottom: 15px;">
+                📊 REGULATORY ENFORCEMENT ACTION
+            </h3>
+            <div style="text-align: left; color: #ffffff; font-size: 1rem; line-height: 1.8;">
+                <p>✅ <strong>Transaction Blocked:</strong> Self-transfer prevented</p>
+                <p>🔄 <strong>Funds Seized:</strong> {{ amount | default(0) }} coins transferred to market oversight</p>
+                <p>👤 <strong>Enforcement Agent:</strong> TheQuant (Platform Administrator)</p>
+                <p>📋 <strong>Violation Code:</strong> INSIDER-{{ timestamp | default("000") }}</p>
+                <p>⏰ <strong>Timestamp:</strong> {{ current_time | default("Unknown") }}</p>
+            </div>
+        </div>
+        
+        <!-- Warning Message -->
+        <div style="background: linear-gradient(135deg, #4a1515, #2d1b1b); border-radius: 10px; padding: 20px; margin-bottom: 30px;">
+            <p style="color: #ffffff; font-size: 1rem; line-height: 1.6; margin-bottom: 15px;">
+                <strong>YOUR ATTEMPTED INSIDER TRADING COINS HAVE BEEN CONFISCATED</strong> and transferred to <span style="color: #00D084; font-weight: bold;">TheQuant</span> for platform administration and market integrity enforcement.
+            </p>
+            <p style="color: #FFA726; font-size: 0.9rem; line-height: 1.6;">
+                TheQuant maintains market independence and ensures fair trading practices for all Straw Coin participants. This action protects market integrity and prevents artificial price manipulation.
+            </p>
+        </div>
+        
+        <!-- Compliance Notice -->
+        <div style="border: 1px solid #4a90e2; background: rgba(74, 144, 226, 0.1); border-radius: 10px; padding: 20px; margin-bottom: 30px;">
+            <h4 style="color: #4a90e2; font-size: 1.1rem; margin-bottom: 10px;">
+                📜 COMPLIANCE REMINDER
+            </h4>
+            <p style="color: #ffffff; font-size: 0.95rem; line-height: 1.5;">
+                All Straw Coin transactions are monitored for regulatory compliance. Self-transfers, wash trading, and market manipulation are strictly prohibited and will result in immediate enforcement action.
+            </p>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+            <a href="/" style="background: linear-gradient(135deg, #4a90e2, #357abd); color: white; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: bold; transition: all 0.3s; box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);">
+                📊 Return to Trading Platform
+            </a>
+            <a href="/leaderboard" style="background: linear-gradient(135deg, #00D084, #00A66B); color: white; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: bold; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0, 208, 132, 0.3);">
+                📈 View Market Data
+            </a>
+        </div>
+        
+        <!-- Footer Notice -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+            <p style="color: #b0b0b0; font-size: 0.8rem; line-height: 1.4;">
+                <strong>Straw Coin Regulatory Commission</strong><br>
+                Protecting Market Integrity Since 2024<br>
+                <em>"Where Shareholder Value Meets Regulatory Compliance"</em>
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+}
+</style>
+{% endblock %}
