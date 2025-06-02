@@ -110,6 +110,46 @@
     </div>
 </div>
 
+<!-- Performer System Status -->
+<div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
+    <h2 style="text-align: center; margin-bottom: 20px;">🎭 Performer Economy</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; text-align: center;">
+            <h3>🎪 Performers</h3>
+            <p style="font-size: 2rem; font-weight: bold;">{{ performer_count }}</p>
+            <p>Active on Stage</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; text-align: center;">
+            <h3>👥 Audience</h3>
+            <p style="font-size: 2rem; font-weight: bold;">{{ audience_count }}</p>
+            <p>Market Participants</p>
+        </div>
+    </div>
+    
+    {% if current_user_is_performer %}
+    <div style="background: linear-gradient(45deg, #e74c3c, #c0392b); padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+        <h3 style="margin: 0 0 10px 0;">🎭 You are a PERFORMER</h3>
+        <p style="margin: 5px 0; opacity: 0.9;">You lose 5 coins every minute to audience members</p>
+        <p style="margin: 5px 0; font-size: 0.9rem; opacity: 0.7;">Make them laugh to earn coins back through tips!</p>
+    </div>
+    {% else %}
+    <div style="background: linear-gradient(45deg, #2ecc71, #27ae60); padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+        <h3 style="margin: 0 0 10px 0;">👥 You are AUDIENCE</h3>
+        <p style="margin: 5px 0; opacity: 0.9;">You receive coins from performers every minute</p>
+        <p style="margin: 5px 0; font-size: 0.9rem; opacity: 0.7;">Send coins to performers to show appreciation!</p>
+    </div>
+    {% endif %}
+    
+    {% if redistribution_enabled %}
+    <div style="text-align: center; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+        <p style="margin: 0; font-size: 0.9rem; opacity: 0.8;">
+            ⏰ Automatic redistribution every minute | 
+            💰 5 coins per performer → audience members
+        </p>
+    </div>
+    {% endif %}
+</div>
+
 <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
     <h2 style="text-align: center; margin-bottom: 20px;">🏆 Market Leaders</h2>
     <div style="display: grid; gap: 10px;">

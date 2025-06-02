@@ -17,7 +17,8 @@ from .db import (
     has_active_session, 
     create_session, 
     update_session_activity, 
-    remove_session
+    remove_session,
+    get_user_performer_status
 )
 
 bp = Blueprint("auth", __name__)
@@ -83,6 +84,7 @@ def login():
         ), 400
 
     username = data["username"].strip()
+    is_performer = data.get("is_performer", False)
 
     if not username or len(username) < 3:
         return jsonify(
@@ -102,14 +104,16 @@ def login():
         ), 409
 
     balance = get_user_balance(username)
+    performer_status = get_user_performer_status(username)
 
     if balance is None:
-        user_id = create_user(username)
+        user_id = create_user(username, is_performer)
         if user_id is None:
             return jsonify(
                 {"error": "Username already exists", "status": "duplicate_stakeholder"}
             ), 409
         balance = 10000
+        performer_status = is_performer
     else:
         # Create balance snapshot for existing user login
         from .db import get_db, create_balance_snapshot
@@ -137,11 +141,14 @@ def login():
     session["session_start"] = datetime.now().isoformat()
     session.permanent = True
 
+    user_type = "performer" if performer_status else "audience member"
     return jsonify(
         {
-            "message": f"User {username} successfully registered",
+            "message": f"User {username} successfully registered as {user_type}",
             "username": username,
             "balance": balance,
+            "is_performer": performer_status,
+            "user_type": user_type,
             "session_timeout_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
             "debug_mode": current_app.debug,
             "status": "authentication_successful",

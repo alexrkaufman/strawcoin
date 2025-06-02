@@ -52,10 +52,18 @@ def init_db():
             table for table in required_tables if table not in existing_tables
         ]
 
-        if missing_tables:
-            click.echo(
-                f"Found existing database, migrating missing tables: {missing_tables}"
-            )
+        # Check if users table needs is_performer column
+        user_columns = db.execute("PRAGMA table_info(users)").fetchall()
+        column_names = [col["name"] for col in user_columns]
+        needs_performer_column = "is_performer" not in column_names
+
+        if missing_tables or needs_performer_column:
+            if missing_tables:
+                click.echo(
+                    f"Found existing database, migrating missing tables: {missing_tables}"
+                )
+            if needs_performer_column:
+                click.echo("Adding is_performer column to users table")
 
             # Add missing tables
             if "balance_snapshots" in missing_tables:
@@ -97,6 +105,11 @@ def init_db():
                     "CREATE INDEX idx_active_sessions_last_activity ON active_sessions(last_activity)"
                 )
                 click.echo("Added active_sessions table")
+
+            # Add is_performer column to users table if missing
+            if needs_performer_column:
+                db.execute("ALTER TABLE users ADD COLUMN is_performer BOOLEAN NOT NULL DEFAULT 0")
+                click.echo("Added is_performer column to users table")
 
             db.commit()
 
@@ -266,15 +279,18 @@ def init_app(app):
     app.cli.add_command(cleanup_sessions_command)
     app.cli.add_command(list_sessions_command)
     app.cli.add_command(clear_sessions_command)
+    app.cli.add_command(redistribute_performer_coins_command)
+    app.cli.add_command(set_performer_command)
+    app.cli.add_command(list_performers_command)
     app.cli.add_command(migrate_db_command)
 
 
-def create_user(username):
+def create_user(username, is_performer=False):
     db = get_db()
     try:
         cursor = db.execute(
-            "INSERT INTO users (username, coin_balance) VALUES (?, ?)",
-            (username, 10000),
+            "INSERT INTO users (username, coin_balance, is_performer) VALUES (?, ?, ?)",
+            (username, 10000, is_performer),
         )
         user_id = cursor.lastrowid
 
@@ -597,3 +613,165 @@ def get_session_info(session_id):
     ).fetchone()
     
     return dict(session) if session else None
+
+
+def set_user_performer_status(username, is_performer):
+    """Set a user's performer status."""
+    db = get_db()
+    try:
+        db.execute(
+            "UPDATE users SET is_performer = ? WHERE username = ?",
+            (is_performer, username),
+        )
+        db.commit()
+        return True
+    except sqlite3.Error:
+        return False
+
+
+def get_user_performer_status(username):
+    """Get a user's performer status."""
+    db = get_db()
+    user = db.execute(
+        "SELECT is_performer FROM users WHERE username = ?", (username,)
+    ).fetchone()
+    return bool(user["is_performer"]) if user else None
+
+
+def get_performers():
+    """Get all performers."""
+    db = get_db()
+    performers = db.execute(
+        "SELECT username, coin_balance FROM users WHERE is_performer = 1"
+    ).fetchall()
+    return [dict(performer) for performer in performers]
+
+
+def get_audience_members():
+    """Get all audience members (non-performers)."""
+    db = get_db()
+    audience = db.execute(
+        "SELECT username, coin_balance FROM users WHERE is_performer = 0"
+    ).fetchall()
+    return [dict(member) for member in audience]
+
+
+def performer_redistribution():
+    """Redistribute 5 coins from each performer to all audience members every minute."""
+    db = get_db()
+    
+    # Get all performers and audience members
+    performers = db.execute(
+        "SELECT id, username, coin_balance FROM users WHERE is_performer = 1"
+    ).fetchall()
+    
+    audience = db.execute(
+        "SELECT id, username, coin_balance FROM users WHERE is_performer = 0"
+    ).fetchall()
+    
+    if not performers or not audience:
+        return {"success": False, "message": "No performers or audience members found"}
+    
+    audience_count = len(audience)
+    performer_count = len(performers)
+    coins_per_performer = 5
+    total_coins_redistributed = performer_count * coins_per_performer
+    coins_per_audience_member = total_coins_redistributed // audience_count
+    
+    try:
+        # Start transaction
+        for performer in performers:
+            # Check if performer has enough coins
+            if performer["coin_balance"] < coins_per_performer:
+                continue  # Skip performers who don't have enough coins
+            
+            # Deduct coins from performer
+            db.execute(
+                "UPDATE users SET coin_balance = coin_balance - ? WHERE id = ?",
+                (coins_per_performer, performer["id"]),
+            )
+            
+            # Create transaction record for each audience member
+            for audience_member in audience:
+                coins_for_this_member = coins_per_performer // audience_count
+                if coins_for_this_member > 0:
+                    db.execute(
+                        "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
+                        (performer["id"], audience_member["id"], coins_for_this_member),
+                    )
+        
+        # Add coins to audience members
+        if coins_per_audience_member > 0:
+            db.execute(
+                "UPDATE users SET coin_balance = coin_balance + ? WHERE is_performer = 0",
+                (coins_per_audience_member,),
+            )
+        
+        db.commit()
+        
+        # Create balance snapshots for all users after redistribution
+        create_balance_snapshots_for_all_users()
+        
+        return {
+            "success": True,
+            "performer_count": performer_count,
+            "audience_count": audience_count,
+            "coins_per_performer": coins_per_performer,
+            "coins_per_audience_member": coins_per_audience_member,
+            "total_redistributed": total_coins_redistributed
+        }
+        
+    except sqlite3.Error as e:
+        db.rollback()
+        return {"success": False, "message": f"Database error: {e}"}
+
+
+@click.command("redistribute-performer-coins")
+@with_appcontext
+def redistribute_performer_coins_command():
+    """Manually trigger performer coin redistribution."""
+    result = performer_redistribution()
+    if result["success"]:
+        click.echo(f"✅ Redistributed {result['total_redistributed']} coins from {result['performer_count']} performers to {result['audience_count']} audience members")
+        click.echo(f"   Each performer lost {result['coins_per_performer']} coins")
+        click.echo(f"   Each audience member gained {result['coins_per_audience_member']} coins")
+    else:
+        click.echo(f"❌ Redistribution failed: {result['message']}")
+
+
+@click.command("set-performer")
+@click.argument("username")
+@click.option("--performer/--audience", default=True, help="Set as performer (default) or audience member")
+@with_appcontext
+def set_performer_command(username, performer):
+    """Set a user's performer status."""
+    success = set_user_performer_status(username, performer)
+    if success:
+        status = "performer" if performer else "audience member"
+        click.echo(f"✅ Set {username} as {status}")
+    else:
+        click.echo(f"❌ Failed to set performer status for {username}")
+
+
+@click.command("list-performers")
+@with_appcontext
+def list_performers_command():
+    """List all performers."""
+    performers = get_performers()
+    audience = get_audience_members()
+    
+    if performers:
+        click.echo("🎭 Performers:")
+        for performer in performers:
+            click.echo(f"  {performer['username']} - {performer['coin_balance']} coins")
+    else:
+        click.echo("No performers found")
+    
+    if audience:
+        click.echo(f"\n👥 Audience Members ({len(audience)}):")
+        for member in audience[:5]:  # Show first 5
+            click.echo(f"  {member['username']} - {member['coin_balance']} coins")
+        if len(audience) > 5:
+            click.echo(f"  ... and {len(audience) - 5} more")
+    else:
+        click.echo("No audience members found")

@@ -5,6 +5,7 @@ from flask import Flask, render_template, current_app
 from .auth import require_auth
 from .config import DevelopmentConfig, ProductionConfig
 from .db import get_db
+from .scheduler import init_scheduler
 
 
 def create_app(test_config=None):
@@ -71,6 +72,13 @@ def create_app(test_config=None):
                 [dict(user) for user in all_users] if all_users else []
             )
 
+            # Get performer stats
+            performer_count = db.execute("SELECT COUNT(*) as count FROM users WHERE is_performer = 1").fetchone()
+            audience_count = db.execute("SELECT COUNT(*) as count FROM users WHERE is_performer = 0").fetchone()
+            current_user_is_performer = db.execute(
+                "SELECT is_performer FROM users WHERE username = ?", (current_username,)
+            ).fetchone()
+
             market_cap = total_coins["total"] or 0
             stakeholder_count = user_count["count"] or 0
             tx_count = transaction_volume["count"] or 0
@@ -87,6 +95,9 @@ def create_app(test_config=None):
             current_user_balance = 0
             recent_transactions = []
             available_recipients = []
+            performer_count = {"count": 0}
+            audience_count = {"count": 0}
+            current_user_is_performer = {"is_performer": 0}
 
         return render_template(
             "home.jinja2",
@@ -101,6 +112,10 @@ def create_app(test_config=None):
             current_user_balance=current_user_balance,
             recent_transactions=recent_transactions,
             available_recipients=available_recipients,
+            performer_count=performer_count["count"],
+            audience_count=audience_count["count"],
+            current_user_is_performer=bool(current_user_is_performer["is_performer"]) if current_user_is_performer else False,
+            redistribution_enabled=app.config.get("ENABLE_PERFORMER_REDISTRIBUTION", False),
         )
 
     @app.route("/leaderboard")
@@ -137,5 +152,8 @@ def create_app(test_config=None):
     # Clean up expired sessions on startup
     with app.app_context():
         db.cleanup_sessions_on_startup()
+
+    # Initialize performer redistribution scheduler
+    init_scheduler(app)
 
     return app

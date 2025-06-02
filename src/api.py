@@ -5,6 +5,11 @@ from .db import (
     transfer_coins,
     get_all_users,
     get_transaction_history,
+    set_user_performer_status,
+    get_user_performer_status,
+    get_performers,
+    get_audience_members,
+    performer_redistribution,
 )
 from .auth import require_auth
 
@@ -30,18 +35,23 @@ def register_user():
             }
         ), 400
 
-    user_id = create_user(username)
+    # Check if performer flag is provided
+    is_performer = data.get("is_performer", False)
+    
+    user_id = create_user(username, is_performer)
 
     if user_id is None:
         return jsonify(
             {"error": "Username already exists", "status": "duplicate_stakeholder"}
         ), 409
 
+    user_type = "performer" if is_performer else "audience member"
     return jsonify(
         {
-            "message": f"User {username} successfully created",
+            "message": f"User {username} successfully created as {user_type}",
             "user_id": user_id,
             "starting_balance": 10000,
+            "is_performer": is_performer,
             "status": "moon_mission_initiated",
         }
     ), 201
@@ -251,6 +261,95 @@ def get_leaderboard_history():
             "status": "success",
         }
     )
+
+
+@bp.route("/performers", methods=["GET"])
+@require_auth
+def get_performers_list():
+    """Get all performers."""
+    performers = get_performers()
+    audience = get_audience_members()
+    
+    return jsonify(
+        {
+            "performers": performers,
+            "audience_count": len(audience),
+            "performer_count": len(performers),
+            "status": "success",
+        }
+    )
+
+
+@bp.route("/performers/redistribute", methods=["POST"])
+@require_auth
+def trigger_performer_redistribution():
+    """Manually trigger performer coin redistribution."""
+    result = performer_redistribution()
+    
+    if result["success"]:
+        return jsonify(
+            {
+                "message": f"Redistributed {result['total_redistributed']} coins from {result['performer_count']} performers to {result['audience_count']} audience members",
+                "details": result,
+                "status": "redistribution_successful",
+            }
+        ), 200
+    else:
+        return jsonify(
+            {
+                "error": result["message"],
+                "status": "redistribution_failed",
+            }
+        ), 500
+
+
+@bp.route("/users/<username>/performer-status", methods=["GET"])
+@require_auth
+def get_performer_status(username):
+    """Get a user's performer status."""
+    status = get_user_performer_status(username)
+    
+    if status is None:
+        return jsonify({"error": "User not found", "status": "user_not_found"}), 404
+    
+    return jsonify(
+        {
+            "username": username,
+            "is_performer": status,
+            "user_type": "performer" if status else "audience_member",
+            "status": "success",
+        }
+    )
+
+
+@bp.route("/users/<username>/performer-status", methods=["PUT"])
+@require_auth
+def set_performer_status(username):
+    """Set a user's performer status."""
+    data = request.get_json()
+    
+    if not data or "is_performer" not in data:
+        return jsonify(
+            {"error": "is_performer field required", "status": "validation_error"}
+        ), 400
+    
+    is_performer = bool(data["is_performer"])
+    success = set_user_performer_status(username, is_performer)
+    
+    if not success:
+        return jsonify(
+            {"error": "Failed to update performer status", "status": "update_failed"}
+        ), 500
+    
+    user_type = "performer" if is_performer else "audience_member"
+    return jsonify(
+        {
+            "message": f"User {username} is now a {user_type}",
+            "username": username,
+            "is_performer": is_performer,
+            "status": "status_updated",
+        }
+    ), 200
 
 
 @bp.route("/leaderboard-snapshot", methods=["POST"])
