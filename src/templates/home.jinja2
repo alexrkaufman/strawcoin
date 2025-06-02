@@ -37,12 +37,13 @@
         <form id="sendCoinsForm" class="send-form">
             <div>
                 <label class="form-label">Recipient:</label>
-                <select id="recipient" name="recipient" class="form-input" required>
-                    <option value="">Select a shareholder...</option>
+                <input type="text" id="recipient" name="recipient" class="form-input" list="recipientList" placeholder="Type or select a shareholder..." autocomplete="off" required>
+                <datalist id="recipientList">
                     {% for user in available_recipients %}
                     <option value="{{ user.username }}">{{ user.username }}</option>
                     {% endfor %}
-                </select>
+                </datalist>
+                <small class="opacity-80" style="font-size: 0.9rem;">💡 Start typing to see suggestions or click the dropdown arrow</small>
             </div>
 
             <div>

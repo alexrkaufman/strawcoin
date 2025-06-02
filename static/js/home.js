@@ -5,7 +5,56 @@ document.addEventListener('DOMContentLoaded', function() {
     const quickSendButtons = document.querySelectorAll('.quickSend');
     const statusDiv = document.getElementById('transferStatus');
     const amountInput = document.getElementById('amount');
-    const recipientSelect = document.getElementById('recipient');
+    const recipientInput = document.getElementById('recipient');
+    const recipientList = document.getElementById('recipientList');
+
+    // Get list of valid recipients for validation
+    const validRecipients = [];
+    if (recipientList) {
+        const options = recipientList.querySelectorAll('option');
+        options.forEach(option => {
+            if (option.value) {
+                validRecipients.push(option.value);
+            }
+        });
+    }
+
+    // Add recipient input validation and feedback
+    if (recipientInput) {
+        recipientInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            // Remove any special styling first
+            this.style.borderColor = '';
+            
+            if (value.length > 0) {
+                // Check if the entered value matches a valid recipient
+                const isValid = validRecipients.some(recipient => 
+                    recipient.toLowerCase() === value.toLowerCase()
+                );
+                
+                if (isValid) {
+                    this.style.borderColor = '#2ecc71'; // Green for valid
+                } else {
+                    // Check if it's a partial match
+                    const partialMatch = validRecipients.some(recipient => 
+                        recipient.toLowerCase().startsWith(value.toLowerCase())
+                    );
+                    
+                    if (partialMatch) {
+                        this.style.borderColor = '#f39c12'; // Orange for partial match
+                    } else {
+                        this.style.borderColor = '#e74c3c'; // Red for no match
+                    }
+                }
+            }
+        });
+
+        // Clear validation styling on focus
+        recipientInput.addEventListener('focus', function() {
+            this.style.borderColor = '#3498db';
+        });
+    }
 
     // Quick send button functionality
     quickSendButtons.forEach(button => {
@@ -24,11 +73,23 @@ document.addEventListener('DOMContentLoaded', function() {
         sendForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const recipient = recipientSelect.value;
+            const recipient = recipientInput.value;
             const amount = parseInt(amountInput.value);
 
             if (!recipient || !amount || amount <= 0) {
-                showStatus('Please select a recipient and enter a valid amount', 'error');
+                showStatus('Please enter a recipient and a valid amount', 'error');
+                return;
+            }
+
+            // Validate that the recipient exists in the list (case-insensitive)
+            const trimmedRecipient = recipient.trim();
+            const isValidRecipient = validRecipients.some(validRecipient => 
+                validRecipient.toLowerCase() === trimmedRecipient.toLowerCase()
+            );
+
+            if (!isValidRecipient) {
+                showStatus('Please enter a valid recipient username', 'error');
+                recipientInput.style.borderColor = '#e74c3c';
                 return;
             }
 
@@ -55,6 +116,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     usernameElement.getAttribute('data-username') : 
                     window.currentUsername;
 
+                // Use the exact case from the valid recipients list
+                const exactRecipient = validRecipients.find(validRecipient =>
+                    validRecipient.toLowerCase() === trimmedRecipient.toLowerCase()
+                ) || trimmedRecipient;
+
                 const response = await fetch('/api/transfer', {
                     method: 'POST',
                     headers: {
@@ -62,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     body: JSON.stringify({
                         sender: currentUsername,
-                        recipient: recipient,
+                        recipient: exactRecipient,
                         amount: amount
                     })
                 });
