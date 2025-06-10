@@ -1,6 +1,7 @@
 import os
+from re import PatternError
 
-from flask import Flask, current_app, render_template, redirect, url_for
+from flask import Flask, current_app, redirect, render_template, url_for
 
 from .auth import require_auth
 from .config import DevelopmentConfig, ProductionConfig
@@ -24,7 +25,6 @@ def create_app(test_config=None):
     else:
         app.config.from_object(ProductionConfig)
 
-
     # Ensure instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
@@ -41,7 +41,7 @@ def create_app(test_config=None):
 
         db = get_db()
         current_username = session.get("username")
-        
+
         # Redirect The CHANCELLOR to their terminal
         quant_username = app.config.get("QUANT_USERNAME", "CHANCELLOR")
         quant_enabled = app.config.get("QUANT_ENABLED", False)
@@ -135,13 +135,13 @@ def create_app(test_config=None):
     def leaderboard_page():
         from flask import session
 
-        from .db import get_user_balance, get_market_status
+        from .db import get_market_status, get_user_balance
 
         current_username = session.get("username")
         current_user_balance = (
             get_user_balance(current_username) if current_username else 0
         )
-        
+
         # Get current market status
         market_status = get_market_status()
 
@@ -205,7 +205,11 @@ def create_app(test_config=None):
             stakeholder_count = user_count["count"] or 0
             tx_count = transaction_volume["count"] or 0
             volume = transaction_volume["volume"] or 0
-            top_performers = [dict(performer) for performer in top_performers] if top_performers else []
+            top_performers = (
+                [dict(performer) for performer in top_performers]
+                if top_performers
+                else []
+            )
             all_users_list = [dict(user) for user in all_users] if all_users else []
 
         except Exception as e:
@@ -235,7 +239,9 @@ def create_app(test_config=None):
             performer_count=performer_count["count"],
             audience_count=audience_count["count"],
             all_users=all_users_list,
-            redistribution_enabled=app.config.get("ENABLE_PERFORMER_REDISTRIBUTION", False),
+            redistribution_enabled=app.config.get(
+                "ENABLE_PERFORMER_REDISTRIBUTION", False
+            ),
         )
 
     @app.errorhandler(404)
@@ -250,33 +256,32 @@ def create_app(test_config=None):
     @require_auth
     def insider_trading_warning():
         """Display insider trading violation warning page."""
-        from flask import session, request
         from datetime import datetime
-        
+
+        from flask import request, session
+
         username = session.get("username", "Unknown")
         amount = request.args.get("amount", 0)
-        
+
         return render_template(
             "insider_trading_warning.jinja2",
             username=username,
             amount=amount,
             timestamp=int(datetime.now().timestamp()),
-            current_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
+            current_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC"),
         )
 
     @app.route("/quant-independence-warning")
     @require_auth
     def quant_independence_warning():
         """Display Quant independence protection warning page."""
-        from flask import session, request
-        
+        from flask import request, session
+
         username = session.get("username", "Unknown")
         amount = request.args.get("amount", 0)
-        
+
         return render_template(
-            "quant_independence_warning.jinja2",
-            username=username,
-            amount=amount
+            "quant_independence_warning.jinja2", username=username, amount=amount
         )
 
     @app.route("/debug/config")
@@ -285,12 +290,15 @@ def create_app(test_config=None):
         config_info = {
             "session_timeout_seconds": app.config.get("SESSION_TIMEOUT_SECONDS"),
             "debug": app.debug,
-            "config_class": app.config.__class__.__name__ if hasattr(app.config, '__class__') else "unknown",
+            "config_class": app.config.__class__.__name__
+            if hasattr(app.config, "__class__")
+            else "unknown",
             "redistribution_enabled": app.config.get("ENABLE_PERFORMER_REDISTRIBUTION"),
-            "session_cookie_secure": app.config.get("SESSION_COOKIE_SECURE")
+            "session_cookie_secure": app.config.get("SESSION_COOKIE_SECURE"),
         }
-        
+
         from flask import jsonify
+
         return jsonify(config_info)
 
     # Register blueprints
