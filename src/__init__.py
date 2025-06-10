@@ -17,13 +17,13 @@ def create_app(test_config=None):
     )
 
     # Load configuration based on Flask's debug mode
-    if app.debug:
+    if test_config is not None:
+        app.config.from_mapping(test_config)
+    elif app.debug:
         app.config.from_object(DevelopmentConfig)
     else:
         app.config.from_object(ProductionConfig)
 
-    if test_config:
-        app.config.from_mapping(test_config)
 
     # Ensure instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
