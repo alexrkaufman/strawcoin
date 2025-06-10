@@ -132,7 +132,6 @@ def create_app(test_config=None):
         )
 
     @app.route("/leaderboard")
-    @require_auth
     def leaderboard_page():
         from flask import session
 
