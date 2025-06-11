@@ -45,7 +45,7 @@ body {
 .session-banner.session-inactive {
     background: linear-gradient(90deg, #6c757d, #495057);
 }
-</edits > .session-banner-content {
+.session-banner-content {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -687,43 +687,65 @@ header {
     border-radius: 10px;
     padding: 20px;
     margin-bottom: 30px;
-    h4 {
-        font-size: 1.2rem;
-        margin-bottom: 20px;
-    }
-    p {
-        text-align: left;
-    }
+}
+
+.callout_box h4 {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+.callout_box p {
+    text-align: left;
 }
 .callout_box.warning {
     background: rgba(255, 167, 38, 0.1);
     border: 1px solid #ffa726;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 30px;
 }
+
 .callout_box.info {
-    background: rgba(255, 167, 38, 0.1);
-    border: 1px solid #ffa726;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 30px;
+    background: rgba(74, 144, 226, 0.1);
+    border: 1px solid #4a90e2;
 }
-.callout_box {
-    .benefits-section {
-        margin-top: 40px;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 25px;
-        border-radius: 15px;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
-        h4 {
-            margin-bottom: 20px;
-        }
-        p {
-            text-align: left;
-            margin-bottom: 10px;
-        }
+/* Header Logout Button Styles */
+header {
+    position: relative;
+}
+
+.header-actions {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.logout-btn {
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.logout-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+}
+
+.logout-icon {
+    font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+    .header-actions {
+        position: static;
+        margin-top: 15px;
+        display: flex;
+        justify-content: center;
     }
 }
