@@ -26,29 +26,17 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Touch-optimized button interactions
-  registerBtn.addEventListener("touchstart", function () {
-    this.style.transform = "scale(0.98)";
-  });
-
-  registerBtn.addEventListener("touchend", function () {
-    this.style.transform = "scale(1)";
-  });
+  StrawCoinUtils.addTouchOptimization(registerBtn);
 
   // Form submission handling
   form.addEventListener("submit", function (e) {
     e.preventDefault();
 
     const username = usernameInput.value.trim();
-
-    if (!username) {
-      showError("Username required for market entry");
-      return;
-    }
-
-    if (username.length < 3) {
-      showError(
-        "Username must be at least 3 characters for optimal market identity",
-      );
+    const validation = StrawCoinUtils.validateUsername(username);
+    
+    if (!validation.isValid) {
+      showError(validation.message);
       return;
     }
 
@@ -56,11 +44,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function showError(message) {
-    errorMessage.style.display = "block";
-    errorMessage.querySelector("p").textContent = message;
-    setTimeout(() => {
-      errorMessage.style.display = "none";
-    }, 5000);
+    StrawCoinUtils.showError(message, '#errorMessage');
   }
 
   function showLoading(show) {
@@ -69,45 +53,40 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function showSuccess(message) {
-    successMessage.style.display = "block";
-    successMessage.querySelector("p").textContent = message;
+    StrawCoinUtils.showSuccess(message, '#successMessage');
     form.style.display = "none";
     loadingMessage.style.display = "none";
   }
 
-  function registerUser(username) {
+  async function registerUser(username) {
     showLoading(true);
 
-    fetch("/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username: username }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.status === "authentication_successful") {
-          // Success - show confirmation with timeout info before redirect
-          const timeoutInfo = data.debug_mode
-            ? `${data.session_timeout_seconds} seconds (debug mode)`
-            : `${Math.floor(data.session_timeout_seconds / 60)} minutes`;
-          showSuccess(
-            `Welcome to Straw Coin, ${data.username}! You have ${data.balance} coins.`,
-          );
-          setTimeout(() => {
-            window.location.href = "/";
-          }, 3000);
-        } else {
-          showLoading(false);
-          showError(data.error || "Registration failed - please try again");
-        }
-      })
-      .catch((error) => {
-        showLoading(false);
-        showError("Network error - please check connection and retry");
-        console.error("Registration error:", error);
+    try {
+      const data = await StrawCoinUtils.apiRequest("/login", {
+        method: "POST",
+        body: JSON.stringify({ username: username }),
       });
+
+      if (data && data.status === "authentication_successful") {
+        // Success - show confirmation with timeout info before redirect
+        const timeoutInfo = data.debug_mode
+          ? `${data.session_timeout_seconds} seconds (debug mode)`
+          : `${Math.floor(data.session_timeout_seconds / 60)} minutes`;
+        showSuccess(
+          `Welcome to Straw Coin, ${data.username}! You have ${StrawCoinUtils.formatNumber(data.balance)} coins.`,
+        );
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 3000);
+      } else {
+        showLoading(false);
+        showError(data.error || "Registration failed - please try again");
+      }
+    } catch (error) {
+      showLoading(false);
+      showError(error.message || "Network error - please check connection and retry");
+      console.error("Registration error:", error);
+    }
   }
 
   // Auto-focus username input on page load (mobile-friendly delay)

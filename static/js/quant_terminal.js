@@ -6,8 +6,12 @@ document.addEventListener("DOMContentLoaded", function () {
   console.log("🎛️ The CHANCELLOR Terminal initializing...");
   initializeQuantTerminal();
 
-  // Auto-refresh market data every 30 seconds
-  setInterval(refreshMarketData, 30000);
+  // Auto-refresh market data
+  const marketRefresh = StrawCoinUtils.createAutoRefresh(
+    refreshMarketData,
+    StrawCoinUtils.REFRESH_INTERVALS.marketStats
+  );
+  marketRefresh.start();
 });
 
 function initializeQuantTerminal() {
@@ -23,6 +27,9 @@ function initializeQuantTerminal() {
     "The CHANCELLOR Terminal initialized successfully",
     "info",
   );
+
+  // Get current username
+  window.currentUsername = StrawCoinUtils.getCurrentUsername();
 }
 
 function bindControlButtons() {
@@ -70,21 +77,19 @@ async function manipulatePerformerStatus() {
     document.getElementById("statusReason").value.trim() ||
     "Market manipulation by The CHANCELLOR";
 
-  if (!username) {
-    showQuantStatus("Username required for status manipulation", "error");
+  const validation = StrawCoinUtils.validateUsername(username);
+  if (!validation.isValid) {
+    showQuantStatus(validation.message, "error");
     return;
   }
 
   try {
     showQuantStatus("⚡ Manipulating performer status...", "info");
 
-    const response = await fetch(
+    const data = await StrawCoinUtils.apiRequest(
       `/api/quant/users/${username}/performer-status`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           is_performer: isPerformer,
           reason: reason,
@@ -92,9 +97,7 @@ async function manipulatePerformerStatus() {
       },
     );
 
-    const data = await response.json();
-
-    if (response.ok) {
+    if (data) {
       const statusType = isPerformer ? "PERFORMER" : "AUDIENCE";
       logQuantAction(
         "STATUS_MANIPULATION",
@@ -181,17 +184,12 @@ async function executeUniversalTransfer() {
     );
     showQuantStatus(statusMessage, "info");
 
-    const response = await fetch(endpoint, {
+    const data = await StrawCoinUtils.apiRequest(endpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
-
-    if (response.ok) {
+    if (data) {
       const successMessage = getTransferSuccessMessage(data, transferType);
       logQuantAction("UNIVERSAL_TRANSFER", successMessage, "manipulation");
       showQuantStatus(`✅ ${successMessage}`, "success");
@@ -259,20 +257,15 @@ async function forceMarketRedistribution() {
   try {
     showQuantStatus("⚡ Forcing market redistribution...", "info");
 
-    const response = await fetch("/api/quant/force-redistribution", {
+    const data = await StrawCoinUtils.apiRequest("/api/quant/force-redistribution", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({
         multiplier: multiplier,
         reason: reason,
       }),
     });
 
-    const data = await response.json();
-
-    if (response.ok) {
+    if (data) {
       logQuantAction(
         "FORCED_REDISTRIBUTION",
         `Forced ${data.redistributions?.length || 0} redistribution cycles (${multiplier}x)`,
@@ -309,10 +302,8 @@ async function forceMarketRedistribution() {
 async function refreshMarketData() {
   try {
     // Get current market stats from the API
-    const response = await fetch("/api/leaderboard");
-    if (response.ok) {
-      const data = await response.json();
-
+    const data = await StrawCoinUtils.apiRequest("/api/leaderboard");
+    if (data) {
       // Update live market data display
       updateMarketDataDisplay(data);
 
@@ -336,10 +327,9 @@ async function getAllUsers() {
   try {
     showQuantStatus("👥 Loading all users...", "info");
 
-    const response = await fetch("/api/quant/users");
-    const data = await response.json();
+    const data = await StrawCoinUtils.apiRequest("/api/quant/users");
 
-    if (response.ok) {
+    if (data) {
       displayUsersList(data.users);
       logQuantAction(
         "USER_QUERY",
@@ -361,10 +351,9 @@ async function getDetailedMarketStats() {
   try {
     showQuantStatus("📊 Loading detailed market statistics...", "info");
 
-    const response = await fetch("/api/quant/market-stats");
-    const data = await response.json();
+    const data = await StrawCoinUtils.apiRequest("/api/quant/market-stats");
 
-    if (response.ok) {
+    if (data) {
       displayDetailedStats(data.market_stats);
       logQuantAction(
         "MARKET_ANALYSIS",
@@ -383,31 +372,7 @@ async function getDetailedMarketStats() {
 }
 
 function updateMarketDataDisplay(data) {
-  if (data.market_cap !== undefined) {
-    const totalCoinsEl = document.getElementById("totalCoins");
-    if (totalCoinsEl)
-      totalCoinsEl.textContent = data.market_cap.toLocaleString();
-
-    // Update the main market cap display
-    const marketCapEls = document.querySelectorAll('[data-stat="market-cap"]');
-    marketCapEls.forEach(
-      (el) => (el.textContent = data.market_cap.toLocaleString()),
-    );
-  }
-
-  if (data.user_count !== undefined) {
-    const totalUsersEl = document.getElementById("totalUsers");
-    if (totalUsersEl) totalUsersEl.textContent = data.user_count;
-
-    // Update the main user count display
-    const userCountEls = document.querySelectorAll('[data-stat="user-count"]');
-    userCountEls.forEach((el) => (el.textContent = data.user_count));
-  }
-
-  if (data.volume !== undefined) {
-    const volumeEls = document.querySelectorAll('[data-stat="volume"]');
-    volumeEls.forEach((el) => (el.textContent = data.volume.toLocaleString()));
-  }
+  StrawCoinUtils.updateMarketStats(data);
 }
 
 function displayUsersList(users) {
@@ -438,7 +403,7 @@ function displayUsersList(users) {
                     </div>
                 </div>
                 <span style="font-weight: bold; font-size: 1.1rem;">
-                    ${user.coin_balance.toLocaleString()} coins
+                    ${StrawCoinUtils.formatNumber(user.coin_balance, 'coins')}
                 </span>
             </div>
         `;
@@ -450,26 +415,21 @@ function displayUsersList(users) {
 
 function displayDetailedStats(stats) {
   const modalContent = `
-        <div style="background: rgba(0,0,0,0.9); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
-            <div style="background: #2c3e50; padding: 30px; border-radius: 15px; max-width: 600px; max-height: 80%; overflow-y: auto;" onclick="event.stopPropagation()">
-                <h2 style="color: #ecf0f1; margin-bottom: 20px;">📊 Detailed Market Statistics</h2>
-                <div style="color: #ecf0f1;">
-                    <p><strong>Total Coins:</strong> ${stats.total_coins?.toLocaleString() || "N/A"}</p>
-                    <p><strong>Total Users:</strong> ${stats.total_users || "N/A"}</p>
-                    <p><strong>Performers:</strong> ${stats.total_performers || "N/A"}</p>
-                    <p><strong>Audience Members:</strong> ${stats.total_audience || "N/A"}</p>
-                    <p><strong>Total Transactions:</strong> ${stats.total_transactions || "N/A"}</p>
-                    <p><strong>Average Balance:</strong> ${stats.average_balance?.toLocaleString() || "N/A"}</p>
-                    <p><strong>Median Balance:</strong> ${stats.median_balance?.toLocaleString() || "N/A"}</p>
-                    <p><strong>Richest User Balance:</strong> ${stats.max_balance?.toLocaleString() || "N/A"}</p>
-                    <p><strong>Poorest User Balance:</strong> ${stats.min_balance?.toLocaleString() || "N/A"}</p>
-                </div>
-                <button onclick="this.parentElement.parentElement.remove()" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-top: 20px; cursor: pointer;">Close</button>
-            </div>
-        </div>
-    `;
+    <h2 style="color: #ecf0f1; margin-bottom: 20px;">📊 Detailed Market Statistics</h2>
+    <div style="color: #ecf0f1;">
+        <p><strong>Total Coins:</strong> ${StrawCoinUtils.formatNumber(stats.total_coins)}</p>
+        <p><strong>Total Users:</strong> ${stats.total_users || "N/A"}</p>
+        <p><strong>Performers:</strong> ${stats.total_performers || "N/A"}</p>
+        <p><strong>Audience Members:</strong> ${stats.total_audience || "N/A"}</p>
+        <p><strong>Total Transactions:</strong> ${stats.total_transactions || "N/A"}</p>
+        <p><strong>Average Balance:</strong> ${StrawCoinUtils.formatNumber(stats.average_balance)}</p>
+        <p><strong>Median Balance:</strong> ${StrawCoinUtils.formatNumber(stats.median_balance)}</p>
+        <p><strong>Richest User Balance:</strong> ${StrawCoinUtils.formatNumber(stats.max_balance)}</p>
+        <p><strong>Poorest User Balance:</strong> ${StrawCoinUtils.formatNumber(stats.min_balance)}</p>
+    </div>
+  `;
 
-  document.body.insertAdjacentHTML("beforeend", modalContent);
+  StrawCoinUtils.createModal(modalContent);
 }
 
 function logQuantAction(type, message, level = "info") {
@@ -500,19 +460,7 @@ function logQuantAction(type, message, level = "info") {
 }
 
 function showQuantStatus(message, type = "info") {
-  const statusEl = document.getElementById("quantStatus");
-  if (!statusEl) return;
-
-  statusEl.textContent = message;
-  statusEl.className = `message message-${type}`;
-
-  // Clear after 5 seconds for non-error messages
-  if (type !== "error") {
-    setTimeout(() => {
-      statusEl.textContent = "";
-      statusEl.className = "message";
-    }, 5000);
-  }
+  StrawCoinUtils.showMessage(message, type, '#quantStatus');
 }
 
 // Enhanced error handling for The Quant's operations
@@ -525,23 +473,20 @@ window.addEventListener("error", function (event) {
 });
 
 // Handle session management for The Quant
-function checkQuantSession() {
-  fetch("/auth/session-status")
-    .then((response) => response.json())
-    .then((data) => {
-      if (!data.authenticated) {
-        logQuantAction(
-          "SESSION",
-          "Session expired - redirecting to login",
-          "error",
-        );
-        window.location.href = "/register";
-      }
-    })
-    .catch((error) => {
-      console.error("Session check failed:", error);
-    });
+async function checkQuantSession() {
+  const isAuthenticated = await StrawCoinUtils.checkSession();
+  if (!isAuthenticated) {
+    logQuantAction(
+      "SESSION",
+      "Session expired - redirecting to login",
+      "error",
+    );
+  }
 }
 
 // Check session every 2 minutes
-setInterval(checkQuantSession, 120000);
+const sessionRefresh = StrawCoinUtils.createAutoRefresh(
+  checkQuantSession,
+  120000 // 2 minutes
+);
+sessionRefresh.start();

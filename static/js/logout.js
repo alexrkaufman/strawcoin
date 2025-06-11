@@ -11,21 +11,19 @@ function handleLogout() {
   }
 
   // Send logout request
-  fetch("/logout", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "same-origin",
+  StrawCoinUtils.apiRequest("/logout", {
+    method: "POST"
   })
-    .then((response) => response.json())
     .then((data) => {
-      if (data.status === "logout_successful") {
+      if (data && data.status === "logout_successful") {
         // Show success message briefly
         if (logoutBtn) {
           logoutBtn.innerHTML =
             '<span class="logout-icon">✓</span><span class="logout-text">Logged out!</span>';
         }
+
+        // Clear session data
+        StrawCoinUtils.clearSession();
 
         // Redirect to registration page after a short delay
         setTimeout(() => {

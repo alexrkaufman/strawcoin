@@ -33,15 +33,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // Mobile touch optimization
   document.addEventListener("touchstart", function () {
     // Clear any existing session data
-    if (typeof Storage !== "undefined") {
-      localStorage.clear();
-      sessionStorage.clear();
-    }
+    StrawCoinUtils.clearSession();
   });
 
   // Clear any cached session data
-  if (typeof Storage !== "undefined") {
-    localStorage.removeItem("straw_coin_session");
-    sessionStorage.clear();
-  }
+  StrawCoinUtils.clearSession();
 });

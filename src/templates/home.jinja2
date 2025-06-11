@@ -5,99 +5,94 @@
         <p class="welcome-subtitle">
             Disrupting <strong>The Short Straw</strong> through cutting-edge comedy tokenization
         </p>
-        {% if current_username %}
-            <div class="user-balance-card" data-username="{{ current_username }}">
-                <h3>💰 Welcome back, {{ current_username }}!</h3>
-                <p class="balance-amount">{{ "{:,}".format(current_user_balance) }} Straw Coins</p>
-            </div>
-            <!-- Navigation Links -->
-            <div class="nav-links">
-                <a href="/leaderboard" class="leaderboard-link">📊 Real-Time Leaderboard</a>
-            </div>
-        {% endif %}
-    </div>
-    {% if current_username %}
-        <!-- Send Coins Feature -->
-        <div class="send-coins-section">
-            <h2 class="send-coins-title">💸 Send Coins to Fellow Shareholders</h2>
-            <!-- Quick Send Buttons -->
-            <div class="quick-send-section">
-                <p class="mb-10 opacity-90">Quick Send:</p>
-                <div class="quick-send-buttons">
-                    <button class="quickSend quick-send-btn" data-amount="100">100 coins</button>
-                    <button class="quickSend quick-send-btn" data-amount="500">500 coins</button>
-                    <button class="quickSend quick-send-btn" data-amount="1000">1,000 coins</button>
-                </div>
-            </div>
-            <div>
-                <form id="sendCoinsForm" class="send-form">
-                    <div>
-                        <label class="form-label">Recipient:</label>
-                        <input type="text"
-                               id="recipient"
-                               name="recipient"
-                               class="form-input"
-                               list="recipientList"
-                               placeholder="Type or select a shareholder..."
-                               autocomplete="off"
-                               required>
-                        <datalist id="recipientList">
-                            {% for user in available_recipients %}<option value="{{ user.username }}">{{ user.username }}</option>{% endfor %}
-                        </datalist>
-                        <small class="opacity-80" style="font-size: 0.9rem;">💡 Start typing to see suggestions or click the dropdown arrow</small>
-                    </div>
-                    <div>
-                        <label class="form-label">Amount:</label>
-                        <input type="number"
-                               id="amount"
-                               name="amount"
-                               min="1"
-                               max="{{ current_user_balance }}"
-                               class="form-input"
-                               placeholder="Enter amount..."
-                               required>
-                    </div>
-                    <button type="submit" class="send-btn">🚀 Send Coins</button>
-                </form>
-            </div>
-            <!-- Status Display -->
-            <div id="transferStatus" class="message"></div>
+        <div class="user-balance-card" data-username="{{ current_username }}">
+            <h3>💰 Welcome back, {{ current_username }}!</h3>
+            <p class="balance-amount">{{ current_user_balance }} Straw Coins</p>
         </div>
-        <!-- Recent Transactions -->
-        {% if recent_transactions %}
-            <div style="background: rgba(255,255,255,0.1);
-                        padding: 30px;
-                        border-radius: 15px;
-                        margin-bottom: 30px">
-                <h2 style="text-align: center; margin-bottom: 20px;">📈 Your Recent Transactions</h2>
-                <div style="display: grid; gap: 10px;">
-                    {% for transaction in recent_transactions %}
-                        <div style="display: flex;
-                                    justify-content: space-between;
-                                    align-items: center;
-                                    background: rgba(255,255,255,0.1);
-                                    padding: 15px;
-                                    border-radius: 8px">
-                            <div>
-                                {% if transaction.sender == current_username %}
-                                    <span style="color: #e74c3c;">📤 Sent to {{ transaction.recipient }}</span>
-                                {% else %}
-                                    <span style="color: #2ecc71;">📥 Received from {{ transaction.sender }}</span>
-                                {% endif %}
-                                <div style="font-size: 0.9rem; opacity: 0.8;">{{ transaction.timestamp.strftime("%Y-%m-%d %H:%M") }}</div>
-                            </div>
-                            <span style="font-weight: bold; font-size: 1.1rem;">
-                                {% if transaction.sender == current_username %}
-                                    <span style="color: #e74c3c;">-{{ "{:,}".format(transaction.amount) }}</span>
-                                {% else %}
-                                    <span style="color: #2ecc71;">+{{ "{:,}".format(transaction.amount) }}</span>
-                                {% endif %}
-                            </span>
-                        </div>
-                    {% endfor %}
-                </div>
+        <div class="nav-links" style="text-align: center">
+            <a href="/leaderboard" class="leaderboard-link">📊 Real-Time Leaderboard</a>
+        </div>
+    </div>
+    <!-- Send Coins Feature -->
+    <div class="send-coins-section">
+        <h2 class="send-coins-title">💸 Send Coins to Fellow Shareholders</h2>
+        <!-- Quick Send Buttons -->
+        <div class="quick-send-section">
+            <p class="mb-10 opacity-90">Quick Send:</p>
+            <div class="quick-send-buttons">
+                <button class="quickSend quick-send-btn" data-amount="100">100 coins</button>
+                <button class="quickSend quick-send-btn" data-amount="500">500 coins</button>
+                <button class="quickSend quick-send-btn" data-amount="1000">1,000 coins</button>
             </div>
-        {% endif %}
+        </div>
+        <div>
+            <form id="sendCoinsForm" class="send-form">
+                <div>
+                    <label class="form-label">Recipient:</label>
+                    <input type="text"
+                           id="recipient"
+                           name="recipient"
+                           class="form-input"
+                           list="recipientList"
+                           placeholder="Type or select a shareholder..."
+                           autocomplete="off"
+                           required>
+                    <datalist id="recipientList">
+                        {% for user in available_recipients %}<option value="{{ user.username }}">{{ user.username }}</option>{% endfor %}
+                    </datalist>
+                    <small class="opacity-80" style="font-size: 0.9rem;">💡 Start typing to see suggestions or click the dropdown arrow</small>
+                </div>
+                <div>
+                    <label class="form-label">Amount:</label>
+                    <input type="number"
+                           id="amount"
+                           name="amount"
+                           min="1"
+                           max="{{ current_user_balance }}"
+                           class="form-input"
+                           placeholder="Enter amount..."
+                           required>
+                </div>
+                <button type="submit" class="send-btn">🚀 Send Coins</button>
+            </form>
+        </div>
+        <!-- Status Display -->
+        <div id="transferStatus" class="message"></div>
+    </div>
+    <!-- Recent Transactions -->
+    {% if recent_transactions %}
+        <div style="background: rgba(255,255,255,0.1);
+                    padding: 30px;
+                    border-radius: 15px;
+                    margin-bottom: 30px">
+            <h2 style="text-align: center; margin-bottom: 20px;">📈 Your Recent Transactions</h2>
+            <div style="display: grid; gap: 10px;">
+                {% for transaction in recent_transactions %}
+                    <div style="display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                background: rgba(255,255,255,0.1);
+                                padding: 15px;
+                                border-radius: 8px">
+                        <div>
+                            {% if transaction.sender == current_username %}
+                                <span style="color: #e74c3c;">📤 Sent to {{ transaction.recipient }}</span>
+                            {% else %}
+                                <span style="color: #2ecc71;">📥 Received from {{ transaction.sender }}</span>
+                            {% endif %}
+                            <div style="font-size: 0.9rem; opacity: 0.8;">{{ transaction.timestamp.strftime("%Y-%m-%d %H:%M") }}</div>
+                        </div>
+                        <span style="font-weight: bold; font-size: 1.1rem;">
+                            {% if transaction.sender == current_username %}
+                                <span style="color: #e74c3c;">-{{ "{:,}".format(transaction.amount) }}</span>
+                            {% else %}
+                                <span style="color: #2ecc71;">+{{ "{:,}".format(transaction.amount) }}</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
     {% endif %}
     <!-- Market Stats -->
     <div class="market-stats-grid">

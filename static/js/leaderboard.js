@@ -8,10 +8,7 @@ let lastUpdateData = null;
 
 document.addEventListener("DOMContentLoaded", function () {
   // Get current username from the page
-  const usernameElement = document.querySelector("[data-username]");
-  if (usernameElement) {
-    currentUsername = usernameElement.getAttribute("data-username");
-  }
+  currentUsername = StrawCoinUtils.getCurrentUsername() || "";
 
   initializeChart();
   startAutoUpdate();
@@ -204,10 +201,9 @@ async function loadChartData() {
       refreshBtn.disabled = true;
     }
 
-    const response = await fetch(`/api/leaderboard-history?hours=${timeRange}`);
-    const data = await response.json();
+    const data = await StrawCoinUtils.apiRequest(`/api/leaderboard-history?hours=${timeRange}`);
 
-    if (data.status === "success") {
+    if (data && data.status === "success") {
       // Update chart
       if (chart) {
         chart.data.datasets = data.datasets;
@@ -313,7 +309,7 @@ function updateCurrentLeaderboard(leaders) {
                 ${isCurrentUser ? ' <span style="color: #00D084; font-size: 0.8rem; margin-left: 8px;">YOU</span>' : ""}
             </div>
             <div style="color: #ffffff; font-weight: bold; text-align: right; display: flex; align-items: center; justify-content: flex-end;">
-                ${leader.coin_balance.toLocaleString()}
+                ${StrawCoinUtils.formatNumber(leader.coin_balance)}
             </div>
             <div style="color: ${isPositive ? "#00D084" : "#F23645"}; font-weight: bold; text-align: right; display: flex; align-items: center; justify-content: flex-end;">
                 ${isPositive ? "+" : ""}${change24h}%
@@ -397,7 +393,7 @@ function updateTradingStats(data) {
       biggestGain > 0 ? ((biggestGain / 10000) * 100).toFixed(2) : "0.00";
     biggestGainerElement.innerHTML = `
             <p style="color: #ffffff; font-size: 1.4rem; font-weight: bold; margin: 5px 0;">${biggestGainer}</p>
-            <p style="color: #00D084; font-size: 1.1rem; font-weight: bold; margin: 0;">+${biggestGain.toLocaleString()} (+${gainPercent}%)</p>
+            <p style="color: #00D084; font-size: 1.1rem; font-weight: bold; margin: 0;">${StrawCoinUtils.formatChange(biggestGain, true)} (+${gainPercent}%)</p>
         `;
   }
 
@@ -409,7 +405,7 @@ function updateTradingStats(data) {
         : "0.00";
     biggestLoserElement.innerHTML = `
             <p style="color: #ffffff; font-size: 1.4rem; font-weight: bold; margin: 5px 0;">${biggestLoser}</p>
-            <p style="color: #F23645; font-size: 1.1rem; font-weight: bold; margin: 0;">${biggestLoss.toLocaleString()} (-${lossPercent}%)</p>
+            <p style="color: #F23645; font-size: 1.1rem; font-weight: bold; margin: 0;">${StrawCoinUtils.formatNumber(biggestLoss)} (-${lossPercent}%)</p>
         `;
   }
 
@@ -458,13 +454,13 @@ function updateMarketStatus(data) {
       (sum, leader) => sum + leader.coin_balance,
       0,
     );
-    marketCapElement.textContent = totalMarketCap.toLocaleString() + " STRAW";
+    marketCapElement.textContent = StrawCoinUtils.formatNumber(totalMarketCap, "STRAW");
   }
 
   if (volume24hElement) {
     // Mock 24h volume
     const mockVolume = Math.floor(Math.random() * 50000) + 100000;
-    volume24hElement.textContent = mockVolume.toLocaleString() + " STRAW";
+    volume24hElement.textContent = StrawCoinUtils.formatNumber(mockVolume, "STRAW");
   }
 
   if (activeTradersElement && data.current_leaders) {
@@ -477,9 +473,8 @@ function updateMarketStatus(data) {
 
 async function checkMarketStatus() {
   try {
-    const response = await fetch("/api/market-status");
-    if (response.ok) {
-      const data = await response.json();
+    const data = await StrawCoinUtils.apiRequest("/api/market-status");
+    if (data) {
       updateMarketStatusDisplay(data.market_status);
     }
   } catch (error) {
@@ -521,14 +516,18 @@ function updateMarketStatusDisplay(marketStatus) {
 
 function startAutoUpdate() {
   // Update every 30 seconds for live trading feel
-  updateInterval = setInterval(() => {
-    loadChartData();
-  }, 30000);
+  const chartRefresh = StrawCoinUtils.createAutoRefresh(
+    loadChartData,
+    StrawCoinUtils.REFRESH_INTERVALS.chartData
+  );
+  chartRefresh.start();
 
   // Update market status more frequently for dynamic feel
-  setInterval(() => {
-    updateLiveMarketIndicators();
-  }, 5000);
+  const indicatorRefresh = StrawCoinUtils.createAutoRefresh(
+    updateLiveMarketIndicators,
+    StrawCoinUtils.REFRESH_INTERVALS.liveIndicators
+  );
+  indicatorRefresh.start();
 }
 
 function updateLiveMarketIndicators() {
@@ -546,7 +545,7 @@ function updateLiveMarketIndicators() {
     );
     const change = Math.floor(Math.random() * 1000) - 500; // ±500 change
     const newVolume = Math.max(50000, currentVolume + change);
-    volume24hElement.textContent = newVolume.toLocaleString() + " STRAW";
+    volume24hElement.textContent = StrawCoinUtils.formatNumber(newVolume, "STRAW");
   }
 }
 

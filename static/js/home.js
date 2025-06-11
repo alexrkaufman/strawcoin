@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const amountInput = document.getElementById("amount");
   const recipientInput = document.getElementById("recipient");
   const recipientList = document.getElementById("recipientList");
+  const currentUsername = StrawCoinUtils.getCurrentUsername();
 
   // Get list of valid recipients for validation
   const validRecipients = [];
@@ -119,11 +120,7 @@ document.addEventListener("DOMContentLoaded", function () {
         submitButton.textContent = "🚀 Sending...";
         submitButton.disabled = true;
 
-        // Get current username from the page
-        const usernameElement = document.querySelector("[data-username]");
-        const currentUsername = usernameElement
-          ? usernameElement.getAttribute("data-username")
-          : window.currentUsername;
+
 
         // Use the exact case from the valid recipients list
         const exactRecipient =
@@ -132,11 +129,8 @@ document.addEventListener("DOMContentLoaded", function () {
               validRecipient.toLowerCase() === trimmedRecipient.toLowerCase(),
           ) || trimmedRecipient;
 
-        const response = await fetch("/api/transfer", {
+        const data = await StrawCoinUtils.apiRequest("/api/transfer", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
           body: JSON.stringify({
             sender: currentUsername,
             recipient: exactRecipient,
@@ -144,12 +138,10 @@ document.addEventListener("DOMContentLoaded", function () {
           }),
         });
 
-        const data = await response.json();
-
-        if (response.ok && data.status === "success") {
-          showStatus(
-            `🎉 Successfully sent ${amount.toLocaleString()} coins to ${recipient}!`,
-            "success",
+        if (data && data.status === "success") {
+          StrawCoinUtils.showSuccess(
+            `🎉 Successfully sent ${StrawCoinUtils.formatNumber(amount)} coins to ${recipient}!`,
+            '#transferStatus'
           );
 
           // Reset form
@@ -162,19 +154,15 @@ document.addEventListener("DOMContentLoaded", function () {
           setTimeout(() => {
             window.location.reload();
           }, 2000);
-        } else if (data.redirect) {
-          // Handle redirects (quant independence, insider trading warnings)
-          window.location.href = data.redirect;
-          return;
         } else {
-          showStatus(`Error: ${data.message || "Transfer failed"}`, "error");
+          StrawCoinUtils.showError(`Error: ${data.message || "Transfer failed"}`, '#transferStatus');
         }
 
         // Re-enable form
         submitButton.textContent = originalText;
         submitButton.disabled = false;
       } catch (error) {
-        showStatus("Network error. Please try again.", "error");
+        StrawCoinUtils.showError(error.message || "Network error. Please try again.", '#transferStatus');
         console.error("Transfer error:", error);
 
         // Re-enable form
@@ -186,44 +174,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function showStatus(message, type) {
-    if (!statusDiv) return;
-
-    statusDiv.style.display = "block";
-    statusDiv.innerHTML = message;
-
-    if (type === "success") {
-      statusDiv.style.background = "rgba(46, 204, 113, 0.9)";
-      statusDiv.style.color = "white";
-    } else {
-      statusDiv.style.background = "rgba(231, 76, 60, 0.9)";
-      statusDiv.style.color = "white";
-    }
-
-    statusDiv.style.padding = "15px";
-    statusDiv.style.borderRadius = "10px";
-    statusDiv.style.margin = "20px 0";
-    statusDiv.style.textAlign = "center";
-    statusDiv.style.fontWeight = "bold";
-
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-      statusDiv.style.display = "none";
-    }, 5000);
+    StrawCoinUtils.showMessage(message, type, '#transferStatus');
   }
-
-  // Add hover effects to buttons
-  const allButtons = document.querySelectorAll("button");
-  allButtons.forEach((button) => {
-    button.addEventListener("mouseenter", function () {
-      if (!this.disabled) {
-        this.style.transform = "scale(1.05)";
-      }
-    });
-
-    button.addEventListener("mouseleave", function () {
-      this.style.transform = "scale(1)";
-    });
-  });
 
   // Initialize tooltips for performer status
   const performerCards = document.querySelectorAll(".performer-status-card");
@@ -237,38 +189,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // Auto-refresh market stats every 30 seconds
-  setInterval(() => {
-    updateMarketStats();
-  }, 30000);
+  // Auto-refresh market stats
+  const marketRefresh = StrawCoinUtils.createAutoRefresh(
+    updateMarketStats,
+    StrawCoinUtils.REFRESH_INTERVALS.marketStats
+  );
+  marketRefresh.start();
 
   async function updateMarketStats() {
     try {
-      const response = await fetch("/api/market-stats");
-      if (response.ok) {
-        const data = await response.json();
-
-        // Update market cap
-        const marketCapElement = document.querySelector(
-          '[data-stat="market-cap"]',
-        );
-        if (marketCapElement) {
-          marketCapElement.textContent = data.market_cap.toLocaleString();
-        }
-
-        // Update user count
-        const userCountElement = document.querySelector(
-          '[data-stat="user-count"]',
-        );
-        if (userCountElement) {
-          userCountElement.textContent = data.total_users;
-        }
-
-        // Update transaction volume
-        const volumeElement = document.querySelector('[data-stat="volume"]');
-        if (volumeElement) {
-          volumeElement.textContent = data.total_volume.toLocaleString();
-        }
+      const data = await StrawCoinUtils.apiRequest("/api/market-stats");
+      if (data) {
+        StrawCoinUtils.updateMarketStats(data);
       }
     } catch (error) {
       console.log("Market stats update failed:", error);

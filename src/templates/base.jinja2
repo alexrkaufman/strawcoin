@@ -6,6 +6,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{{ title or "Straw Coin - Revolutionary Comedy Tokenization" }}</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <link rel="shortcut icon"
+              type="image/svg+xml"
+              href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E🪙%3C/text%3E%3C/svg%3E">
     </head>
     <body class="{{ page_class or '' }}">
         <div class="container">
@@ -13,12 +16,12 @@
                 <div class="logo">🪙 {{ site_name or "Straw Coin" }} 🚀</div>
                 <div class="tagline">{{ tagline or "Revolutionary Comedy Market Dynamics" }}</div>
                 {% if session.get('username') %}
-                <div class="header-actions">
-                    <button class="logout-btn" onclick="handleLogout()">
-                        <span class="logout-icon">🚪</span>
-                        <span class="logout-text">Logout</span>
-                    </button>
-                </div>
+                    <div class="header-actions">
+                        <button class="logout-btn" onclick="handleLogout()">
+                            <span class="logout-icon">🚪</span>
+                            <span class="logout-text">Logout</span>
+                        </button>
+                    </div>
                 {% endif %}
             </header>
             <main class="main-content">
@@ -36,11 +39,11 @@
                 </p>
             </footer>
         </div>
+        <!-- Shared utilities loaded first -->
+        <script src="{{ url_for('static', filename='js/shared_utils.js') }}"></script>
         {% if request.endpoint != 'auth.session_expired' and request.endpoint != 'auth.register' %}
             <script src="{{ url_for('static', filename='js/session.js') }}"></script>
         {% endif %}
-        {% if session.get('username') %}
-            <script src="{{ url_for('static', filename='js/logout.js') }}"></script>
-        {% endif %}
+        {% if session.get('username') %}<script src="{{ url_for('static', filename='js/logout.js') }}"></script>{% endif %}
     </body>
 </html>
