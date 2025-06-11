@@ -78,10 +78,7 @@
     {% if recent_transactions %}
         <div class="quant-panel">
             <h2 class="quant-panel-title">📈 Recent Market Activity</h2>
-            <div style="display: grid;
-                        gap: 10px;
-                        max-height: 300px;
-                        overflow-y: auto">
+            <div style="display: grid; gap: 10px; max-height: 300px; overflow-y: auto">
                 {% for transaction in recent_transactions %}
                     <div style="display: flex;
                                 justify-content: space-between;
@@ -246,10 +243,7 @@
             <h3 class="quant-panel-title">👥 Complete User Registry</h3>
             <div class="quant-users-registry">
                 {% if all_users %}
-                    <div style="display: grid;
-                                gap: 10px;
-                                max-height: 400px;
-                                overflow-y: auto">
+                    <div style="display: grid; gap: 10px; max-height: 400px; overflow-y: auto">
                         {% for user in all_users %}
                             <div style="display: flex;
                                         justify-content: space-between;
