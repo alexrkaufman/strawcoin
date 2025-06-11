@@ -114,7 +114,7 @@ def login():
 
     # Set Flask session
     session["username"] = username
-    session.permanent = True
+    session.permanent = False  # Use non-permanent session cookies
 
     user_type = "performer" if performer_status else "audience member"
     return jsonify(
@@ -124,7 +124,6 @@ def login():
             "balance": balance,
             "is_performer": performer_status,
             "user_type": user_type,
-            "session_timeout_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
             "status": "authentication_successful",
         }
     ), 200
@@ -139,7 +138,6 @@ def session_status():
         {
             "authenticated": True,
             "username": session["username"],
-            "session_timeout_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
             "status": "session_active",
         }
     ), 200
