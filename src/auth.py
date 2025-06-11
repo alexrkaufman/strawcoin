@@ -12,12 +12,12 @@ from flask import (
     current_app,
 )
 from .db import (
-    create_user, 
-    get_user_balance, 
-    has_active_session, 
-    create_session, 
+    create_user,
+    get_user_balance,
+    has_active_session,
+    create_session,
     remove_session,
-    get_user_performer_status
+    get_user_performer_status,
 )
 
 bp = Blueprint("auth", __name__)
@@ -66,11 +66,18 @@ def require_quant(f):
         current_username = session.get("username")
         quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
         quant_enabled = current_app.config.get("QUANT_ENABLED", False)
-        
-        if not quant_enabled or not current_username or current_username.upper() != quant_username.upper():
+
+        if (
+            not quant_enabled
+            or not current_username
+            or current_username.upper() != quant_username.upper()
+        ):
             if request.is_json:
                 return jsonify(
-                    {"error": "Unauthorized - Quant access required", "status": "unauthorized"}
+                    {
+                        "error": "Unauthorized - Quant access required",
+                        "status": "unauthorized",
+                    }
                 ), 403
             return render_template("403.jinja2"), 403
 
@@ -115,7 +122,7 @@ def login():
         return jsonify(
             {
                 "error": f"User {username} is already logged in. Only one session per user is allowed.",
-                "status": "session_conflict"
+                "status": "session_conflict",
             }
         ), 409
 
@@ -143,7 +150,7 @@ def login():
 
     # Generate unique session ID
     session_id = secrets.token_urlsafe(32)
-    
+
     # Create session record in database
     if not create_session(username, session_id):
         return jsonify(
@@ -213,14 +220,14 @@ def logout():
     """Manually log out and clean up session."""
     if "session_id" in session:
         remove_session(session["session_id"])
-    
+
     username = session.get("username", "Unknown")
     session.clear()
-    
+
     return jsonify(
         {
             "message": f"User {username} successfully logged out",
-            "status": "logout_successful"
+            "status": "logout_successful",
         }
     ), 200
 

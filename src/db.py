@@ -100,9 +100,15 @@ def init_db():
                         FOREIGN KEY (recipient_id) REFERENCES users (id)
                     )
                 """)
-                db.execute("CREATE INDEX idx_transactions_sender ON transactions(sender_id)")
-                db.execute("CREATE INDEX idx_transactions_recipient ON transactions(recipient_id)")
-                db.execute("CREATE INDEX idx_transactions_timestamp ON transactions(timestamp)")
+                db.execute(
+                    "CREATE INDEX idx_transactions_sender ON transactions(sender_id)"
+                )
+                db.execute(
+                    "CREATE INDEX idx_transactions_recipient ON transactions(recipient_id)"
+                )
+                db.execute(
+                    "CREATE INDEX idx_transactions_timestamp ON transactions(timestamp)"
+                )
                 click.echo("Added transactions table")
 
             if "balance_snapshots" in missing_tables:
@@ -732,7 +738,7 @@ def performer_redistribution():
     quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
     audience = db.execute(
         "SELECT id, username, coin_balance FROM users WHERE is_performer = 0 AND username != ?",
-        (quant_username,)
+        (quant_username,),
     ).fetchall()
 
     if not performers or not audience:
@@ -741,7 +747,9 @@ def performer_redistribution():
     audience_count = len(audience)
     performer_count = len(performers)
     coins_per_performer_to_each_audience = 5
-    total_coins_needed_per_performer = coins_per_performer_to_each_audience * audience_count
+    total_coins_needed_per_performer = (
+        coins_per_performer_to_each_audience * audience_count
+    )
     total_coins_redistributed = 0
 
     try:
@@ -764,11 +772,15 @@ def performer_redistribution():
                     "UPDATE users SET coin_balance = coin_balance + ? WHERE id = ?",
                     (coins_per_performer_to_each_audience, audience_member["id"]),
                 )
-                
+
                 # Create transaction record
                 db.execute(
                     "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
-                    (performer["id"], audience_member["id"], coins_per_performer_to_each_audience),
+                    (
+                        performer["id"],
+                        audience_member["id"],
+                        coins_per_performer_to_each_audience,
+                    ),
                 )
 
             total_coins_redistributed += total_coins_needed_per_performer
@@ -801,7 +813,9 @@ def redistribute_performer_coins_command():
         click.echo(
             f"✅ Redistributed {result['total_redistributed']} coins from {result['performer_count']} performers to {result['audience_count']} audience members"
         )
-        click.echo(f"   Each performer lost {result['total_coins_needed_per_performer']} coins")
+        click.echo(
+            f"   Each performer lost {result['total_coins_needed_per_performer']} coins"
+        )
         click.echo(
             f"   Each audience member gained {result['coins_per_performer_to_each_audience']} coins from each performer"
         )
@@ -856,22 +870,24 @@ def list_performers_command():
 def create_quant_command():
     """Create The CHANCELLOR user with proper settings (0 coins, audience member)."""
     quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
-    
+
     # Check if The CHANCELLOR already exists
     db = get_db()
     existing = db.execute(
         "SELECT username FROM users WHERE username = ?", (quant_username,)
     ).fetchone()
-    
+
     if existing:
         click.echo(f"❌ {quant_username} already exists")
         return
-    
+
     # Create The Quant user
     user_id = create_user(quant_username, is_performer=False)
     if user_id:
         # Set balance to 0 (they should start with no coins)
-        db.execute('UPDATE users SET coin_balance = 0 WHERE username = ?', (quant_username,))
+        db.execute(
+            "UPDATE users SET coin_balance = 0 WHERE username = ?", (quant_username,)
+        )
         db.commit()
         click.echo(f"✅ Created {quant_username} with 0 coins (audience member)")
     else:
@@ -883,28 +899,31 @@ def create_quant_command():
 @click.option("--port", default=5000, help="Port to bind to")
 def run_production_command(host, port):
     """Run the app in production mode with correct configuration."""
-    
+
     click.echo("🚀 Starting Straw Coin in production mode...")
     click.echo(f"   Host: {host}")
     click.echo(f"   Port: {port}")
     click.echo(f"   Session timeout: 5 minutes (300 seconds)")
     click.echo(f"   Debug mode: OFF")
     click.echo(f"   Performer redistribution: ON")
-    
+
     # Import and create app
     from . import create_app
+
     app = create_app()
-    
+
     # Verify production config is loaded (should be loaded when app.debug is False)
     timeout = app.config.get("SESSION_TIMEOUT_SECONDS", 0)
     if timeout == 300 and not app.debug:
         click.echo("✅ Production configuration loaded successfully")
     else:
         if app.debug:
-            click.echo(f"⚠️  Warning: App is in debug mode! Use 'flask run' without --debug for production.")
+            click.echo(
+                f"⚠️  Warning: App is in debug mode! Use 'flask run' without --debug for production."
+            )
         if timeout != 300:
             click.echo(f"⚠️  Warning: Session timeout is {timeout}s (expected 300s)")
-    
+
     # Run the app
     app.run(host=host, port=port, debug=False)
 
@@ -913,94 +932,101 @@ def _get_market_override_file():
     """Get the path to the market override file."""
     import os
     from flask import current_app
+
     instance_path = current_app.instance_path
-    return os.path.join(instance_path, 'market_override.txt')
+    return os.path.join(instance_path, "market_override.txt")
+
 
 def _read_market_override():
     """Read market override from file."""
     import os
+
     try:
         override_file = _get_market_override_file()
         if os.path.exists(override_file):
-            with open(override_file, 'r') as f:
+            with open(override_file, "r") as f:
                 content = f.read().strip()
-                if content == 'OPEN':
+                if content == "OPEN":
                     return True
-                elif content == 'CLOSED':
+                elif content == "CLOSED":
                     return False
         return None
     except Exception:
         return None
 
+
 def _write_market_override(status):
     """Write market override to file."""
     import os
+
     try:
         override_file = _get_market_override_file()
         os.makedirs(os.path.dirname(override_file), exist_ok=True)
-        
+
         if status is None:
             # Remove override file
             if os.path.exists(override_file):
                 os.remove(override_file)
         else:
             # Write status to file
-            with open(override_file, 'w') as f:
-                f.write('OPEN' if status else 'CLOSED')
+            with open(override_file, "w") as f:
+                f.write("OPEN" if status else "CLOSED")
     except Exception:
         pass
+
 
 def is_market_open():
     """Check if the market is currently open based on configuration and time."""
     from datetime import datetime
     from flask import current_app
-    
+
     # Check for persistent file override first
     override = _read_market_override()
     if override is not None:
         return override
-    
+
     # Check if market is manually set to open/closed in config
-    market_open = current_app.config.get('MARKET_OPEN', True)
+    market_open = current_app.config.get("MARKET_OPEN", True)
     if not market_open:
         return False
-    
+
     # Check market hours (optional - if configured)
-    market_hours = current_app.config.get('MARKET_OPEN_HOURS')
+    market_hours = current_app.config.get("MARKET_OPEN_HOURS")
     if market_hours:
         now = datetime.now()
         current_hour = now.hour
-        start_hour = market_hours.get('start', 0)
-        end_hour = market_hours.get('end', 23)
-        
+        start_hour = market_hours.get("start", 0)
+        end_hour = market_hours.get("end", 23)
+
         # Handle overnight markets (e.g., start=22, end=2)
         if start_hour <= end_hour:
             return start_hour <= current_hour <= end_hour
         else:
             return current_hour >= start_hour or current_hour <= end_hour
-    
+
     return True
 
 
 def get_market_status():
     """Get market status with details for display."""
     is_open = is_market_open()
-    
+
     market_info = {
-        'is_open': is_open,
-        'status_text': '🟢 OPEN' if is_open else '🔴 CLOSED',
-        'status_color': '#00D084' if is_open else '#F23645',
-        'redistribution_active': is_open
+        "is_open": is_open,
+        "status_text": "🟢 OPEN" if is_open else "🔴 CLOSED",
+        "status_color": "#00D084" if is_open else "#F23645",
+        "redistribution_active": is_open,
     }
-    
+
     # Add market hours info if configured
     from flask import current_app
-    market_hours = current_app.config.get('MARKET_OPEN_HOURS')
+
+    market_hours = current_app.config.get("MARKET_OPEN_HOURS")
     if market_hours:
-        start = market_hours.get('start', 0)
-        end = market_hours.get('end', 23)
-        market_info['hours'] = f"{start:02d}:00 - {end:02d}:00"
-    
+        start = market_hours.get("start", 0)
+        end = market_hours.get("end", 23)
+        market_info["hours"] = f"{start:02d}:00 - {end:02d}:00"
+
     return market_info
 
 
@@ -1010,18 +1036,18 @@ def toggle_market_command():
     # Get current status using the is_market_open function
     current_status = is_market_open()
     new_status = not current_status
-    
+
     # Persist the override to file
     _write_market_override(new_status)
-    
+
     status_text = "OPEN" if new_status else "CLOSED"
     click.echo(f"📊 Market status changed to: {status_text}")
-    
+
     if new_status:
         click.echo("✅ Performer redistributions will now occur")
     else:
         click.echo("🛑 Performer redistributions paused until market reopens")
-    
+
     click.echo("💡 Use 'flask market-status' to check current status")
 
 
@@ -1030,28 +1056,32 @@ def market_status_command():
     """Check current market status."""
     market_info = get_market_status()
     override = _read_market_override()
-    
+
     click.echo("📊 STRAW COIN MARKET STATUS")
     click.echo("=" * 30)
     click.echo(f"Status: {market_info['status_text']}")
-    
+
     if override is not None:
         click.echo(f"Override: {'FORCED OPEN' if override else 'FORCED CLOSED'}")
-    
-    if 'hours' in market_info:
+
+    if "hours" in market_info:
         click.echo(f"Market Hours: {market_info['hours']}")
-    
-    click.echo(f"Redistributions: {'ACTIVE' if market_info['redistribution_active'] else 'PAUSED'}")
-    
-    if market_info['is_open']:
+
+    click.echo(
+        f"Redistributions: {'ACTIVE' if market_info['redistribution_active'] else 'PAUSED'}"
+    )
+
+    if market_info["is_open"]:
         click.echo("✅ Performer coin redistributions are occurring")
     else:
         click.echo("🛑 Performer coin redistributions are paused")
-    
+
     if override is None:
         click.echo("💡 Use 'flask toggle-market' to manually override market status")
     else:
-        click.echo("💡 Use 'flask reset-market' to remove override and use time-based status")
+        click.echo(
+            "💡 Use 'flask reset-market' to remove override and use time-based status"
+        )
 
 
 @click.command("create-fake-users")
@@ -1061,41 +1091,67 @@ def market_status_command():
 def create_fake_users_command(performers, audience, clear):
     """Create fake users for testing and validation."""
     import random
-    
+
     performer_names = [
-        "ComedyKing", "JokeQueen", "StandUpStar", "LaughMaster", "WittyWiz",
-        "PunchlinePro", "HumorHero", "SatireSage", "QuipQueen", "BanterBoss"
+        "ComedyKing",
+        "JokeQueen",
+        "StandUpStar",
+        "LaughMaster",
+        "WittyWiz",
+        "PunchlinePro",
+        "HumorHero",
+        "SatireSage",
+        "QuipQueen",
+        "BanterBoss",
     ]
-    
+
     audience_names = [
-        "LaughLover", "ComedyFan", "HumorHunter", "JokeJunkie", "WitWatcher",
-        "SatireFan", "PunchlineAddict", "GiggleGuru", "ChuckleChamp", "SnickerStar",
-        "HahaHero", "LOLLegend", "ROFLRuler", "TickleExpert", "AmuseAce",
-        "MirthMaster", "JollyJudge", "FunnyFollower", "ComicCritic", "HilariousHero"
+        "LaughLover",
+        "ComedyFan",
+        "HumorHunter",
+        "JokeJunkie",
+        "WitWatcher",
+        "SatireFan",
+        "PunchlineAddict",
+        "GiggleGuru",
+        "ChuckleChamp",
+        "SnickerStar",
+        "HahaHero",
+        "LOLLegend",
+        "ROFLRuler",
+        "TickleExpert",
+        "AmuseAce",
+        "MirthMaster",
+        "JollyJudge",
+        "FunnyFollower",
+        "ComicCritic",
+        "HilariousHero",
     ]
-    
+
     click.echo("🎭 Creating fake users for Straw Coin testing...")
-    
+
     if clear:
         click.echo("🧹 Clearing existing fake users...")
         db = get_db()
         # Remove fake users (keep essential ones like CHANCELLOR)
-        essential_users = ['CHANCELLOR', 'Alex']  # Keep core users
+        essential_users = ["CHANCELLOR", "Alex"]  # Keep core users
         db.execute(
             "DELETE FROM users WHERE username NOT IN ({})".format(
-                ','.join(['?' for _ in essential_users])
+                ",".join(["?" for _ in essential_users])
             ),
-            essential_users
+            essential_users,
         )
         db.commit()
         click.echo("✅ Existing fake users cleared")
-    
+
     created_users = []
-    
+
     # Create performers
     click.echo(f"🎪 Creating {performers} performers...")
-    selected_performers = random.sample(performer_names, min(performers, len(performer_names)))
-    
+    selected_performers = random.sample(
+        performer_names, min(performers, len(performer_names))
+    )
+
     for name in selected_performers:
         user_id = create_user(name, is_performer=True)
         if user_id:
@@ -1103,19 +1159,20 @@ def create_fake_users_command(performers, audience, clear):
             balance = random.randint(8000, 15000)
             db = get_db()
             db.execute(
-                "UPDATE users SET coin_balance = ? WHERE id = ?",
-                (balance, user_id)
+                "UPDATE users SET coin_balance = ? WHERE id = ?", (balance, user_id)
             )
             db.commit()
             created_users.append(f"🎭 {name} (Performer): {balance:,} coins")
             click.echo(f"   ✅ Created performer: {name} with {balance:,} coins")
         else:
             click.echo(f"   ⚠️  Performer {name} already exists, skipping")
-    
+
     # Create audience members
     click.echo(f"👥 Creating {audience} audience members...")
-    selected_audience = random.sample(audience_names, min(audience, len(audience_names)))
-    
+    selected_audience = random.sample(
+        audience_names, min(audience, len(audience_names))
+    )
+
     for name in selected_audience:
         user_id = create_user(name, is_performer=False)
         if user_id:
@@ -1123,15 +1180,14 @@ def create_fake_users_command(performers, audience, clear):
             balance = random.randint(7000, 12000)
             db = get_db()
             db.execute(
-                "UPDATE users SET coin_balance = ? WHERE id = ?",
-                (balance, user_id)
+                "UPDATE users SET coin_balance = ? WHERE id = ?", (balance, user_id)
             )
             db.commit()
             created_users.append(f"👤 {name} (Audience): {balance:,} coins")
             click.echo(f"   ✅ Created audience member: {name} with {balance:,} coins")
         else:
             click.echo(f"   ⚠️  Audience member {name} already exists, skipping")
-    
+
     # Create initial balance snapshots for trading platform
     click.echo("📊 Creating initial balance snapshots...")
     success = create_balance_snapshots_for_all_users()
@@ -1139,25 +1195,29 @@ def create_fake_users_command(performers, audience, clear):
         click.echo("✅ Balance snapshots created")
     else:
         click.echo("⚠️  Failed to create balance snapshots")
-    
+
     # Summary
     click.echo("\n🎯 FAKE USER CREATION SUMMARY")
     click.echo("=" * 40)
     click.echo(f"Total users created: {len(created_users)}")
     click.echo(f"Performers: {len(selected_performers)}")
     click.echo(f"Audience members: {len(selected_audience)}")
-    
+
     if created_users:
         click.echo("\n📋 Created users:")
         for user in created_users:
             click.echo(f"   {user}")
-    
+
     # Show current totals
     db = get_db()
     total_users = db.execute("SELECT COUNT(*) as count FROM users").fetchone()["count"]
-    total_performers = db.execute("SELECT COUNT(*) as count FROM users WHERE is_performer = 1").fetchone()["count"]
-    total_audience = db.execute("SELECT COUNT(*) as count FROM users WHERE is_performer = 0").fetchone()["count"]
-    
+    total_performers = db.execute(
+        "SELECT COUNT(*) as count FROM users WHERE is_performer = 1"
+    ).fetchone()["count"]
+    total_audience = db.execute(
+        "SELECT COUNT(*) as count FROM users WHERE is_performer = 0"
+    ).fetchone()["count"]
+
     click.echo(f"\n📈 PLATFORM TOTALS:")
     click.echo(f"   Total users: {total_users}")
     click.echo(f"   Performers: {total_performers}")
@@ -1169,10 +1229,10 @@ def create_fake_users_command(performers, audience, clear):
 def reset_market_command():
     """Reset market status to use time-based rules (remove override)."""
     _write_market_override(None)
-    
+
     click.echo("📊 Market status override removed")
     click.echo("✅ Market will now follow time-based rules")
-    
+
     # Show current status after reset
     market_info = get_market_status()
     click.echo(f"Current status: {market_info['status_text']}")
