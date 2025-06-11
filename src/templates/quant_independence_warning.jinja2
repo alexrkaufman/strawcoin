@@ -28,31 +28,24 @@
         </div>
 
         <!-- Enforcement Notice -->
-        <div style="border: 1px solid #F23645; background: rgba(242, 54, 69, 0.1); border-radius: 10px; padding: 20px; margin-bottom: 30px;">
-            <h4 style="color: #F23645; font-size: 1.1rem; margin-bottom: 10px;">
-                🚨 REGULATORY ENFORCEMENT NOTICE
-            </h4>
-            <p style="color: #ffffff; font-size: 0.9rem; line-height: 1.5;">
-                Attempts to circumvent CHANCELLOR's independence protocols are monitored and may result in regulatory action. CHANCELLOR maintains neutrality through strict payment restrictions.
-            </p>
-            <p style="color: #F23645; font-size: 0.9rem; line-height: 1.5; margin-top: 10px; font-weight: bold;">
-                WARNING: If INSIDER TRADING is identified it will result in immediate confiscation of coins to CHANCELLOR for regulatory enforcement.
-            </p>
-        </div>
+        {{ m.callout_box(
+            title="🚨 REGULATORY ENFORCEMENT NOTICE",
+            message="Attempts to circumvent CHANCELLOR's independence protocols are monitored and may
+            result in regulatory action. CHANCELLOR maintains neutrality through
+            strict payment restrictions.",
+            class="warning"
+        ) }}
 
         <!-- Independence Explanation -->
-        <div style="background: rgba(0, 0, 0, 0.3); border-radius: 10px; padding: 25px; margin-bottom: 30px;">
-            <h3 style="color: #4a90e2; font-size: 1.2rem; margin-bottom: 15px;">
-                🛡️ WHY QUANT INDEPENDENCE MATTERS
-            </h3>
-            <div style="text-align: left; color: #ffffff; font-size: 0.95rem; line-height: 1.7;">
-                <p>🏦 <strong>Regulatory Oversight:</strong> CHANCELLOR must remain impartial to enforce market rules</p>
-                <p>⚖️ <strong>Conflict Prevention:</strong> Direct payments could compromise enforcement decisions</p>
-                <p>🔍 <strong>Market Integrity:</strong> Independence ensures fair treatment of all traders</p>
-                <p>📊 <strong>Platform Administration:</strong> Neutral oversight protects all participants</p>
-                <p>🚫 <strong>Anti-Corruption:</strong> No bribes, gifts, or influence attempts allowed</p>
-            </div>
-        </div>
+        {{ m.callout_box(
+            title="🛡️ WHY QUANT INDEPENDENCE MATTERS",
+            message="<p>🏦 <strong>Regulatory Oversight:</strong> CHANCELLOR must remain impartial to enforce market rules</p>
+                     <p>⚖️ <strong>Conflict Prevention:</strong> Direct payments could compromise enforcement decisions</p>
+                     <p>🔍 <strong>Market Integrity:</strong> Independence ensures fair treatment of all traders</p>
+                     <p>📊 <strong>Platform Administration:</strong> Neutral oversight protects all participants</p>
+                     <p>🚫 <strong>Anti-Corruption:</strong> No bribes, gifts, or influence attempts allowed</p>",
+            class="info_box"
+            ) }}
 
         <!-- Alternative Actions -->
         <div style="background: linear-gradient(135deg, #1b2d1b, #154a15); border: 1px solid #00D084; border-radius: 10px; padding: 20px; margin-bottom: 30px;">

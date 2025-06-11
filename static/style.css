@@ -800,4 +800,53 @@ header {
 @keyframes slideUp {
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+}.callout_box {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+    h4 {
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+    }
+    p {
+        text-align: left;
+    }
+}
+
+.callout_box.warning {
+    background: rgba(255, 167, 38, 0.1);
+    border: 1px solid #ffa726;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.callout_box.info {
+    background: rgba(255, 167, 38, 0.1);
+    border: 1px solid #ffa726;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.callout_box {
+    .benefits-section {
+        margin-top: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 25px;
+        border-radius: 15px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+
+        h4 {
+            margin-bottom: 20px;
+        }
+
+        p {
+            text-align: left;
+            margin-bottom: 10px;
+        }
+    }
 }
