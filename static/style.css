@@ -408,38 +408,43 @@ header {
     text-align: center;
     padding: 20px;
 }
-.registration-header {
+
+.registration-section .header {
     margin-bottom: 40px;
 }
-.registration-title {
+
+.registration-section .title {
     font-size: 2.5rem;
     margin-bottom: 20px;
 }
-.registration-subtitle {
+
+.registration-section .subtitle {
     font-size: 1.3rem;
     margin-bottom: 30px;
 }
-.registration-form-container {
+
+/* Registration Form */
+.registration-form {
+    margin-bottom: 30px;
     background: rgba(255, 255, 255, 0.1);
     padding: 40px;
     border-radius: 15px;
     max-width: 500px;
     margin: 0 auto;
-    backdrop-filter: blur(10px);
 }
-.registration-form {
-    margin-bottom: 30px;
-}
-.form-group {
+
+.registration-form .form-group {
     margin-bottom: 25px;
 }
-.form-label {
+
+.registration-form .form-label {
     display: block;
     margin-bottom: 10px;
     font-size: 1.1rem;
     font-weight: bold;
 }
-.form-input {
+
+.registration-form .form-input {
     width: 100%;
     padding: 15px;
     font-size: 1.1rem;
@@ -449,6 +454,7 @@ header {
     color: #333;
     box-sizing: border-box;
 }
+
 .register-btn {
     width: 100%;
     padding: 15px;
@@ -460,34 +466,35 @@ header {
     border-radius: 10px;
     cursor: pointer;
     text-transform: uppercase;
-    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
     transition: transform 0.2s;
 }
-.register-btn:hover {
-    transform: scale(1.02);
-}
+
 /* Message Styles */
-.message {
+.registration-form .message {
     padding: 15px;
     border-radius: 10px;
     margin-bottom: 20px;
     display: none;
 }
-.error-message {
+
+.registration-form .error-message {
     background: rgba(255, 0, 0, 0.2);
     border: 1px solid rgba(255, 0, 0, 0.5);
     color: #ff6b6b;
 }
-.success-message {
+
+.registration-form .success-message {
     background: rgba(0, 255, 0, 0.2);
     border: 1px solid rgba(0, 255, 0, 0.5);
     color: #4caf50;
 }
-.loading-message {
+
+.registration-form .loading-message {
     padding: 20px;
     text-align: center;
 }
-.loading-emoji {
+
+.registration-form .loading-emoji {
     font-size: 2rem;
     margin-bottom: 10px;
 }
@@ -719,11 +726,11 @@ header {
 }
 
 .market-status-item.volume {
-    color: #FFA726;
+    color: #ffa726;
 }
 
 .market-status-item.traders {
-    color: #42A5F5;
+    color: #42a5f5;
 }
 
 .market-label {
@@ -757,7 +764,7 @@ header {
 }
 
 .position-badge {
-    background: #00D084;
+    background: #00d084;
     color: #000;
     padding: 4px 12px;
     border-radius: 20px;
@@ -792,11 +799,11 @@ header {
     margin: 0;
     font-size: 1.2rem;
     font-weight: bold;
-    color: #00D084;
+    color: #00d084;
 }
 
 .change-value.negative {
-    color: #F23645;
+    color: #f23645;
 }
 
 .change-label {
@@ -824,7 +831,7 @@ header {
 }
 
 .trading-btn.primary {
-    background: linear-gradient(135deg, #00D084, #00A66B);
+    background: linear-gradient(135deg, #00d084, #00a66b);
     color: white;
 }
 
@@ -832,8 +839,6 @@ header {
     background: linear-gradient(135deg, #4a90e2, #357abd);
     color: white;
 }
-
-
 
 /* Chart Controls */
 .chart-controls {
@@ -885,7 +890,7 @@ header {
 }
 
 .refresh-btn {
-    background: linear-gradient(135deg, #00D084, #00A66B);
+    background: linear-gradient(135deg, #00d084, #00a66b);
     color: white;
     border: none;
     padding: 10px 16px;
@@ -902,13 +907,13 @@ header {
 .live-dot {
     width: 8px;
     height: 8px;
-    background: #00D084;
+    background: #00d084;
     border-radius: 50%;
     animation: pulse 2s infinite;
 }
 
 .live-text {
-    color: #00D084;
+    color: #00d084;
     font-size: 0.9rem;
     font-weight: bold;
 }
@@ -1049,19 +1054,19 @@ header {
 }
 
 .stat-title.gain {
-    color: #00D084;
+    color: #00d084;
 }
 
 .stat-title.loss {
-    color: #F23645;
+    color: #f23645;
 }
 
 .stat-title.volume {
-    color: #FFA726;
+    color: #ffa726;
 }
 
 .stat-title.data {
-    color: #42A5F5;
+    color: #42a5f5;
 }
 
 .stat-period {
@@ -1069,19 +1074,19 @@ header {
 }
 
 .stat-period.gain {
-    color: #00D084;
+    color: #00d084;
 }
 
 .stat-period.loss {
-    color: #F23645;
+    color: #f23645;
 }
 
 .stat-period.volume {
-    color: #FFA726;
+    color: #ffa726;
 }
 
 .stat-period.data {
-    color: #42A5F5;
+    color: #42a5f5;
 }
 
 .stat-value {
@@ -1098,19 +1103,19 @@ header {
 }
 
 .stat-change.gain {
-    color: #00D084;
+    color: #00d084;
 }
 
 .stat-change.loss {
-    color: #F23645;
+    color: #f23645;
 }
 
 .stat-change.volume {
-    color: #FFA726;
+    color: #ffa726;
 }
 
 .stat-change.data {
-    color: #42A5F5;
+    color: #42a5f5;
 }
 
 /* Mobile Responsive Updates */
@@ -1119,22 +1124,22 @@ header {
         flex-direction: column;
         gap: 10px;
     }
-    
+
     .chart-controls {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .chart-controls-left,
     .chart-controls-right {
         flex-direction: column;
         width: 100%;
     }
-    
+
     .trading-stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .leaderboard-table-header {
         grid-template-columns: 50px 1.5fr 1fr 0.8fr;
         gap: 10px;

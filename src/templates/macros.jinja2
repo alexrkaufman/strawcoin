@@ -7,3 +7,32 @@
 {% macro crypto_badge(message) -%}
     <span class="crypto-badge">To The Moon! 🌙</span>
 {%- endmacro %}
+{% macro registration_form() -%}
+    <div class="registration-form">
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="username" class="form-label">Choose Your Market Identity:</label>
+                <input type="text"
+                       id="username"
+                       name="username"
+                       required
+                       maxlength="20"
+                       class="form-input"
+                       placeholder="Enter username..."
+                       autocomplete="off"
+                       autocapitalize="none">
+            </div>
+            <button type="submit" id="registerBtn" class="register-btn button">🌙 Launch to Moon Mission</button>
+        </form>
+        <div id="errorMessage" class="message error-message">
+            <p class="font-bold"></p>
+        </div>
+        <div id="loadingMessage" class="message loading-message">
+            <div class="loading-emoji">⏳</div>
+            <p>Initializing stakeholder account...</p>
+        </div>
+        <div id="successMessage" class="message success-message">
+            <p class="font-bold"></p>
+        </div>
+    </div>
+{%- endmacro %}

@@ -1,39 +1,13 @@
 {% extends "base.jinja2" %}
 {% block content %}
     <div class="registration-section">
-        <div class="registration-header">
-            <h1 class="registration-title">🚀 Join The Revolution</h1>
+        <div class="header">
+            <h1 class="title">🚀 Join The Revolution</h1>
             <p class="registration-subtitle">
                 Enter <strong>The Short Straw</strong> comedy tokenization ecosystem
             </p>
         </div>
-        <div class="registration-form-container">
-            <form id="registrationForm" class="registration-form">
-                <div class="form-group">
-                    <label for="username" class="form-label">Choose Your Market Identity:</label>
-                    <input type="text"
-                           id="username"
-                           name="username"
-                           required
-                           maxlength="20"
-                           class="form-input"
-                           placeholder="Enter username..."
-                           autocomplete="off"
-                           autocapitalize="none">
-                </div>
-                <button type="submit" id="registerBtn" class="register-btn">🌙 Launch to Moon Mission</button>
-            </form>
-            <div id="errorMessage" class="message error-message">
-                <p class="font-bold"></p>
-            </div>
-            <div id="loadingMessage" class="message loading-message">
-                <div class="loading-emoji">⏳</div>
-                <p>Initializing stakeholder account...</p>
-            </div>
-            <div id="successMessage" class="message success-message">
-                <p class="font-bold"></p>
-            </div>
-        </div>
+        {{ m.registration_form() }}
         <div class="nav-links">
             <a href="/leaderboard" class="leaderboard-link button">📊 Real-Time Leaderboard</a>
         </div>
