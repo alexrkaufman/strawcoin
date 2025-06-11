@@ -1,7 +1,7 @@
 import os
 from re import PatternError
 
-from flask import Flask, current_app, redirect, render_template, url_for
+from flask import Flask, abort, current_app, redirect, render_template, url_for
 
 from .auth import require_auth
 from .config import DevelopmentConfig, ProductionConfig
@@ -167,7 +167,7 @@ def create_app(test_config=None):
 
         # Check if user is The CHANCELLOR
         if not quant_enabled or current_username != quant_username:
-            return render_template("403.jinja2"), 403
+            abort(403)
 
         db = get_db()
 
@@ -246,11 +246,11 @@ def create_app(test_config=None):
 
     @app.errorhandler(404)
     def page_not_found(error):
-        return render_template("404.jinja2"), 404
+        return render_template("error.jinja2", error_icon="🚀💥", error_number=404), 404
 
     @app.errorhandler(403)
     def forbidden(error):
-        return render_template("403.jinja2"), 403
+        return render_template("error.jinja2", error_icon="🚫⚡", error_number=403), 403
 
     @app.route("/insider-trading-warning")
     @require_auth
