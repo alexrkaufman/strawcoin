@@ -1,7 +1,7 @@
 {% macro callout_box(title, message, class="") -%}
-    <div class="callout_box {{ class }}">
-        <h4 class="title">{{ title }}</h4>
-        <p>{{ message }}</p>
+    <div class="callout-box {{ class }}">
+        {% if title %}<h4 class="title">{{ title }}</h4>{% endif %}
+        <div class="content">{{ message|safe }}</div>
     </div>
 {%- endmacro %}
 {% macro crypto_badge(message) -%}

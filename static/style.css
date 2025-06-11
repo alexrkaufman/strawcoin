@@ -440,25 +440,7 @@ header {
     margin-bottom: 10px;
 }
 /* Benefits Section */
-.benefits-section {
-    margin-top: 40px;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 25px;
-    border-radius: 15px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-}
-.benefits-title {
-    margin-bottom: 20px;
-}
-.benefits-list {
-    text-align: left;
-}
-.benefits-list p {
-    margin-bottom: 10px;
-    text-align: left;
-}
+
 /* Session Warning */
 /* Chart Container */
 .chart-container {
@@ -613,9 +595,7 @@ header {
     .registration-form-container {
         padding: 20px;
     }
-    .benefits-section {
-        padding: 15px;
-    }
+
 }
 /* Market CTA Section */
 .market-cta-section {
@@ -893,8 +873,8 @@ header {
     background: linear-gradient(45deg, #9b59b6, #8e44ad);
 }
 
-/* Info and Warning Boxes */
-.info-box {
+/* Callout Box System - Base */
+.callout-box {
     background: rgba(255,255,255,0.1);
     padding: 30px;
     border-radius: 15px;
@@ -902,42 +882,50 @@ header {
     margin: 0 auto 30px;
 }
 
-.info-box.compact {
-    padding: 20px;
+.callout-box h4 {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+    text-align: center;
 }
 
-.info-box h2, .info-box h3 {
-    margin-bottom: 15px;
+.callout-box .content {
+    text-align: left;
 }
 
-.info-box p {
+.callout-box .content p {
     margin-bottom: 10px;
 }
 
-.info-box p:last-child {
+.callout-box .content p:last-child {
     margin-bottom: 0;
 }
 
-.warning-box {
-    margin-top: 30px;
-    padding: 20px;
-    background: rgba(255, 193, 7, 0.1);
-    border-radius: 10px;
-    border: 1px solid rgba(255, 193, 7, 0.3);
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
+/* Callout Box Modifiers */
+.callout-box.info-box {
+    /* Uses base styles */
 }
 
-.error-box {
-    margin-top: 30px;
-    padding: 20px;
+.callout-box.warning-box {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.callout-box.error-box {
     background: rgba(231, 76, 60, 0.1);
-    border-radius: 10px;
     border: 1px solid rgba(231, 76, 60, 0.3);
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
+}
+
+.callout-box.compact {
+    padding: 20px;
+}
+
+.callout-box.large {
+    max-width: 600px;
+}
+
+/* Legacy support for standalone info-box usage */
+.info-box h2, .info-box h3 {
+    margin-bottom: 15px;
 }
 
 /* Error Page Styles */
@@ -963,10 +951,7 @@ header {
     opacity: 0.9;
 }
 
-.info-box.large {
-    max-width: 600px;
-    margin-bottom: 40px;
-}
+
 
 .error-actions {
     margin-bottom: 40px;
@@ -1070,12 +1055,10 @@ header {
     text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
-.regulatory-notice-box {
+.callout-box.regulatory-notice {
     background: rgba(242, 54, 69, 0.1);
     border: 1px solid #F23645;
-    border-radius: 10px;
     padding: 20px;
-    margin-bottom: 30px;
 }
 
 .regulatory-section-title {
@@ -1102,11 +1085,9 @@ header {
     line-height: 1.6;
 }
 
-.enforcement-action-box {
+.callout-box.enforcement-action {
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 10px;
     padding: 25px;
-    margin-bottom: 30px;
 }
 
 .enforcement-title {
@@ -1130,11 +1111,9 @@ header {
     margin-bottom: 0;
 }
 
-.confiscation-notice-box {
+.callout-box.confiscation-notice {
     background: linear-gradient(135deg, #4a1515, #2d1b1b);
-    border-radius: 10px;
     padding: 20px;
-    margin-bottom: 30px;
 }
 
 .confiscation-message {
@@ -1155,12 +1134,10 @@ header {
     line-height: 1.6;
 }
 
-.compliance-notice-box {
-    border: 1px solid #4a90e2;
+.callout-box.compliance-notice {
     background: rgba(74, 144, 226, 0.1);
-    border-radius: 10px;
+    border: 1px solid #4a90e2;
     padding: 20px;
-    margin-bottom: 30px;
 }
 
 .compliance-title {
@@ -1249,12 +1226,10 @@ header {
     line-height: 1.6;
 }
 
-.independence-alternatives-box {
+.callout-box.independence-alternatives {
     background: linear-gradient(135deg, #1b2d1b, #154a15);
     border: 1px solid #00D084;
-    border-radius: 10px;
     padding: 20px;
-    margin-bottom: 30px;
 }
 
 .alternatives-title {
@@ -1802,31 +1777,7 @@ header {
         font-size: 0.7rem;
     }
 }
-.callout_box {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 30px;
-}
 
-.callout_box h4 {
-    font-size: 1.4rem;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.callout_box p {
-    text-align: left;
-}
-.callout_box.warning {
-    background: rgba(255, 167, 38, 0.1);
-    border: 1px solid #ffa726;
-}
-
-.callout_box.info {
-    background: rgba(74, 144, 226, 0.1);
-    border: 1px solid #4a90e2;
-}
 
 /* Header Logout Button Styles */
 header {

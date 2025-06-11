@@ -7,52 +7,37 @@
             <!-- Main Warning -->
             <h1 class="regulatory-warning-title">INSIDER TRADING DETECTED</h1>
             <!-- Regulatory Notice -->
-            <div class="regulatory-notice-box">
-                <h2 class="regulatory-section-title">🏛️ STRAW COIN REGULATORY COMMISSION ALERT</h2>
-                <p class="regulatory-alert-text">
-                    <strong>{{ username }}</strong>, you have been flagged for attempting to execute a <span class="violation-highlight">SELF-TRANSFER</span> of <strong>{{ amount | default(0) }} Straw Coins</strong>.
-                </p>
-                <p class="regulatory-warning-text">
-                    This action constitutes <strong>INSIDER TRADING</strong> under Section 420.69 of the Straw Coin Market Regulations Act.
-                </p>
-            </div>
+            {{ m.callout_box(
+                title="🏛️ STRAW COIN REGULATORY COMMISSION ALERT",
+                message='<p class="regulatory-alert-text"><strong>' ~ username ~ '</strong>, you have been flagged for attempting to execute a <span class="violation-highlight">SELF-TRANSFER</span> of <strong>' ~ (amount | default(0)) ~ ' Straw Coins</strong>.</p>
+                <p class="regulatory-warning-text">This action constitutes <strong>INSIDER TRADING</strong> under Section 420.69 of the Straw Coin Market Regulations Act.</p>',
+                class="regulatory-notice"
+            ) }}
             <!-- Enforcement Action -->
-            <div class="enforcement-action-box">
-                <h3 class="enforcement-title">📊 REGULATORY ENFORCEMENT ACTION</h3>
-                <div class="enforcement-details">
-                    <p>
-                        ✅ <strong>Transaction Blocked:</strong> Self-transfer prevented
-                    </p>
-                    <p>
-                        🔄 <strong>Funds Seized:</strong> {{ amount | default(0) }} coins transferred to market oversight
-                    </p>
-                    <p>
-                        👤 <strong>Enforcement Agent:</strong> CHANCELLOR (Platform Administrator)
-                    </p>
-                    <p>
-                        📋 <strong>Violation Code:</strong> INSIDER-{{ timestamp | default("000") }}
-                    </p>
-                    <p>
-                        ⏰ <strong>Timestamp:</strong> {{ current_time | default("Unknown") }}
-                    </p>
-                </div>
-            </div>
+            {{ m.callout_box(
+                title="📊 REGULATORY ENFORCEMENT ACTION",
+                message='<div class="enforcement-details">
+                    <p>✅ <strong>Transaction Blocked:</strong> Self-transfer prevented</p>
+                    <p>🔄 <strong>Funds Seized:</strong> ' ~ (amount | default(0)) ~ ' coins transferred to market oversight</p>
+                    <p>👤 <strong>Enforcement Agent:</strong> CHANCELLOR (Platform Administrator)</p>
+                    <p>📋 <strong>Violation Code:</strong> INSIDER-' ~ (timestamp | default("000")) ~ '</p>
+                    <p>⏰ <strong>Timestamp:</strong> ' ~ (current_time | default("Unknown")) ~ '</p>
+                </div>',
+                class="enforcement-action"
+            ) }}
             <!-- Warning Message -->
-            <div class="confiscation-notice-box">
-                <p class="confiscation-message">
-                    <strong>YOUR ATTEMPTED INSIDER TRADING COINS HAVE BEEN CONFISCATED</strong> and transferred to <span class="chancellor-highlight">CHANCELLOR</span> for platform administration and market integrity enforcement.
-                </p>
-                <p class="market-integrity-text">
-                    CHANCELLOR maintains market independence and ensures fair trading practices for all Straw Coin participants. This action protects market integrity and prevents artificial price manipulation.
-                </p>
-            </div>
+            {{ m.callout_box(
+                title="",
+                message='<p class="confiscation-message"><strong>YOUR ATTEMPTED INSIDER TRADING COINS HAVE BEEN CONFISCATED</strong> and transferred to <span class="chancellor-highlight">CHANCELLOR</span> for platform administration and market integrity enforcement.</p>
+                <p class="market-integrity-text">CHANCELLOR maintains market independence and ensures fair trading practices for all Straw Coin participants. This action protects market integrity and prevents artificial price manipulation.</p>',
+                class="confiscation-notice"
+            ) }}
             <!-- Compliance Notice -->
-            <div class="compliance-notice-box">
-                <h4 class="compliance-title">📜 COMPLIANCE REMINDER</h4>
-                <p class="compliance-text">
-                    All Straw Coin transactions are monitored for regulatory compliance. Self-transfers, wash trading, and market manipulation are strictly prohibited and will result in immediate enforcement action.
-                </p>
-            </div>
+            {{ m.callout_box(
+                title="📜 COMPLIANCE REMINDER",
+                message='<p class="compliance-text">All Straw Coin transactions are monitored for regulatory compliance. Self-transfers, wash trading, and market manipulation are strictly prohibited and will result in immediate enforcement action.</p>',
+                class="compliance-notice"
+            ) }}
             <!-- Action Buttons -->
             <div class="regulatory-actions">
                 <a href="/" class="regulatory-action-btn primary">📊 Return to Trading Platform</a>
