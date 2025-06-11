@@ -28,12 +28,17 @@ def is_authenticated():
         session.clear()
         return False
     
-    # Check if session is older than 60 seconds
-    session_created = datetime.fromisoformat(session["session_created"])
-    session_age = datetime.now() - session_created
-    
-    if session_age > timedelta(seconds=60):
-        # Session expired
+    try:
+        # Check if session is older than 60 seconds
+        session_created = datetime.fromisoformat(session["session_created"])
+        session_age = datetime.now() - session_created
+        
+        if session_age > timedelta(seconds=60):
+            # Session expired
+            session.clear()
+            return False
+    except (ValueError, TypeError):
+        # Invalid session_created format, clear session
         session.clear()
         return False
     

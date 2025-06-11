@@ -50,12 +50,19 @@ def create_app(test_config=None):
                     return jsonify({"error": "Session expired", "status": "session_expired"}), 401
                 return redirect(url_for('auth.register', expired=1))
             
-            # Check if session is older than 60 seconds
-            session_created = datetime.fromisoformat(session['session_created'])
-            session_age = datetime.now() - session_created
-            
-            if session_age > timedelta(seconds=60):
-                # Session expired
+            try:
+                # Check if session is older than 60 seconds
+                session_created = datetime.fromisoformat(session['session_created'])
+                session_age = datetime.now() - session_created
+                
+                if session_age > timedelta(seconds=60):
+                    # Session expired
+                    session.clear()
+                    if request.is_json:
+                        return jsonify({"error": "Session expired", "status": "session_expired"}), 401
+                    return redirect(url_for('auth.register', expired=1))
+            except (ValueError, TypeError, KeyError):
+                # Invalid session data, clear it
                 session.clear()
                 if request.is_json:
                     return jsonify({"error": "Session expired", "status": "session_expired"}), 401
@@ -66,6 +73,11 @@ def create_app(test_config=None):
     def home_page():
         db = get_db()
         current_username = session.get("username")
+        
+        # Extra safety check - if username is None after auth, redirect to register
+        if not current_username:
+            session.clear()
+            return redirect(url_for('auth.register', expired=1))
 
         # Redirect The CHANCELLOR to their terminal
         quant_username = app.config.get("QUANT_USERNAME", "CHANCELLOR")
