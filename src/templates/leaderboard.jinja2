@@ -7,7 +7,8 @@
     <!-- Market Status Bar -->
     <div class="market-status-bar">
         <div class="market-status-grid">
-            <div class="market-status-item status" style="color: {{ market_status.status_color if market_status else '#00D084' }};">
+            <div class="market-status-item status"
+                 style="color: {{ market_status.status_color if market_status else '#00D084' }}">
                 <span class="market-label">MARKET STATUS:</span>
                 <span class="market-value">{{ market_status.status_text if market_status else '🟢 OPEN' }}</span>
             </div>
@@ -27,7 +28,8 @@
     </div>
     <div class="portfolio-section">
         {% if current_username %}
-            <div class="user-balance-card trading-portfolio" data-username="{{ current_username }}">
+            <div class="user-balance-card trading-portfolio"
+                 data-username="{{ current_username }}">
                 <div class="portfolio-header">
                     <h3>PORTFOLIO POSITION</h3>
                     <span id="userPosition" class="position-badge">Calculating...</span>
