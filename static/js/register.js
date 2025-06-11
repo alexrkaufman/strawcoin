@@ -68,10 +68,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       if (data && data.status === "authentication_successful") {
-        // Success - show confirmation with timeout info before redirect
-        const timeoutInfo = data.debug_mode
-          ? `${data.session_timeout_seconds} seconds (debug mode)`
-          : `${Math.floor(data.session_timeout_seconds / 60)} minutes`;
+        // Success - show confirmation before redirect
         showSuccess(
           `Welcome to Straw Coin, ${data.username}! You have ${StrawCoinUtils.formatNumber(data.balance)} coins.`,
         );

@@ -1,39 +1,24 @@
 from functools import wraps
-from datetime import datetime
-import secrets
+
 from flask import (
     Blueprint,
+    current_app,
+    jsonify,
+    redirect,
+    render_template,
     request,
     session,
-    redirect,
     url_for,
-    render_template,
-    jsonify,
-    current_app,
 )
-from .db import (
-    create_user,
-    get_user_balance,
-    has_active_session,
-    create_session,
-    remove_session,
-    get_user_performer_status,
-)
+
+from .db import create_user, get_user_balance, get_user_performer_status
 
 bp = Blueprint("auth", __name__)
 
 
 def is_authenticated():
-    # Simplified authentication - only check if user is logged in
-    # Client handles session timeout
-    return "username" in session and "session_id" in session
-
-
-def update_activity():
-    # Activity updates removed - session timeout handled client-side
-    # Only keep session permanent flag
-    if "username" in session and "session_id" in session:
-        session.permanent = True
+    # Check if user has a username in session
+    return "username" in session
 
 
 def require_auth(f):
@@ -46,7 +31,6 @@ def require_auth(f):
                 ), 401
             return redirect(url_for("auth.register"))
 
-        update_activity()
         return f(*args, **kwargs)
 
     return decorated_function
@@ -81,7 +65,6 @@ def require_quant(f):
                 ), 403
             return render_template("403.jinja2"), 403
 
-        update_activity()
         return f(*args, **kwargs)
 
     return decorated_function
@@ -117,15 +100,6 @@ def login():
             }
         ), 400
 
-    # Check for active session before allowing login
-    if has_active_session(username):
-        return jsonify(
-            {
-                "error": f"User {username} is already logged in. Only one session per user is allowed.",
-                "status": "session_conflict",
-            }
-        ), 409
-
     balance = get_user_balance(username)
     performer_status = get_user_performer_status(username)
 
@@ -137,30 +111,9 @@ def login():
             ), 409
         balance = 10000
         performer_status = is_performer
-    else:
-        # Create balance snapshot for existing user login
-        from .db import get_db, create_balance_snapshot
 
-        db = get_db()
-        user = db.execute(
-            "SELECT id FROM users WHERE username = ?", (username,)
-        ).fetchone()
-        if user:
-            create_balance_snapshot(user["id"], balance)
-
-    # Generate unique session ID
-    session_id = secrets.token_urlsafe(32)
-
-    # Create session record in database
-    if not create_session(username, session_id):
-        return jsonify(
-            {"error": "Failed to create session", "status": "session_error"}
-        ), 500
-
+    # Set Flask session
     session["username"] = username
-    session["user_balance"] = balance
-    session["session_id"] = session_id
-    session["session_start"] = datetime.now().isoformat()
     session.permanent = True
 
     user_type = "performer" if performer_status else "audience member"
@@ -171,8 +124,7 @@ def login():
             "balance": balance,
             "is_performer": performer_status,
             "user_type": user_type,
-            "total_timeout_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
-            "debug_mode": current_app.debug,
+            "session_timeout_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
             "status": "authentication_successful",
         }
     ), 200
@@ -187,7 +139,7 @@ def session_status():
         {
             "authenticated": True,
             "username": session["username"],
-            "total_timeout_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
+            "session_timeout_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
             "status": "session_active",
         }
     ), 200
@@ -200,27 +152,12 @@ def session_expired():
     )
 
 
-@bp.route("/update-activity", methods=["POST"])
-def update_activity_endpoint():
-    if not is_authenticated():
-        return jsonify({"error": "Session expired", "status": "session_expired"}), 401
 
-    # Activity updates removed - client handles session timeout
-    return jsonify(
-        {
-            "message": "Activity received (client-managed)",
-            "total_timeout_seconds": current_app.config["SESSION_TIMEOUT_SECONDS"],
-            "status": "client_managed",
-        }
-    )
 
 
 @bp.route("/logout", methods=["POST"])
 def logout():
-    """Manually log out and clean up session."""
-    if "session_id" in session:
-        remove_session(session["session_id"])
-
+    """Log out and clear session."""
     username = session.get("username", "Unknown")
     session.clear()
 
@@ -230,6 +167,3 @@ def logout():
             "status": "logout_successful",
         }
     ), 200
-
-
-# Activity tracking removed - session timeout now handled client-side

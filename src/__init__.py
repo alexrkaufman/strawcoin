@@ -1,11 +1,10 @@
 import os
-from re import PatternError
 
-from flask import Flask, abort, current_app, redirect, render_template, url_for
+from flask import Flask, abort, current_app, redirect, render_template, session, url_for
 
 from .auth import require_auth
 from .config import DevelopmentConfig, ProductionConfig
-from .db import get_db
+from .db import get_db, get_market_status, get_transaction_history, get_user_balance
 from .scheduler import init_scheduler
 
 
@@ -282,33 +281,12 @@ def create_app(test_config=None):
             Other market maipulation such as self-dealing will result in confiscation.""",
         )
 
-    @app.route("/debug/config")
-    def debug_config():
-        """Debug endpoint to check which configuration is loaded."""
-        config_info = {
-            "session_timeout_seconds": app.config.get("SESSION_TIMEOUT_SECONDS"),
-            "debug": app.debug,
-            "config_class": app.config.__class__.__name__
-            if hasattr(app.config, "__class__")
-            else "unknown",
-            "redistribution_enabled": app.config.get("ENABLE_PERFORMER_REDISTRIBUTION"),
-            "session_cookie_secure": app.config.get("SESSION_COOKIE_SECURE"),
-        }
-
-        from flask import jsonify
-
-        return jsonify(config_info)
-
     # Register blueprints
     from . import api, auth, db
 
     app.register_blueprint(api.bp)
     app.register_blueprint(auth.bp)
     db.init_app(app)
-
-    # Clean up expired sessions on startup
-    with app.app_context():
-        db.cleanup_sessions_on_startup()
 
     # Initialize performer redistribution scheduler
     init_scheduler(app)

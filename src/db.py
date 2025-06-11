@@ -20,16 +20,7 @@ def close_db(e=None):
         db.close()
 
 
-def cleanup_sessions_on_startup():
-    """Clean up expired sessions when the app starts."""
-    try:
-        from flask import current_app
 
-        if current_app:
-            timeout_seconds = current_app.config.get("SESSION_TIMEOUT_SECONDS", 300)
-            cleanup_expired_sessions(timeout_seconds)
-    except Exception:
-        pass  # Ignore errors during startup cleanup
 
 
 def init_db():
@@ -53,7 +44,6 @@ def init_db():
             "users",
             "transactions",
             "balance_snapshots",
-            "active_sessions",
         ]
         missing_tables = [
             table for table in required_tables if table not in existing_tables
@@ -129,27 +119,7 @@ def init_db():
                 )
                 click.echo("Added balance_snapshots table")
 
-            if "active_sessions" in missing_tables:
-                db.execute("""
-                    CREATE TABLE active_sessions (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT NOT NULL,
-                        session_id TEXT UNIQUE NOT NULL,
-                        last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (username) REFERENCES users (username)
-                    )
-                """)
-                db.execute(
-                    "CREATE INDEX idx_active_sessions_username ON active_sessions(username)"
-                )
-                db.execute(
-                    "CREATE INDEX idx_active_sessions_session_id ON active_sessions(session_id)"
-                )
-                db.execute(
-                    "CREATE INDEX idx_active_sessions_last_activity ON active_sessions(last_activity)"
-                )
-                click.echo("Added active_sessions table")
+
 
             # Add is_performer column to users table if missing
             if needs_performer_column:
@@ -262,52 +232,7 @@ def cleanup_snapshots_command(hours):
         click.echo("❌ Failed to clean up snapshots")
 
 
-@click.command("cleanup-sessions")
-@with_appcontext
-def cleanup_sessions_command():
-    """Clean up expired sessions."""
-    timeout_seconds = current_app.config.get("SESSION_TIMEOUT_SECONDS", 300)
-    success = cleanup_expired_sessions(timeout_seconds)
-    if success:
-        click.echo(f"✅ Cleaned up expired sessions (timeout: {timeout_seconds}s)")
-    else:
-        click.echo("❌ Failed to clean up expired sessions")
 
-
-@click.command("list-sessions")
-@with_appcontext
-def list_sessions_command():
-    """List all active sessions."""
-    db = get_db()
-    sessions = db.execute(
-        "SELECT username, session_id, last_activity, created_at FROM active_sessions ORDER BY last_activity DESC"
-    ).fetchall()
-
-    if sessions:
-        click.echo("Active Sessions:")
-        for session in sessions:
-            click.echo(
-                f"  {session['username']} - Last activity: {session['last_activity']} (Created: {session['created_at']})"
-            )
-    else:
-        click.echo("No active sessions")
-
-
-@click.command("clear-sessions")
-@click.confirmation_option(prompt="Are you sure you want to clear all active sessions?")
-@with_appcontext
-def clear_sessions_command():
-    """Clear all active sessions."""
-    db = get_db()
-    try:
-        count = db.execute("SELECT COUNT(*) as count FROM active_sessions").fetchone()[
-            "count"
-        ]
-        db.execute("DELETE FROM active_sessions")
-        db.commit()
-        click.echo(f"✅ Cleared {count} active sessions")
-    except Exception as e:
-        click.echo(f"❌ Failed to clear sessions: {e}")
 
 
 @click.command("migrate-db")
@@ -320,6 +245,34 @@ def migrate_db_command():
     init_db()
 
 
+@click.command("drop-sessions-table")
+@click.confirmation_option(
+    prompt="Are you sure you want to drop the active_sessions table? This will remove all session tracking data."
+)
+@with_appcontext
+def drop_sessions_table_command():
+    """Drop the deprecated active_sessions table after migration to Flask sessions."""
+    db = get_db()
+    try:
+        # Check if table exists
+        table_exists = db.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='active_sessions'"
+        ).fetchone()
+        
+        if table_exists:
+            # Drop the table and its indexes
+            db.execute("DROP TABLE IF EXISTS active_sessions")
+            db.execute("DROP INDEX IF EXISTS idx_active_sessions_username")
+            db.execute("DROP INDEX IF EXISTS idx_active_sessions_session_id")
+            db.execute("DROP INDEX IF EXISTS idx_active_sessions_last_activity")
+            db.commit()
+            click.echo("✅ Successfully dropped active_sessions table and indexes")
+        else:
+            click.echo("ℹ️  active_sessions table doesn't exist - nothing to drop")
+    except Exception as e:
+        click.echo(f"❌ Failed to drop active_sessions table: {e}")
+
+
 def init_app(app):
     app.teardown_appcontext(close_db)
     app.cli.add_command(init_db_command)
@@ -327,13 +280,11 @@ def init_app(app):
     app.cli.add_command(reset_balances_command)
     app.cli.add_command(create_snapshots_command)
     app.cli.add_command(cleanup_snapshots_command)
-    app.cli.add_command(cleanup_sessions_command)
-    app.cli.add_command(list_sessions_command)
-    app.cli.add_command(clear_sessions_command)
     app.cli.add_command(redistribute_performer_coins_command)
     app.cli.add_command(set_performer_command)
     app.cli.add_command(list_performers_command)
     app.cli.add_command(migrate_db_command)
+    app.cli.add_command(drop_sessions_table_command)
     app.cli.add_command(create_quant_command)
     app.cli.add_command(run_production_command)
     app.cli.add_command(create_fake_users_command)
@@ -566,121 +517,7 @@ def cleanup_old_snapshots(hours_to_keep=6):
         return False
 
 
-def create_session(username, session_id):
-    """Create an active session record for a user."""
-    db = get_db()
-    try:
-        db.execute(
-            "INSERT INTO active_sessions (username, session_id, last_activity) VALUES (?, ?, datetime('now'))",
-            (username, session_id),
-        )
-        db.commit()
-        return True
-    except sqlite3.Error:
-        return False
 
-
-def update_session_activity(session_id):
-    """Update the last activity time for a session."""
-    db = get_db()
-    try:
-        db.execute(
-            "UPDATE active_sessions SET last_activity = datetime('now') WHERE session_id = ?",
-            (session_id,),
-        )
-        db.commit()
-        return True
-    except sqlite3.Error:
-        return False
-
-
-def remove_session(session_id):
-    """Remove a session record."""
-    db = get_db()
-    try:
-        db.execute("DELETE FROM active_sessions WHERE session_id = ?", (session_id,))
-        db.commit()
-        return True
-    except sqlite3.Error:
-        return False
-
-
-def cleanup_expired_sessions(timeout_seconds):
-    """Remove sessions that have been inactive for longer than the timeout."""
-    db = get_db()
-    try:
-        db.execute(
-            "DELETE FROM active_sessions WHERE last_activity < datetime('now', '-' || ? || ' seconds')",
-            (timeout_seconds,),
-        )
-        db.commit()
-        return True
-    except sqlite3.Error:
-        return False
-
-
-def has_active_session(username):
-    """Check if a user has an active session."""
-    from flask import current_app
-
-    db = get_db()
-
-    # First cleanup expired sessions
-    timeout_seconds = current_app.config.get("SESSION_TIMEOUT_SECONDS", 300)
-    cleanup_expired_sessions(timeout_seconds)
-
-    # Check for active sessions
-    session = db.execute(
-        "SELECT session_id FROM active_sessions WHERE username = ? AND last_activity > datetime('now', '-' || ? || ' seconds')",
-        (username, timeout_seconds),
-    ).fetchone()
-
-    return session is not None
-
-
-def get_active_session_count():
-    """Get the total number of active sessions."""
-    from flask import current_app
-
-    db = get_db()
-    timeout_seconds = current_app.config.get("SESSION_TIMEOUT_SECONDS", 300)
-
-    # First cleanup expired sessions
-    cleanup_expired_sessions(timeout_seconds)
-
-    # Count active sessions
-    count = db.execute(
-        "SELECT COUNT(*) as count FROM active_sessions WHERE last_activity > datetime('now', '-' || ? || ' seconds')",
-        (timeout_seconds,),
-    ).fetchone()
-
-    return count["count"] if count else 0
-
-
-def get_user_session_id(username):
-    """Get the session ID for a user if they have an active session."""
-    from flask import current_app
-
-    db = get_db()
-    timeout_seconds = current_app.config.get("SESSION_TIMEOUT_SECONDS", 300)
-
-    session = db.execute(
-        "SELECT session_id FROM active_sessions WHERE username = ? AND last_activity > datetime('now', '-' || ? || ' seconds')",
-        (username, timeout_seconds),
-    ).fetchone()
-
-    return session["session_id"] if session else None
-
-
-def get_session_info(session_id):
-    """Get session information by session ID."""
-    db = get_db()
-    session = db.execute(
-        "SELECT username, last_activity, created_at FROM active_sessions WHERE session_id = ?",
-        (session_id,),
-    ).fetchone()
-
-    return dict(session) if session else None
 
 
 def set_user_performer_status(username, is_performer):

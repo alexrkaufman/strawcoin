@@ -42,9 +42,7 @@
                 {% endblock %}
             </footer>
         </div>
-        {% if request.endpoint != 'auth.session_expired' and request.endpoint != 'auth.register' %}
-            <script src="{{ url_for('static', filename='js/session.js') }}"></script>
-        {% endif %}
+
         {% if session.get('username') %}<script src="{{ url_for('static', filename='js/logout.js') }}"></script>{% endif %}
     </body>
 </html>

@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 
 class Config:
@@ -15,8 +16,9 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_NAME = "straw_coin_session"
+    PERMANENT_SESSION_LIFETIME = timedelta(seconds=60)  # 1 minute
 
-    # Default session timeout (1 minute)
+    # Default session timeout (1 minute) - for client-side reference only
     SESSION_TIMEOUT_SECONDS = 60
 
     # Site metadata
@@ -53,6 +55,7 @@ class DevelopmentConfig(Config):
 
     # Shorter timeout for testing (30 seconds)
     SESSION_TIMEOUT_SECONDS = 30
+    PERMANENT_SESSION_LIFETIME = timedelta(seconds=30)  # 30 seconds for development
 
     # Enable redistribution in development for testing
     ENABLE_PERFORMER_REDISTRIBUTION = True
@@ -64,8 +67,9 @@ class ProductionConfig(Config):
     DEBUG = False
     SESSION_COOKIE_SECURE = True
 
-    # Full timeout for live shows (1 minutes)
+    # Full timeout for live shows (1 minute)
     SESSION_TIMEOUT_SECONDS = 60
+    PERMANENT_SESSION_LIFETIME = timedelta(seconds=60)  # 1 minute for production
 
     # Enable redistribution in production
     ENABLE_PERFORMER_REDISTRIBUTION = True

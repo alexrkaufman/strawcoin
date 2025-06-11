@@ -41,20 +41,17 @@ CREATE TABLE balance_snapshots (
 CREATE INDEX idx_balance_snapshots_user_time ON balance_snapshots(user_id, timestamp);
 CREATE INDEX idx_balance_snapshots_timestamp ON balance_snapshots(timestamp);
 
--- Active sessions tracking for session conflict prevention
-CREATE TABLE active_sessions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL,
-    session_id TEXT UNIQUE NOT NULL,
-    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (username) REFERENCES users (username)
-);
-
--- Index for efficient session lookups
-CREATE INDEX idx_active_sessions_username ON active_sessions(username);
-CREATE INDEX idx_active_sessions_session_id ON active_sessions(session_id);
-CREATE INDEX idx_active_sessions_last_activity ON active_sessions(last_activity);
+-- DEPRECATED: Active sessions table - no longer used after auth simplification
+-- Kept for backwards compatibility during migration
+-- This table can be safely dropped after all instances are updated
+-- CREATE TABLE active_sessions (
+--     id INTEGER PRIMARY KEY AUTOINCREMENT,
+--     username TEXT NOT NULL,
+--     session_id TEXT UNIQUE NOT NULL,
+--     last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     FOREIGN KEY (username) REFERENCES users (username)
+-- );
 
 -- Market analytics view for real-time portfolio tracking
 CREATE VIEW user_stats AS

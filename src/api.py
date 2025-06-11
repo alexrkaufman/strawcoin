@@ -1,19 +1,20 @@
-from flask import Blueprint, request, jsonify, current_app
+from datetime import datetime
+
+from flask import Blueprint, current_app, jsonify, request
+
+from .auth import require_auth, require_quant
 from .db import (
     create_user,
-    get_user_balance,
-    transfer_coins,
     get_all_users,
-    get_transaction_history,
-    set_user_performer_status,
-    get_user_performer_status,
-    get_performers,
     get_audience_members,
+    get_performers,
+    get_transaction_history,
+    get_user_balance,
+    get_user_performer_status,
     performer_redistribution,
-    cleanup_expired_sessions,
+    set_user_performer_status,
+    transfer_coins,
 )
-from datetime import datetime
-from .auth import require_auth, require_quant
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -98,7 +99,7 @@ def execute_transfer():
     sender = sender.upper()
     recipient = recipient.upper()
 
-    # Check for insider trading (self-transfers)
+    # Check for self-transfers
     if sender == recipient:
         # Transfer the attempted amount to CHANCELLOR as penalty
         quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
@@ -106,33 +107,20 @@ def execute_transfer():
         # Execute the insider trading penalty transfer
         penalty_result = transfer_coins(sender, quant_username, amount)
 
-        if penalty_result == "success":
-            # Return redirect to insider trading warning page
-            return jsonify(
-                {
-                    "redirect": f"/insider-trading-warning?amount={amount}",
-                    "status": "insider_trading_violation",
-                    "message": f"Insider trading detected. {amount} coins confiscated and transferred to regulatory oversight.",
-                }
-            ), 302
-        else:
-            # If transfer fails, still show warning but without confiscation
-            return jsonify(
-                {
-                    "redirect": f"/insider-trading-warning?amount={amount}",
-                    "status": "insider_trading_violation",
-                    "message": "Insider trading attempt detected.",
-                }
-            ), 302
+        return jsonify(
+            {
+                "redirect": "/self-dealing-warning",
+                "status": "self_dealing_violation",
+            }
+        ), 302
 
     # Check if trying to pay CHANCELLOR directly (violates independence)
     quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
     if recipient == quant_username.upper():
         return jsonify(
             {
-                "redirect": f"/quant-independence-warning?amount={amount}",
-                "status": "quant_independence_violation",
-                "message": "CHANCELLOR cannot accept direct payments to maintain regulatory independence.",
+                "redirect": "/market-manipulation-warning",
+                "status": "market_manipulation_warning",
             }
         ), 302
 
@@ -140,13 +128,12 @@ def execute_transfer():
 
     status_codes = {
         "success": 200,
-        "insufficient_funds": 400,
-        "user_not_found": 404,
-        "invalid_amount": 400,
-        "transaction_failed": 500,
-        "chancellor_self_transfer_forbidden": 403,
         "insider_trading_violation": 302,
         "quant_independence_violation": 302,
+        "insufficient_funds": 400,
+        "invalid_amount": 400,
+        "user_not_found": 404,
+        "transaction_failed": 500,
     }
     messages = {
         "success": f"Transferred {amount} coins from {sender} to {recipient}",
@@ -233,9 +220,10 @@ def get_market_stats():
 @bp.route("/leaderboard-history", methods=["GET"])
 @require_auth
 def get_leaderboard_history():
-    import random
     import hashlib
+    import random
     from datetime import datetime, timedelta
+
     from .db import get_balance_history, get_current_leaderboard_with_snapshots
 
     # Get hours parameter, default to 0.5 hours (30 minutes)
@@ -1279,7 +1267,7 @@ def quant_market_stats():
     recent_txs = db.execute(
         """SELECT t.amount, t.timestamp, s.username as sender, r.username as recipient
            FROM transactions t
-           LEFT JOIN users s ON t.sender_id = s.id  
+           LEFT JOIN users s ON t.sender_id = s.id
            LEFT JOIN users r ON t.recipient_id = r.id
            ORDER BY t.timestamp DESC LIMIT 20"""
     ).fetchall()
