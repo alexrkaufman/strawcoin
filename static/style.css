@@ -116,18 +116,8 @@ header {
     justify-content: center;
     flex-wrap: wrap;
 }
-.quick-send-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    padding: 10px 15px;
-    border-radius: 20px;
-    color: white;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.quick-send-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
+/* Quick send buttons use .button.secondary */
+
 .send-form {
     max-width: 500px;
     margin: 0 auto;
@@ -175,26 +165,59 @@ header {
     font-size: 0.85rem;
     opacity: 0.8;
 }
-.send-btn {
-    background: linear-gradient(45deg, #e74c3c, #c0392b);
-    color: white;
+/* Base button styles */
+.button {
+    display: inline-block;
+    padding: 10px 20px;
     border: none;
-    padding: 15px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
+    border-radius: 10px;
     cursor: pointer;
-    text-transform: uppercase;
-    transition: transform 0.2s;
+    text-decoration: none;
+    text-align: center;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
 }
+
 .button:hover {
-    transform: scale(1.02);
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
-.send-btn:disabled {
-    opacity: 0.6;
+
+.button:disabled {
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
 }
+
+/* Button variants */
+.button.primary {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+.button.success {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+.button.danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.button.warning {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.button.secondary {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.button.large {
+    padding: 15px 30px;
+    font-size: 1.1rem;
+}
+
 /* Market Stats Grid */
 .market-stats-grid {
     display: grid;
@@ -388,20 +411,6 @@ header {
     box-sizing: border-box;
 }
 
-.register-btn {
-    width: 100%;
-    padding: 15px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    background: linear-gradient(45deg, #f39c12, #e67e22);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: transform 0.2s;
-}
-
 /* Message Styles */
 .registration-form .message {
     padding: 15px;
@@ -534,19 +543,6 @@ header {
     gap: 20px;
     justify-content: center;
     flex-wrap: wrap;
-}
-.session-expired-btn {
-    background: linear-gradient(45deg, #2ecc71, #27ae60);
-    color: white;
-    text-decoration: none;
-    padding: 15px 30px;
-    border-radius: 10px;
-    font-weight: bold;
-    font-size: 1.1rem;
-    transition: transform 0.2s;
-}
-.session-expired-btn:hover {
-    transform: scale(1.05);
 }
 /* Mobile Responsive */
 @media (max-width: 768px) {
@@ -712,44 +708,13 @@ header {
     gap: 20px;
 }
 
-.quant-btn {
+/* Button variants continued */
+.button.info {
+    background: linear-gradient(135deg, #00bfa5, #00a693);
+}
+
+.button.full-width {
     width: 100%;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s;
-    margin-bottom: 10px;
-}
-
-.quant-btn:last-child {
-    margin-bottom: 0;
-}
-
-.quant-btn-primary {
-    background: linear-gradient(45deg, #3498db, #2980b9);
-    color: white;
-}
-
-.quant-btn-danger {
-    background: linear-gradient(45deg, #e74c3c, #c0392b);
-    color: white;
-}
-
-.quant-btn-warning {
-    background: linear-gradient(45deg, #f39c12, #e67e22);
-    color: white;
-}
-
-.quant-btn-info {
-    background: linear-gradient(45deg, #00bfa5, #00a693);
-    color: white;
-}
-
-.quant-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .quant-users-registry {
@@ -866,10 +831,6 @@ header {
     color: #e74c3c;
 }
 
-.session-expired-btn.secondary {
-    background: linear-gradient(45deg, #9b59b6, #8e44ad);
-}
-
 /* Callout Box System - Base */
 .callout-box {
     background: rgba(255, 255, 255, 0.1);
@@ -975,31 +936,6 @@ header {
     border: 2px solid #ffdd00;
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(255, 221, 0, 0.3);
-}
-
-.action-btn {
-    display: inline-block;
-    color: white;
-    padding: 15px 30px;
-    border-radius: 25px;
-    text-decoration: none;
-    font-weight: bold;
-    margin: 10px;
-    font-size: 1.1rem;
-    transition: all 0.3s;
-}
-
-.action-btn.primary {
-    background: linear-gradient(45deg, #f39c12, #e67e22);
-}
-
-.action-btn.success {
-    background: linear-gradient(45deg, #27ae60, #2ecc71);
-}
-
-.action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 /* User List Styles */
@@ -1173,30 +1109,6 @@ header {
     justify-content: center;
     flex-wrap: wrap;
     margin-bottom: 30px;
-}
-
-.regulatory-action-btn {
-    color: white;
-    padding: 15px 30px;
-    border-radius: 10px;
-    text-decoration: none;
-    font-weight: bold;
-    transition: all 0.3s;
-}
-
-.regulatory-action-btn.primary {
-    background: linear-gradient(135deg, #4a90e2, #357abd);
-    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
-}
-
-.regulatory-action-btn.success {
-    background: linear-gradient(135deg, #00d084, #00a66b);
-    box-shadow: 0 4px 15px rgba(0, 208, 132, 0.3);
-}
-
-.regulatory-action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
 }
 
 /* Independence Warning Specific Styles */
@@ -1465,24 +1377,9 @@ header {
     margin-top: 15px;
 }
 
-.trading-btn {
-    padding: 12px 24px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: bold;
-    transition: all 0.3s;
-    border: none;
-    cursor: pointer;
-}
-
-.trading-btn.primary {
-    background: linear-gradient(135deg, #00d084, #00a66b);
-    color: white;
-}
-
-.trading-btn.secondary {
-    background: linear-gradient(135deg, #4a90e2, #357abd);
-    color: white;
+/* Button variants continued */
+.button.trading-green {
+    background: linear-gradient(135deg, #00D084, #00a866);
 }
 
 /* Chart Controls */
@@ -1519,7 +1416,8 @@ header {
     gap: 8px;
 }
 
-.chart-type-btn {
+/* Chart type buttons */
+.button.chart-type {
     background: #333;
     color: #b0b0b0;
     border: 1px solid #555;
@@ -1528,19 +1426,10 @@ header {
     font-size: 0.8rem;
 }
 
-.chart-type-btn.active {
+.button.chart-type.active {
     background: #4a90e2;
     color: white;
     border: none;
-}
-
-.refresh-btn {
-    background: linear-gradient(135deg, #00d084, #00a66b);
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 6px;
-    font-weight: bold;
 }
 
 .live-indicator {
@@ -1597,12 +1486,9 @@ header {
     font-size: 0.9rem;
 }
 
-.auto-scale-btn {
-    background: #4a90e2;
-    color: white;
-    border: none;
+/* Auto scale button */
+.button.small {
     padding: 4px 8px;
-    border-radius: 4px;
     font-size: 0.8rem;
 }
 
@@ -1812,19 +1698,13 @@ header {
     align-items: center;
 }
 
-.logout-btn {
-    background: linear-gradient(45deg, #e74c3c, #c0392b);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 25px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
+/* Custom button modifiers */
+.button.logout {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    border-radius: 25px;
 }
 
 .logout-icon {

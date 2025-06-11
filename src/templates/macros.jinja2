@@ -22,7 +22,7 @@
                        autocomplete="off"
                        autocapitalize="none">
             </div>
-            <button type="submit" id="registerBtn" class="register-btn button">🌙 Launch to Moon Mission</button>
+            <button type="submit" id="registerBtn" class="button warning large full-width">🌙 Launch to Moon Mission</button>
         </form>
         <div id="errorMessage" class="message error-message">
             <p></p>
@@ -38,15 +38,15 @@
 {%- endmacro %}
 {% macro leaderboard_button() -%}
     <div class="nav-links">
-        <a href="/leaderboard" class="leaderboard-link button">📊 Real-Time Leaderboard</a>
+        <a href="/leaderboard" class="button primary">📊 Real-Time Leaderboard</a>
     </div>
 {%- endmacro %}
 {% macro recovery_box() -%}
     {{ callout_box(title="🔍 Navigation Recovery Protocol",
         message='<p>Return to authorized areas of the platform</p>
         <div class="session-expired-actions">
-            <a href="/" class="session-expired-btn button">🏠 Return to Home</a>
-            <a href="/leaderboard" class="session-expired-btn button secondary">📊 View Leaderboard</a>
+            <a href="/" class="button success large">🏠 Return to Home</a>
+            <a href="/leaderboard" class="button secondary large">📊 View Leaderboard</a>
         </div>',
         class="info-box large") 
     }}
