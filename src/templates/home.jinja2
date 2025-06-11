@@ -16,7 +16,7 @@
         <h2 class="send-coins-title">💸 Send Coins to Fellow Shareholders</h2>
         <!-- Quick Send Buttons -->
         <div class="quick-send-section">
-            <p class="mb-10 opacity-90">Quick Send:</p>
+            <p>Quick Send:</p>
             <div class="quick-send-buttons">
                 <button class="quickSend quick-send-btn button" data-amount="100">100 coins</button>
                 <button class="quickSend quick-send-btn button" data-amount="500">500 coins</button>
@@ -38,7 +38,7 @@
                     <datalist id="recipientList">
                         {% for user in available_recipients %}<option value="{{ user.username }}">{{ user.username }}</option>{% endfor %}
                     </datalist>
-                    <small class="opacity-80" style="font-size: 0.9rem;">💡 Start typing to see suggestions or click the dropdown arrow</small>
+                    <small>💡 Start typing to see suggestions or click the dropdown arrow</small>
                 </div>
                 <div>
                     <label class="form-label">Amount:</label>
@@ -59,32 +59,24 @@
     </div>
     <!-- Recent Transactions -->
     {% if recent_transactions %}
-        <div style="background: rgba(255,255,255,0.1);
-                    padding: 30px;
-                    border-radius: 15px;
-                    margin-bottom: 30px">
-            <h2 style="text-align: center; margin-bottom: 20px;">📈 Your Recent Transactions</h2>
-            <div style="display: grid; gap: 10px;">
+        <div class="transaction-section">
+            <h2>📈 Your Recent Transactions</h2>
+            <div class="transaction-list">
                 {% for transaction in recent_transactions %}
-                    <div style="display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                                background: rgba(255,255,255,0.1);
-                                padding: 15px;
-                                border-radius: 8px">
+                    <div class="transaction-item{% if transaction.sender == current_username %} sent{% else %} received{% endif %}">
                         <div>
                             {% if transaction.sender == current_username %}
-                                <span style="color: #e74c3c;">📤 Sent to {{ transaction.recipient }}</span>
+                                <span class="transaction-label">📤 Sent to {{ transaction.recipient }}</span>
                             {% else %}
-                                <span style="color: #2ecc71;">📥 Received from {{ transaction.sender }}</span>
+                                <span class="transaction-label">📥 Received from {{ transaction.sender }}</span>
                             {% endif %}
-                            <div style="font-size: 0.9rem; opacity: 0.8;">{{ transaction.timestamp.strftime("%Y-%m-%d %H:%M") }}</div>
+                            <div class="transaction-timestamp">{{ transaction.timestamp.strftime("%Y-%m-%d %H:%M") }}</div>
                         </div>
-                        <span style="font-weight: bold; font-size: 1.1rem;">
+                        <span class="transaction-amount">
                             {% if transaction.sender == current_username %}
-                                <span style="color: #e74c3c;">-{{ "{:,}".format(transaction.amount) }}</span>
+                                -{{ "{:,}".format(transaction.amount) }}
                             {% else %}
-                                <span style="color: #2ecc71;">+{{ "{:,}".format(transaction.amount) }}</span>
+                                +{{ "{:,}".format(transaction.amount) }}
                             {% endif %}
                         </span>
                     </div>
@@ -128,19 +120,19 @@
         {% if current_user_is_performer %}
             <div class="performer-status-card performer">
                 <h3>🎭 You are a PERFORMER</h3>
-                <p class="opacity-90">You lose 5 coins to each audience member every minute</p>
-                <p class="opacity-70" style="font-size: 0.9rem;">Make them laugh to earn coins back through tips!</p>
+                <p>You lose 5 coins to each audience member every minute</p>
+                <p class="small-text">Make them laugh to earn coins back through tips!</p>
             </div>
         {% else %}
             <div class="performer-status-card audience">
                 <h3>👥 You are AUDIENCE</h3>
-                <p class="opacity-90">You receive 5 coins from each performer every minute</p>
-                <p class="opacity-70" style="font-size: 0.9rem;">Send coins to performers to show appreciation!</p>
+                <p>You receive 5 coins from each performer every minute</p>
+                <p class="small-text">Send coins to performers to show appreciation!</p>
             </div>
         {% endif %}
         {% if redistribution_enabled %}
             <div class="redistribution-info">
-                <p class="opacity-80" style="font-size: 0.9rem;">
+                <p class="small-text">
                     ⏰ Automatic redistribution every minute |
                     💰 5 coins from each performer → each audience member
                 </p>
@@ -154,43 +146,44 @@
                 {% for performer in top_performers %}
                     {% set medals = ["🥇", "🥈", "🥉"] %}
                     <div class="leaderboard-item{% if performer.username == current_username %} current-user{% endif %}">
-                        <span class="font-bold">{{ medals[loop.index0] }} {{ performer.username }}</span>
-                        <span class="font-bold">{{ "{:,}".format(performer.coin_balance) }} Straw Coins</span>
+                        <span>{{ medals[loop.index0] }} {{ performer.username }}</span>
+                        <span>{{ "{:,}".format(performer.coin_balance) }} Straw Coins</span>
                     </div>
                 {% endfor %}
             {% else %}
-                <p class="text-center opacity-70">No stakeholders yet - Be the first to join the revolution!</p>
+                <p class="empty-state">No stakeholders yet - Be the first to join the revolution!</p>
             {% endif %}
         </div>
     </div>
-    <div class="text-center"
-         style="background: rgba(255,255,255,0.1);
-                padding: 30px;
-                border-radius: 15px">
+    <div class="market-cta-section">
         {% if not current_username %}
-            <h2 class="mb-20">🌙 Join The Moon Mission</h2>
-            <p class="mb-20" style="font-size: 1.1rem;">Ready to disrupt comedy through market forces?</p>
-            <p class="mb-10">
-                🎯 <strong>Get 10,000 Straw Coins</strong> instantly upon registration
-            </p>
-            <p class="mb-10">
-                💸 <strong>Trade with other audience members</strong> during The Short Straw
-            </p>
-            <p class="mb-20">
-                📈 <strong>Let the market decide</strong> comedic value - no taste required!
-            </p>
+            <h2>🌙 Join The Moon Mission</h2>
+            <p class="cta-subtitle">Ready to disrupt comedy through market forces?</p>
+            <div class="cta-benefits">
+                <p>
+                    🎯 <strong>Get 10,000 Straw Coins</strong> instantly upon registration
+                </p>
+                <p>
+                    💸 <strong>Trade with other audience members</strong> during The Short Straw
+                </p>
+                <p>
+                    📈 <strong>Let the market decide</strong> comedic value - no taste required!
+                </p>
+            </div>
         {% else %}
-            <h2 class="mb-20">🎭 The Comedy Market is Live!</h2>
-            <p class="mb-20" style="font-size: 1.1rem;">Trade coins with fellow audience members and influence the show!</p>
-            <p class="mb-10">
-                💸 <strong>Send coins</strong> to show support for your favorite comedians
-            </p>
-            <p class="mb-10">
-                📊 <strong>Track your portfolio</strong> and climb the leaderboard
-            </p>
-            <p class="mb-20">
-                🏆 <strong>Become a comedy market leader</strong> through strategic trading!
-            </p>
+            <h2>🎭 The Comedy Market is Live!</h2>
+            <p class="cta-subtitle">Trade coins with fellow audience members and influence the show!</p>
+            <div class="cta-benefits">
+                <p>
+                    💸 <strong>Send coins</strong> to show support for your favorite comedians
+                </p>
+                <p>
+                    📊 <strong>Track your portfolio</strong> and climb the leaderboard
+                </p>
+                <p>
+                    🏆 <strong>Become a comedy market leader</strong> through strategic trading!
+                </p>
+            </div>
         {% endif %}
     </div>
     <script>

@@ -18,110 +18,6 @@ body {
     padding: 20px;
     padding-top: 80px; /* Account for session banner */
 }
-/* Session Banner Styles */
-.session-banner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(90deg, #6c757d, #495057);
-    color: white;
-    padding: 10px 0;
-    text-align: center;
-    font-weight: bold;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
-    animation: slideDown 0.3s ease-in-out;
-}
-.session-banner.session-active {
-    background: linear-gradient(90deg, #00d084, #00a66b);
-}
-.session-banner.session-warning {
-    background: linear-gradient(90deg, #f39c12, #e67e22);
-}
-.session-banner.session-critical {
-    background: linear-gradient(90deg, #e74c3c, #c0392b);
-}
-.session-banner.session-inactive {
-    background: linear-gradient(90deg, #6c757d, #495057);
-}
-.session-banner-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-.session-icon {
-    font-size: 1.2rem;
-}
-.session-text {
-    font-size: 1rem;
-}
-.session-countdown {
-    font-family: "Courier New", monospace;
-    font-size: 1.1rem;
-    font-weight: bold;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 2px 8px;
-    border-radius: 4px;
-    min-width: 50px;
-}
-.extend-session-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    padding: 5px 12px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: bold;
-    transition: background 0.3s ease;
-}
-.extend-session-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
-.extend-session-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-.session-message {
-    color: #2ecc71;
-    font-weight: bold;
-    font-size: 0.9rem;
-    margin-left: 10px;
-    animation: fadeIn 0.3s ease-in-out;
-}
-/* Animations */
-@keyframes slideDown {
-    from {
-        transform: translateY(-100%);
-    }
-    to {
-        transform: translateY(0);
-    }
-}
-@keyframes pulse {
-    0%,
-    100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.8;
-    }
-}
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
 /* Header Styles */
 header {
     text-align: center;
@@ -154,6 +50,10 @@ header {
     text-align: center;
     margin-bottom: 40px;
 }
+
+.welcome-section p {
+    opacity: 0.9;
+}
 .welcome-title {
     font-size: 2.5rem;
     margin-bottom: 20px;
@@ -171,6 +71,9 @@ header {
 }
 .user-balance-card h3 {
     margin: 0;
+}
+.user-balance-card.quant-authority {
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
 }
 .balance-amount {
     font-size: 1.5rem;
@@ -269,8 +172,8 @@ header {
 .send-form small {
     display: block;
     margin-top: 5px;
-    color: rgba(255, 255, 255, 0.8);
     font-size: 0.85rem;
+    opacity: 0.8;
 }
 .send-btn {
     background: linear-gradient(45deg, #e74c3c, #c0392b);
@@ -311,10 +214,15 @@ header {
 }
 /* Performer System Styles */
 .performer-section {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255,255,255,0.1);
     padding: 30px;
     border-radius: 15px;
     margin-bottom: 30px;
+}
+
+.performer-section p {
+    opacity: 0.9;
+    margin-bottom: 10px;
 }
 .performer-title {
     text-align: center;
@@ -349,10 +257,15 @@ header {
 }
 /* Leaderboard Styles */
 .leaderboard-section {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255,255,255,0.1);
     padding: 30px;
     border-radius: 15px;
     margin-bottom: 30px;
+}
+
+.leaderboard-section .empty-state {
+    text-align: center;
+    opacity: 0.7;
 }
 .leaderboard-title {
     text-align: center;
@@ -376,10 +289,15 @@ header {
 }
 /* Transaction History */
 .transaction-section {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255,255,255,0.1);
     padding: 30px;
     border-radius: 15px;
     margin-bottom: 30px;
+}
+
+.transaction-section h2 {
+    text-align: center;
+    margin-bottom: 20px;
 }
 .transaction-title {
     text-align: center;
@@ -390,18 +308,33 @@ header {
     gap: 10px;
 }
 .transaction-item {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 15px;
-    border-radius: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 8px;
 }
 .transaction-item.sent {
-    border-left: 4px solid #e74c3c;
+    border-left: 3px solid #e74c3c;
 }
 .transaction-item.received {
-    border-left: 4px solid #2ecc71;
+    border-left: 3px solid #2ecc71;
+}
+.transaction-label {
+    display: block;
+}
+.transaction-item.sent .transaction-label {
+    color: #e74c3c;
+}
+.transaction-item.received .transaction-label {
+    color: #2ecc71;
+}
+.transaction-item.sent .transaction-amount {
+    color: #e74c3c;
+}
+.transaction-item.received .transaction-amount {
+    color: #2ecc71;
 }
 /* Registration Page Styles */
 .registration-section {
@@ -478,15 +411,23 @@ header {
 }
 
 .registration-form .error-message {
-    background: rgba(255, 0, 0, 0.2);
-    border: 1px solid rgba(255, 0, 0, 0.5);
-    color: #ff6b6b;
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.registration-form .error-message p {
+    font-weight: bold;
 }
 
 .registration-form .success-message {
     background: rgba(0, 255, 0, 0.2);
     border: 1px solid rgba(0, 255, 0, 0.5);
     color: #4caf50;
+}
+
+.registration-form .success-message p {
+    font-weight: bold;
 }
 
 .registration-form .loading-message {
@@ -516,6 +457,7 @@ header {
 }
 .benefits-list p {
     margin-bottom: 10px;
+    text-align: left;
 }
 /* Session Warning */
 /* Chart Container */
@@ -551,20 +493,59 @@ header {
 /* Session Expired Page */
 .session-expired-section {
     text-align: center;
-    padding: 40px 20px;
+    padding: 60px 20px;
+}
+
+.session-expired-header {
+    margin-bottom: 40px;
 }
 .session-expired-title {
     font-size: 3rem;
     margin-bottom: 20px;
 }
 .session-expired-subtitle {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     margin-bottom: 30px;
+    color: #ff6b6b;
 }
 .session-expired-message {
-    font-size: 1.1rem;
-    margin-bottom: 30px;
+    font-size: 1.2rem;
     opacity: 0.9;
+}
+
+.session-expired-section h2 {
+    margin-bottom: 20px;
+}
+
+.session-expired-section h3 {
+    margin-bottom: 10px;
+}
+
+.session-expired-section p {
+    margin-bottom: 10px;
+}
+
+.session-expired-section p:last-child {
+    margin-bottom: 0;
+}
+
+/* Session expired info boxes */
+.session-expired-section > div {
+    margin-bottom: 30px;
+}
+
+.session-expired-section > div:last-child {
+    margin-bottom: 0;
+}
+
+/* Pro tip styles */
+.session-expired-section p[style*="italic"] {
+    opacity: 0.8;
+    margin-bottom: 10px;
+}
+
+.session-expired-section p[style*="0.9rem"] {
+    opacity: 0.7;
 }
 .session-expired-actions {
     display: flex;
@@ -636,31 +617,673 @@ header {
         padding: 15px;
     }
 }
-/* Utility Classes */
-.text-center {
+/* Market CTA Section */
+.market-cta-section {
+    background: rgba(255,255,255,0.1);
+    padding: 30px;
+    border-radius: 15px;
     text-align: center;
-}
-.text-left {
-    text-align: left;
-}
-.mb-10 {
-    margin-bottom: 10px;
-}
-.mb-20 {
-    margin-bottom: 20px;
-}
-.mb-30 {
     margin-bottom: 30px;
 }
-.font-bold {
-    font-weight: bold;
+
+.market-cta-section h2 {
+    margin-bottom: 20px;
 }
-.opacity-70 {
-    opacity: 0.7;
+
+.cta-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 20px;
 }
-.opacity-90 {
+
+.cta-benefits {
+    text-align: left;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.cta-benefits p {
+    margin-bottom: 10px;
+}
+
+.cta-benefits p:last-child {
+    margin-bottom: 0;
+}
+
+/* Quick Send Section */
+.quick-send-section p {
+    margin-bottom: 10px;
     opacity: 0.9;
 }
+
+/* Leaderboard Items */
+.leaderboard-item span {
+    font-weight: bold;
+}
+
+/* Performer Status Cards */
+.performer-status-card p {
+    opacity: 0.9;
+}
+
+.performer-status-card p:last-child {
+    opacity: 0.7;
+}
+
+/* Redistribution Info */
+.redistribution-info p {
+    opacity: 0.8;
+}
+
+/* Recent Transactions */
+.transaction-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.transaction-item-detail {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.transaction-amount {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+/* Quant Terminal Styles */
+.quant-terminal-section {
+    margin-bottom: 40px;
+}
+
+.quant-terminal-title {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.quant-panel {
+    background: rgba(255,255,255,0.1);
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.quant-panel h2, .quant-panel h3 {
+    margin-bottom: 20px;
+}
+
+.quant-panel .empty-state {
+    text-align: center;
+    opacity: 0.7;
+}
+
+.quant-control-card {
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.quant-control-card h4 {
+    margin-bottom: 15px;
+}
+
+.quant-control-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.quant-btn {
+    width: 100%;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 10px;
+}
+
+.quant-btn:last-child {
+    margin-bottom: 0;
+}
+
+.quant-btn-primary {
+    background: linear-gradient(45deg, #3498db, #2980b9);
+    color: white;
+}
+
+.quant-btn-danger {
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+    color: white;
+}
+
+.quant-btn-warning {
+    background: linear-gradient(45deg, #f39c12, #e67e22);
+    color: white;
+}
+
+.quant-btn-info {
+    background: linear-gradient(45deg, #00bfa5, #00a693);
+    color: white;
+}
+
+.quant-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.quant-users-registry {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.quant-terminal-log {
+    background: rgba(0,0,0,0.3);
+    padding: 15px;
+    border-radius: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: monospace;
+}
+
+.log-entry {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.log-entry:last-child {
+    margin-bottom: 0;
+}
+
+.log-timestamp {
+    color: #888;
+    margin-right: 10px;
+}
+
+.log-info {
+    background: rgba(52, 152, 219, 0.1);
+}
+
+.log-success {
+    background: rgba(46, 204, 113, 0.1);
+}
+
+.log-error {
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.log-warning {
+    background: rgba(241, 196, 15, 0.1);
+}
+
+.quant-data-display {
+    padding: 20px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+
+.form-hint {
+    display: block;
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-top: 5px;
+}
+
+/* Small Text and Metadata */
+.small-text {
+    font-size: 0.9rem;
+}
+
+.meta-text {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.transaction-timestamp {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.status-subtitle {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.help-text {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-top: 10px;
+}
+
+.warning-text {
+    color: #FFA726;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.security-notice {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.tip-text {
+    font-style: italic;
+    opacity: 0.8;
+    margin-bottom: 10px;
+}
+
+.session-reminder {
+    color: #ffc107;
+    margin: 0;
+    font-weight: bold;
+}
+
+.session-expired-subtitle.error {
+    color: #e74c3c;
+}
+
+.error-reminder {
+    color: #e74c3c;
+    margin: 0;
+    font-weight: bold;
+}
+
+.session-expired-btn.secondary {
+    background: linear-gradient(45deg, #9b59b6, #8e44ad);
+}
+
+/* Info and Warning Boxes */
+.info-box {
+    background: rgba(255,255,255,0.1);
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 500px;
+    margin: 0 auto 30px;
+}
+
+.info-box.compact {
+    padding: 20px;
+}
+
+.info-box h2, .info-box h3 {
+    margin-bottom: 15px;
+}
+
+.info-box p {
+    margin-bottom: 10px;
+}
+
+.info-box p:last-child {
+    margin-bottom: 0;
+}
+
+.warning-box {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.error-box {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(231, 76, 60, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Error Page Styles */
+.error-page-section {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.error-icon {
+    font-size: 8rem;
+    margin-bottom: 20px;
+}
+
+.error-title {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    color: #ff6b6b;
+}
+
+.error-description {
+    font-size: 1.3rem;
+    margin-bottom: 30px;
+    opacity: 0.9;
+}
+
+.info-box.large {
+    max-width: 600px;
+    margin-bottom: 40px;
+}
+
+.error-actions {
+    margin-bottom: 40px;
+}
+
+.action-btn {
+    display: inline-block;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    margin: 10px;
+    font-size: 1.1rem;
+    transition: all 0.3s;
+}
+
+.action-btn.primary {
+    background: linear-gradient(45deg, #f39c12, #e67e22);
+}
+
+.action-btn.success {
+    background: linear-gradient(45deg, #27ae60, #2ecc71);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* User List Styles */
+.user-name {
+    font-weight: bold;
+}
+
+.user-balance {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+/* Quant Terminal Transaction Colors */
+.quant-panel .transaction-item.sent .transaction-amount {
+    color: #e74c3c;
+}
+
+.quant-panel .transaction-item.received .transaction-amount {
+    color: #2ecc71;
+}
+
+/* User and Transaction Lists */
+.user-list, .transaction-list {
+    display: grid;
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.transaction-list {
+    max-height: 300px;
+}
+
+.user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+/* Regulatory Warning Page Styles */
+.regulatory-warning-page {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a1a, #2d1b1b);
+}
+
+.regulatory-warning-container {
+    max-width: 600px;
+    text-align: center;
+    padding: 40px;
+    background: linear-gradient(135deg, #2d1b1b, #4a1515);
+    border: 2px solid #F23645;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(242, 54, 69, 0.3);
+}
+
+.warning-icon-animated {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    animation: pulse 2s infinite;
+}
+
+.regulatory-warning-title {
+    color: #F23645;
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.regulatory-notice-box {
+    background: rgba(242, 54, 69, 0.1);
+    border: 1px solid #F23645;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.regulatory-section-title {
+    color: #ffffff;
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+}
+
+.regulatory-alert-text {
+    color: #ffffff;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.violation-highlight {
+    color: #F23645;
+    font-weight: bold;
+}
+
+.regulatory-warning-text {
+    color: #FFA726;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.enforcement-action-box {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.enforcement-title {
+    color: #00D084;
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+}
+
+.enforcement-details {
+    text-align: left;
+    color: #ffffff;
+    font-size: 1rem;
+    line-height: 1.8;
+}
+
+.enforcement-details p {
+    margin-bottom: 10px;
+}
+
+.enforcement-details p:last-child {
+    margin-bottom: 0;
+}
+
+.confiscation-notice-box {
+    background: linear-gradient(135deg, #4a1515, #2d1b1b);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.confiscation-message {
+    color: #ffffff;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.chancellor-highlight {
+    color: #00D084;
+    font-weight: bold;
+}
+
+.market-integrity-text {
+    color: #FFA726;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.compliance-notice-box {
+    border: 1px solid #4a90e2;
+    background: rgba(74, 144, 226, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.compliance-title {
+    color: #4a90e2;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+.compliance-text {
+    color: #ffffff;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.regulatory-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+}
+
+.regulatory-action-btn {
+    color: white;
+    padding: 15px 30px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.regulatory-action-btn.primary {
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+}
+
+.regulatory-action-btn.success {
+    background: linear-gradient(135deg, #00D084, #00A66B);
+    box-shadow: 0 4px 15px rgba(0, 208, 132, 0.3);
+}
+
+.regulatory-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+}
+
+.regulatory-footer {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.regulatory-footer-text {
+    color: #b0b0b0;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+/* Independence Warning Specific Styles */
+.regulatory-warning-page.independence {
+    background: linear-gradient(135deg, #1a1a1a, #1b2d1b);
+}
+
+.regulatory-warning-container.independence {
+    background: linear-gradient(135deg, #1b2d1b, #154a15);
+    border-color: #FFA726;
+    box-shadow: 0 10px 30px rgba(255, 167, 38, 0.3);
+}
+
+.regulatory-warning-title.independence {
+    color: #FFA726;
+}
+
+.regulatory-notice-box.independence {
+    background: rgba(255, 167, 38, 0.1);
+    border-color: #FFA726;
+}
+
+.violation-highlight.independence {
+    color: #FFA726;
+}
+
+.regulatory-info-text {
+    color: #00D084;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.independence-alternatives-box {
+    background: linear-gradient(135deg, #1b2d1b, #154a15);
+    border: 1px solid #00D084;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.alternatives-title {
+    color: #00D084;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.alternatives-list {
+    text-align: left;
+    color: #ffffff;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.alternatives-list p {
+    margin-bottom: 10px;
+}
+
+.alternatives-list p:last-child {
+    margin-bottom: 0;
+}
+
+.regulatory-warning-page.independence .warning-icon-animated {
+    animation: glow 3s ease-in-out infinite alternate;
+}
+
+/* Utility Classes */
+/* Removed utility classes - styles moved to semantic classes */
 /* Animation Classes */
 .fade-in {
     animation: fadeIn 0.5s ease-in;
@@ -672,6 +1295,15 @@ header {
     to {
         opacity: 1;
     }
+}
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+@keyframes glow {
+    from { text-shadow: 0 0 10px #FFA726, 0 0 20px #FFA726, 0 0 30px #FFA726; }
+    to { text-shadow: 0 0 20px #FFA726, 0 0 30px #FFA726, 0 0 40px #FFA726; }
 }
 .slide-up {
     animation: slideUp 0.3s ease-out;
@@ -739,9 +1371,21 @@ header {
 }
 
 .market-value {
-    margin-left: 8px;
     font-size: 1.1rem;
     font-weight: bold;
+    color: #ffffff;
+}
+
+.market-status-item.status {
+    color: #00D084;
+}
+
+.market-status-item.status.error {
+    color: #ff6b6b;
+}
+
+.market-status-item.status.warning {
+    color: #FFA726;
 }
 
 /* Portfolio Card - Enhanced for Trading */
@@ -755,7 +1399,11 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.portfolio-section {
+    margin-bottom: 30px;
 }
 
 .portfolio-header h3 {
@@ -928,7 +1576,11 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.chart-header h3 {
+    margin-bottom: 0;
 }
 
 .chart-title {
@@ -1046,6 +1698,10 @@ header {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
+}
+
+.stat-header h3 {
+    margin: 0;
 }
 
 .stat-title {

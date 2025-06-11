@@ -3,11 +3,10 @@
     <div class="welcome-section">
         <h1 class="welcome-title">🎛️ The CHANCELLOR Terminal</h1>
         <p class="welcome-subtitle">Market Transfer Manipulation Command Center</p>
-        <div class="user-balance-card"
-             style="background: linear-gradient(45deg, #e74c3c, #c0392b)">
+        <div class="user-balance-card quant-authority">
             <h3>🎯 Welcome, {{ current_username }}</h3>
             <p class="balance-amount">{{ "{:,}".format(current_user_balance) }} Authority Coins</p>
-            <p style="font-size: 0.9rem; opacity: 0.9;">TRANSFER MANIPULATION ACTIVE</p>
+            <p class="status-subtitle">TRANSFER MANIPULATION ACTIVE</p>
         </div>
     </div>
     <!-- Market Overview Dashboard -->
@@ -65,12 +64,12 @@
                 {% for performer in top_performers %}
                     {% set medals = ["🥇", "🥈", "🥉", "🎖️", "🏅"] %}
                     <div class="leaderboard-item{% if performer.username == current_username %} current-user{% endif %}">
-                        <span class="font-bold">{{ medals[loop.index0] if loop.index0 < 5 else "👤" }} {{ performer.username }}</span>
-                        <span class="font-bold">{{ "{:,}".format(performer.coin_balance) }} Straw Coins</span>
+                        <span>{{ medals[loop.index0] if loop.index0 < 5 else "👤" }} {{ performer.username }}</span>
+                        <span>{{ "{:,}".format(performer.coin_balance) }} Straw Coins</span>
                     </div>
                 {% endfor %}
             {% else %}
-                <p class="text-center opacity-70">No stakeholders yet</p>
+                <p class="empty-state">No stakeholders yet</p>
             {% endif %}
         </div>
     </div>
@@ -78,27 +77,22 @@
     {% if recent_transactions %}
         <div class="quant-panel">
             <h2 class="quant-panel-title">📈 Recent Market Activity</h2>
-            <div style="display: grid; gap: 10px; max-height: 300px; overflow-y: auto">
+            <div class="transaction-list">
                 {% for transaction in recent_transactions %}
-                    <div style="display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                                background: rgba(255,255,255,0.1);
-                                padding: 15px;
-                                border-radius: 8px">
+                    <div class="transaction-item{% if transaction.sender == current_username %} sent{% else %} received{% endif %}">
                         <div>
                             {% if transaction.sender == current_username %}
-                                <span style="color: #e74c3c;">📤 Sent to {{ transaction.recipient }}</span>
+                                <span class="transaction-label">📤 Sent to {{ transaction.recipient }}</span>
                             {% else %}
-                                <span style="color: #2ecc71;">📥 Received from {{ transaction.sender }}</span>
+                                <span class="transaction-label">📥 Received from {{ transaction.sender }}</span>
                             {% endif %}
-                            <div style="font-size: 0.9rem; opacity: 0.8;">{{ transaction.timestamp.strftime("%Y-%m-%d %H:%M") }}</div>
+                            <div class="transaction-timestamp">{{ transaction.timestamp.strftime("%Y-%m-%d %H:%M") }}</div>
                         </div>
-                        <span style="font-weight: bold; font-size: 1.1rem;">
+                        <span class="transaction-amount">
                             {% if transaction.sender == current_username %}
-                                <span style="color: #e74c3c;">-{{ "{:,}".format(transaction.amount) }}</span>
+                                -{{ "{:,}".format(transaction.amount) }}
                             {% else %}
-                                <span style="color: #2ecc71;">+{{ "{:,}".format(transaction.amount) }}</span>
+                                +{{ "{:,}".format(transaction.amount) }}
                             {% endif %}
                         </span>
                     </div>
@@ -108,7 +102,7 @@
     {% endif %}
     <!-- Market Transfer Controls -->
     <div class="quant-terminal-section">
-        <h2 class="text-center mb-20">🕹️ Transfer Control Panel</h2>
+        <h2 class="quant-terminal-title">🕹️ Transfer Control Panel</h2>
         <!-- User Management Panel -->
         <div class="quant-panel">
             <h3 class="quant-panel-title">👥 User Status Management</h3>
@@ -192,7 +186,7 @@
                                placeholder="Transfer reason...">
                     </div>
                     <button id="forceTransferBtn" class="quant-btn quant-btn-danger">💸 EXECUTE TRANSFER</button>
-                    <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.8;">
+                    <div class="help-text">
                         <strong>Examples:</strong>
                         <br>
                         • Individual: "performer1" → "audience2" (100 coins)
@@ -232,8 +226,8 @@
                 </div>
                 <div class="quant-control-card">
                     <h4>📊 Market Intelligence</h4>
-                    <button id="refreshStatsBtn" class="quant-btn quant-btn-info mb-10">🔄 Refresh Market Data</button>
-                    <button id="getAllUsersBtn" class="quant-btn quant-btn-info mb-10">👥 Get All Users</button>
+                    <button id="refreshStatsBtn" class="quant-btn quant-btn-info">🔄 Refresh Market Data</button>
+                    <button id="getAllUsersBtn" class="quant-btn quant-btn-info">👥 Get All Users</button>
                     <button id="getMarketStatsBtn" class="quant-btn quant-btn-info">📈 Detailed Market Stats</button>
                 </div>
             </div>
@@ -243,16 +237,11 @@
             <h3 class="quant-panel-title">👥 Complete User Registry</h3>
             <div class="quant-users-registry">
                 {% if all_users %}
-                    <div style="display: grid; gap: 10px; max-height: 400px; overflow-y: auto">
+                    <div class="user-list">
                         {% for user in all_users %}
-                            <div style="display: flex;
-                                        justify-content: space-between;
-                                        align-items: center;
-                                        background: rgba(255,255,255,0.1);
-                                        padding: 15px;
-                                        border-radius: 8px">
+                            <div class="user-item">
                                 <div>
-                                    <span style="font-weight: bold;">
+                                    <span class="user-name">
                                         {% if user.is_performer %}
                                             🎪
                                         {% else %}
@@ -260,17 +249,17 @@
                                         {% endif %}
                                         {{ user.username }}
                                     </span>
-                                    <div style="font-size: 0.9rem; opacity: 0.8;">
+                                    <div class="meta-text">
                                         {{ "Performer" if user.is_performer else "Audience" }} |
                                         Joined: {{ user.created_at.strftime("%Y-%m-%d") if user.created_at else 'Unknown' }}
                                     </div>
                                 </div>
-                                <span style="font-weight: bold; font-size: 1.1rem;">{{ "{:,}".format(user.coin_balance) }} coins</span>
+                                <span class="user-balance">{{ "{:,}".format(user.coin_balance) }} coins</span>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-center opacity-70">No users found</p>
+                    <p class="empty-state">No users found</p>
                 {% endif %}
             </div>
         </div>

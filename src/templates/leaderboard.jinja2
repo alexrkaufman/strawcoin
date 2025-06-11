@@ -7,8 +7,7 @@
     <!-- Market Status Bar -->
     <div class="market-status-bar">
         <div class="market-status-grid">
-            <div class="market-status-item status"
-                 style="color: {{ market_status.status_color if market_status else '#00D084' }}">
+            <div class="market-status-item status{% if market_status and market_status.status_color == '#ff6b6b' %} error{% elif market_status and market_status.status_color == '#FFA726' %} warning{% endif %}">
                 <span class="market-label">MARKET STATUS:</span>
                 <span class="market-value">{{ market_status.status_text if market_status else '🟢 OPEN' }}</span>
             </div>
