@@ -1,10 +1,6 @@
 {% macro callout_box(title, message, class="") -%}
-<div class="callout_box {{ class }}">
-    <h4 class="title">
-        {{ title }}
-    </h4>
-    <p>
-        {{ message }}
-    </p>
-</div>
-{%- endmacro  %}
+    <div class="callout_box {{ class }}">
+        <h4 class="title">{{ title }}</h4>
+        <p>{{ message }}</p>
+    </div>
+{%- endmacro %}

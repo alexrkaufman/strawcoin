@@ -1,190 +1,208 @@
 {% extends "base.jinja2" %}
-
 {% block content %}
-<div class="welcome-section">
-    <h1 class="welcome-title">🚀 Welcome to The Revolution 🚀</h1>
-    <p class="welcome-subtitle">Disrupting <strong>The Short Straw</strong> through cutting-edge comedy tokenization</p>
-    {% if current_username %}
-    <div class="user-balance-card" data-username="{{ current_username }}">
-        <h3>💰 Welcome back, {{ current_username }}!</h3>
-        <p class="balance-amount">{{ "{:,}".format(current_user_balance) }} Straw Coins</p>
-    </div>
-
-    <!-- Navigation Links -->
-    <div class="nav-links">
-        <a href="/leaderboard" class="leaderboard-link">
-            📊 Real-Time Leaderboard
-        </a>
-    </div>
-    {% endif %}
-</div>
-
-{% if current_username %}
-<!-- Send Coins Feature -->
-<div class="send-coins-section">
-    <h2 class="send-coins-title">💸 Send Coins to Fellow Shareholders</h2>
-    <!-- Quick Send Buttons -->
-    <div class="quick-send-section">
-        <p class="mb-10 opacity-90">Quick Send:</p>
-        <div class="quick-send-buttons">
-            <button class="quickSend quick-send-btn" data-amount="100">100 coins</button>
-            <button class="quickSend quick-send-btn" data-amount="500">500 coins</button>
-            <button class="quickSend quick-send-btn" data-amount="1000">1,000 coins</button>
-        </div>
-    </div>
-
-    <div>
-        <form id="sendCoinsForm" class="send-form">
-            <div>
-                <label class="form-label">Recipient:</label>
-                <input type="text" id="recipient" name="recipient" class="form-input" list="recipientList" placeholder="Type or select a shareholder..." autocomplete="off" required>
-                <datalist id="recipientList">
-                    {% for user in available_recipients %}
-                    <option value="{{ user.username }}">{{ user.username }}</option>
-                    {% endfor %}
-                </datalist>
-                <small class="opacity-80" style="font-size: 0.9rem;">💡 Start typing to see suggestions or click the dropdown arrow</small>
-            </div>
-
-            <div>
-                <label class="form-label">Amount:</label>
-                <input type="number" id="amount" name="amount" min="1" max="{{ current_user_balance }}" class="form-input" placeholder="Enter amount..." required>
-            </div>
-
-            <button type="submit" class="send-btn">
-                🚀 Send Coins
-            </button>
-        </form>
-    </div>
-
-    <!-- Status Display -->
-    <div id="transferStatus" class="message"></div>
-</div>
-
-<!-- Recent Transactions -->
-{% if recent_transactions %}
-<div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
-    <h2 style="text-align: center; margin-bottom: 20px;">📈 Your Recent Transactions</h2>
-    <div style="display: grid; gap: 10px;">
-        {% for transaction in recent_transactions %}
-        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
-            <div>
-                {% if transaction.sender == current_username %}
-                <span style="color: #e74c3c;">📤 Sent to {{ transaction.recipient }}</span>
-                {% else %}
-                <span style="color: #2ecc71;">📥 Received from {{ transaction.sender }}</span>
-                {% endif %}
-                <div style="font-size: 0.9rem; opacity: 0.8;">{{ transaction.timestamp.strftime('%Y-%m-%d %H:%M') }}</div>
-            </div>
-            <span style="font-weight: bold; font-size: 1.1rem;">
-                {% if transaction.sender == current_username %}
-                <span style="color: #e74c3c;">-{{ "{:,}".format(transaction.amount) }}</span>
-                {% else %}
-                <span style="color: #2ecc71;">+{{ "{:,}".format(transaction.amount) }}</span>
-                {% endif %}
-            </span>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-{% endif %}
-
-<!-- Market Stats -->
-<div class="market-stats-grid">
-    <div class="stat-card">
-        <h3>💰 Market Cap</h3>
-        <p class="stat-value" data-stat="market-cap">{{ "{:,}".format(market_cap) }}</p>
-        <p>Total Straw Coins</p>
-    </div>
-    <div class="stat-card">
-        <h3>👥 Active Stakeholders</h3>
-        <p class="stat-value" data-stat="user-count">{{ stakeholder_count }}</p>
-        <p>Market Participants</p>
-    </div>
-    <div class="stat-card">
-        <h3>📊 Trading Volume</h3>
-        <p class="stat-value" data-stat="volume">{{ "{:,}".format(volume) }}</p>
-        <p>Total Coins Transferred</p>
-    </div>
-</div>
-
-<!-- Performer System Status -->
-<div class="performer-section">
-    <h2 class="performer-title">🎭 Performer Economy</h2>
-    <div class="performer-stats-grid">
-        <div class="stat-card">
-            <h3>🎪 Performers</h3>
-            <p class="stat-value">{{ performer_count }}</p>
-            <p>Active on Stage</p>
-        </div>
-        <div class="stat-card">
-            <h3>👥 Audience</h3>
-            <p class="stat-value">{{ audience_count }}</p>
-            <p>Market Participants</p>
-        </div>
-    </div>
-    
-    {% if current_user_is_performer %}
-    <div class="performer-status-card performer">
-        <h3>🎭 You are a PERFORMER</h3>
-        <p class="opacity-90">You lose 5 coins to each audience member every minute</p>
-        <p class="opacity-70" style="font-size: 0.9rem;">Make them laugh to earn coins back through tips!</p>
-    </div>
-    {% else %}
-    <div class="performer-status-card audience">
-        <h3>👥 You are AUDIENCE</h3>
-        <p class="opacity-90">You receive 5 coins from each performer every minute</p>
-        <p class="opacity-70" style="font-size: 0.9rem;">Send coins to performers to show appreciation!</p>
-    </div>
-    {% endif %}
-    
-    {% if redistribution_enabled %}
-    <div class="redistribution-info">
-        <p class="opacity-80" style="font-size: 0.9rem;">
-            ⏰ Automatic redistribution every minute | 
-            💰 5 coins from each performer → each audience member
+    <div class="welcome-section">
+        <h1 class="welcome-title">🚀 Welcome to The Revolution 🚀</h1>
+        <p class="welcome-subtitle">
+            Disrupting <strong>The Short Straw</strong> through cutting-edge comedy tokenization
         </p>
-    </div>
-    {% endif %}
-</div>
-
-<div class="leaderboard-section">
-    <h2 class="leaderboard-title">🏆 Market Leaders</h2>
-    <div class="leaderboard-grid">
-        {% if top_performers %}
-            {% for performer in top_performers %}
-                {% set medals = ["🥇", "🥈", "🥉"] %}
-                <div class="leaderboard-item{% if performer.username == current_username %} current-user{% endif %}">
-                    <span class="font-bold">{{ medals[loop.index0] }} {{ performer.username }}</span>
-                    <span class="font-bold">{{ "{:,}".format(performer.coin_balance) }} Straw Coins</span>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p class="text-center opacity-70">No stakeholders yet - Be the first to join the revolution!</p>
+        {% if current_username %}
+            <div class="user-balance-card" data-username="{{ current_username }}">
+                <h3>💰 Welcome back, {{ current_username }}!</h3>
+                <p class="balance-amount">{{ "{:,}".format(current_user_balance) }} Straw Coins</p>
+            </div>
+            <!-- Navigation Links -->
+            <div class="nav-links">
+                <a href="/leaderboard" class="leaderboard-link">📊 Real-Time Leaderboard</a>
+            </div>
         {% endif %}
     </div>
-</div>
-
-<div class="text-center" style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px;">
-    {% if not current_username %}
-    <h2 class="mb-20">🌙 Join The Moon Mission</h2>
-    <p class="mb-20" style="font-size: 1.1rem;">Ready to disrupt comedy through market forces?</p>
-    <p class="mb-10">🎯 <strong>Get 10,000 Straw Coins</strong> instantly upon registration</p>
-    <p class="mb-10">💸 <strong>Trade with other audience members</strong> during The Short Straw</p>
-    <p class="mb-20">📈 <strong>Let the market decide</strong> comedic value - no taste required!</p>
-    {% else %}
-    <h2 class="mb-20">🎭 The Comedy Market is Live!</h2>
-    <p class="mb-20" style="font-size: 1.1rem;">Trade coins with fellow audience members and influence the show!</p>
-    <p class="mb-10">💸 <strong>Send coins</strong> to show support for your favorite comedians</p>
-    <p class="mb-10">📊 <strong>Track your portfolio</strong> and climb the leaderboard</p>
-    <p class="mb-20">🏆 <strong>Become a comedy market leader</strong> through strategic trading!</p>
+    {% if current_username %}
+        <!-- Send Coins Feature -->
+        <div class="send-coins-section">
+            <h2 class="send-coins-title">💸 Send Coins to Fellow Shareholders</h2>
+            <!-- Quick Send Buttons -->
+            <div class="quick-send-section">
+                <p class="mb-10 opacity-90">Quick Send:</p>
+                <div class="quick-send-buttons">
+                    <button class="quickSend quick-send-btn" data-amount="100">100 coins</button>
+                    <button class="quickSend quick-send-btn" data-amount="500">500 coins</button>
+                    <button class="quickSend quick-send-btn" data-amount="1000">1,000 coins</button>
+                </div>
+            </div>
+            <div>
+                <form id="sendCoinsForm" class="send-form">
+                    <div>
+                        <label class="form-label">Recipient:</label>
+                        <input type="text"
+                               id="recipient"
+                               name="recipient"
+                               class="form-input"
+                               list="recipientList"
+                               placeholder="Type or select a shareholder..."
+                               autocomplete="off"
+                               required>
+                        <datalist id="recipientList">
+                            {% for user in available_recipients %}<option value="{{ user.username }}">{{ user.username }}</option>{% endfor %}
+                        </datalist>
+                        <small class="opacity-80" style="font-size: 0.9rem;">💡 Start typing to see suggestions or click the dropdown arrow</small>
+                    </div>
+                    <div>
+                        <label class="form-label">Amount:</label>
+                        <input type="number"
+                               id="amount"
+                               name="amount"
+                               min="1"
+                               max="{{ current_user_balance }}"
+                               class="form-input"
+                               placeholder="Enter amount..."
+                               required>
+                    </div>
+                    <button type="submit" class="send-btn">🚀 Send Coins</button>
+                </form>
+            </div>
+            <!-- Status Display -->
+            <div id="transferStatus" class="message"></div>
+        </div>
+        <!-- Recent Transactions -->
+        {% if recent_transactions %}
+            <div style="background: rgba(255,255,255,0.1);
+                        padding: 30px;
+                        border-radius: 15px;
+                        margin-bottom: 30px">
+                <h2 style="text-align: center; margin-bottom: 20px;">📈 Your Recent Transactions</h2>
+                <div style="display: grid; gap: 10px;">
+                    {% for transaction in recent_transactions %}
+                        <div style="display: flex;
+                                    justify-content: space-between;
+                                    align-items: center;
+                                    background: rgba(255,255,255,0.1);
+                                    padding: 15px;
+                                    border-radius: 8px">
+                            <div>
+                                {% if transaction.sender == current_username %}
+                                    <span style="color: #e74c3c;">📤 Sent to {{ transaction.recipient }}</span>
+                                {% else %}
+                                    <span style="color: #2ecc71;">📥 Received from {{ transaction.sender }}</span>
+                                {% endif %}
+                                <div style="font-size: 0.9rem; opacity: 0.8;">{{ transaction.timestamp.strftime("%Y-%m-%d %H:%M") }}</div>
+                            </div>
+                            <span style="font-weight: bold; font-size: 1.1rem;">
+                                {% if transaction.sender == current_username %}
+                                    <span style="color: #e74c3c;">-{{ "{:,}".format(transaction.amount) }}</span>
+                                {% else %}
+                                    <span style="color: #2ecc71;">+{{ "{:,}".format(transaction.amount) }}</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
     {% endif %}
-</div>
-
-<script>
+    <!-- Market Stats -->
+    <div class="market-stats-grid">
+        <div class="stat-card">
+            <h3>💰 Market Cap</h3>
+            <p class="stat-value" data-stat="market-cap">{{ "{:,}".format(market_cap) }}</p>
+            <p>Total Straw Coins</p>
+        </div>
+        <div class="stat-card">
+            <h3>👥 Active Stakeholders</h3>
+            <p class="stat-value" data-stat="user-count">{{ stakeholder_count }}</p>
+            <p>Market Participants</p>
+        </div>
+        <div class="stat-card">
+            <h3>📊 Trading Volume</h3>
+            <p class="stat-value" data-stat="volume">{{ "{:,}".format(volume) }}</p>
+            <p>Total Coins Transferred</p>
+        </div>
+    </div>
+    <!-- Performer System Status -->
+    <div class="performer-section">
+        <h2 class="performer-title">🎭 Performer Economy</h2>
+        <div class="performer-stats-grid">
+            <div class="stat-card">
+                <h3>🎪 Performers</h3>
+                <p class="stat-value">{{ performer_count }}</p>
+                <p>Active on Stage</p>
+            </div>
+            <div class="stat-card">
+                <h3>👥 Audience</h3>
+                <p class="stat-value">{{ audience_count }}</p>
+                <p>Market Participants</p>
+            </div>
+        </div>
+        {% if current_user_is_performer %}
+            <div class="performer-status-card performer">
+                <h3>🎭 You are a PERFORMER</h3>
+                <p class="opacity-90">You lose 5 coins to each audience member every minute</p>
+                <p class="opacity-70" style="font-size: 0.9rem;">Make them laugh to earn coins back through tips!</p>
+            </div>
+        {% else %}
+            <div class="performer-status-card audience">
+                <h3>👥 You are AUDIENCE</h3>
+                <p class="opacity-90">You receive 5 coins from each performer every minute</p>
+                <p class="opacity-70" style="font-size: 0.9rem;">Send coins to performers to show appreciation!</p>
+            </div>
+        {% endif %}
+        {% if redistribution_enabled %}
+            <div class="redistribution-info">
+                <p class="opacity-80" style="font-size: 0.9rem;">
+                    ⏰ Automatic redistribution every minute |
+                    💰 5 coins from each performer → each audience member
+                </p>
+            </div>
+        {% endif %}
+    </div>
+    <div class="leaderboard-section">
+        <h2 class="leaderboard-title">🏆 Market Leaders</h2>
+        <div class="leaderboard-grid">
+            {% if top_performers %}
+                {% for performer in top_performers %}
+                    {% set medals = ["🥇", "🥈", "🥉"] %}
+                    <div class="leaderboard-item{% if performer.username == current_username %} current-user{% endif %}">
+                        <span class="font-bold">{{ medals[loop.index0] }} {{ performer.username }}</span>
+                        <span class="font-bold">{{ "{:,}".format(performer.coin_balance) }} Straw Coins</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-center opacity-70">No stakeholders yet - Be the first to join the revolution!</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="text-center"
+         style="background: rgba(255,255,255,0.1);
+                padding: 30px;
+                border-radius: 15px">
+        {% if not current_username %}
+            <h2 class="mb-20">🌙 Join The Moon Mission</h2>
+            <p class="mb-20" style="font-size: 1.1rem;">Ready to disrupt comedy through market forces?</p>
+            <p class="mb-10">
+                🎯 <strong>Get 10,000 Straw Coins</strong> instantly upon registration
+            </p>
+            <p class="mb-10">
+                💸 <strong>Trade with other audience members</strong> during The Short Straw
+            </p>
+            <p class="mb-20">
+                📈 <strong>Let the market decide</strong> comedic value - no taste required!
+            </p>
+        {% else %}
+            <h2 class="mb-20">🎭 The Comedy Market is Live!</h2>
+            <p class="mb-20" style="font-size: 1.1rem;">Trade coins with fellow audience members and influence the show!</p>
+            <p class="mb-10">
+                💸 <strong>Send coins</strong> to show support for your favorite comedians
+            </p>
+            <p class="mb-10">
+                📊 <strong>Track your portfolio</strong> and climb the leaderboard
+            </p>
+            <p class="mb-20">
+                🏆 <strong>Become a comedy market leader</strong> through strategic trading!
+            </p>
+        {% endif %}
+    </div>
+    <script>
     // Pass current username to JavaScript
     window.currentUsername = '{{ current_username }}';
-</script>
-<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+    </script>
+    <script src="{{ url_for('static', filename='js/home.js') }}"></script>
 {% endblock %}

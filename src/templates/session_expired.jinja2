@@ -1,58 +1,67 @@
 {% extends "base.jinja2" %}
-
 {% block content %}
-<style>
+    <style>
     .container {
         padding-top: 20px !important;
     }
     #session-banner {
         display: none !important;
     }
-</style>
-<div class="session-expired-section">
-    <div class="session-expired-header">
-        <div class="session-expired-title">⏰💥</div>
-        <h1 class="session-expired-subtitle" style="color: #ff6b6b;">Session Expired!</h1>
-        <p class="session-expired-message">
-            Your trading session has been terminated due to market inactivity
-        </p>
-    </div>
-
-    <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; max-width: 500px; margin: 0 auto 40px;">
-        <h2 class="mb-20">🚨 Session Timeout Protocol</h2>
-        <p class="mb-10">• Your 5-minute trading window has expired</p>
-        <p class="mb-10">• All positions have been temporarily frozen for security</p>
-        <p class="mb-10">• No Straw Coins have been lost during this process</p>
-        <p>• Maximum stakeholder protection protocols activated</p>
-    </div>
-
-    <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; max-width: 500px; margin: 0 auto 30px;">
-        <h3 class="mb-10">💡 Recovery Options</h3>
-        <p class="mb-20">Choose your path back to market participation:</p>
-
-        <div class="session-expired-actions">
-            <a href="/register" id="redirectButton" class="session-expired-btn">
-                🔐 Re-authenticate
-            </a>
+    </style>
+    <div class="session-expired-section">
+        <div class="session-expired-header">
+            <div class="session-expired-title">⏰💥</div>
+            <h1 class="session-expired-subtitle" style="color: #ff6b6b;">Session Expired!</h1>
+            <p class="session-expired-message">Your trading session has been terminated due to market inactivity</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.1);
+                    padding: 30px;
+                    border-radius: 15px;
+                    max-width: 500px;
+                    margin: 0 auto 40px">
+            <h2 class="mb-20">🚨 Session Timeout Protocol</h2>
+            <p class="mb-10">• Your 5-minute trading window has expired</p>
+            <p class="mb-10">• All positions have been temporarily frozen for security</p>
+            <p class="mb-10">• No Straw Coins have been lost during this process</p>
+            <p>• Maximum stakeholder protection protocols activated</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.1);
+                    padding: 25px;
+                    border-radius: 15px;
+                    max-width: 500px;
+                    margin: 0 auto 30px">
+            <h3 class="mb-10">💡 Recovery Options</h3>
+            <p class="mb-20">Choose your path back to market participation:</p>
+            <div class="session-expired-actions">
+                <a href="/register" id="redirectButton" class="session-expired-btn">🔐 Re-authenticate</a>
+            </div>
+        </div>
+        <div style="background: rgba(255,255,255,0.1);
+                    padding: 20px;
+                    border-radius: 10px;
+                    max-width: 500px;
+                    margin: 0 auto">
+            <h3 class="mb-10">⚡ Pro Trading Tip</h3>
+            <p class="opacity-80 mb-10" style="font-style: italic;">
+                "Stay active during The Short Straw performances to maintain your trading session!"
+            </p>
+            <p class="opacity-70" style="font-size: 0.9rem;">
+                Any interaction (scrolling, tapping, trading) resets your 5-minute timer
+            </p>
+        </div>
+        <div style="margin-top: 30px;
+                    padding: 20px;
+                    background: rgba(255, 193, 7, 0.1);
+                    border-radius: 10px;
+                    border: 1px solid rgba(255, 193, 7, 0.3);
+                    max-width: 500px;
+                    margin-left: auto;
+                    margin-right: auto;
+                    margin-top: 30px">
+            <p style="color: #ffc107; margin: 0; font-weight: bold;">
+                🎭 Remember: The Short Straw comedy market never sleeps - but your session does!
+            </p>
         </div>
     </div>
-
-    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; max-width: 500px; margin: 0 auto;">
-        <h3 class="mb-10">⚡ Pro Trading Tip</h3>
-        <p class="opacity-80 mb-10" style="font-style: italic;">
-            "Stay active during The Short Straw performances to maintain your trading session!"
-        </p>
-        <p class="opacity-70" style="font-size: 0.9rem;">
-            Any interaction (scrolling, tapping, trading) resets your 5-minute timer
-        </p>
-    </div>
-
-    <div style="margin-top: 30px; padding: 20px; background: rgba(255, 193, 7, 0.1); border-radius: 10px; border: 1px solid rgba(255, 193, 7, 0.3); max-width: 500px; margin-left: auto; margin-right: auto; margin-top: 30px;">
-        <p style="color: #ffc107; margin: 0; font-weight: bold;">
-            🎭 Remember: The Short Straw comedy market never sleeps - but your session does!
-        </p>
-    </div>
-</div>
-
-<script src="{{ url_for('static', filename='js/session_expired.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/session_expired.js') }}"></script>
 {% endblock %}

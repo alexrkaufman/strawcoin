@@ -1,56 +1,52 @@
 {% import "macros.jinja2" as m %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title or "Straw Coin - Revolutionary Comedy Tokenization" }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body class="{{ page_class or '' }}">
-    <div class="container">
-        <header>
-            <div class="logo">🪙 {{ site_name or "Straw Coin" }} 🚀</div>
-            <div class="tagline">{{ tagline or "Revolutionary Comedy Market Dynamics" }}</div>
-        </header>
-
-        <!-- Unified Session Banner -->
-        <div id="session-banner" class="session-banner session-inactive">
-            <div class="session-banner-content">
-                <span id="session-icon" class="session-icon">⏰</span>
-                <span id="session-text" class="session-text">No session active</span>
-                <button id="extend-session" class="extend-session-btn" style="display: none;">Extend Session</button>
-                <span id="session-message" class="session-message" style="display: none;">✓ Extended!</span>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{{ title or "Straw Coin - Revolutionary Comedy Tokenization" }}</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body class="{{ page_class or '' }}">
+        <div class="container">
+            <header>
+                <div class="logo">🪙 {{ site_name or "Straw Coin" }} 🚀</div>
+                <div class="tagline">{{ tagline or "Revolutionary Comedy Market Dynamics" }}</div>
+            </header>
+            <!-- Unified Session Banner -->
+            <div id="session-banner" class="session-banner session-inactive">
+                <div class="session-banner-content">
+                    <span id="session-icon" class="session-icon">⏰</span>
+                    <span id="session-text" class="session-text">No session active</span>
+                    <button id="extend-session" class="extend-session-btn" style="display: none;">Extend Session</button>
+                    <span id="session-message" class="session-message" style="display: none;">✓ Extended!</span>
+                </div>
             </div>
+            <main class="main-content">
+                {% block content %}{{ content|safe }}{% endblock %}
+            </main>
+            <footer class="footer">
+                <div>
+                    <span class="crypto-badge">To The Moon! 🌙</span>
+                    <span class="crypto-badge">Diamond Hands 💎</span>
+                    <span class="crypto-badge">HODL 🔥</span>
+                </div>
+                <p>Powered by Revolutionary Blockchain-Adjacent Technology</p>
+                <p>
+                    <em>"Where Market Cap Meets Comedy Cap"</em>
+                </p>
+            </footer>
         </div>
-
-        <main class="main-content">
-            {% block content %}
-            {{ content|safe }}
-            {% endblock %}
-        </main>
-
-        <footer class="footer">
-            <div>
-                <span class="crypto-badge">To The Moon! 🌙</span>
-                <span class="crypto-badge">Diamond Hands 💎</span>
-                <span class="crypto-badge">HODL 🔥</span>
-            </div>
-            <p>Powered by Revolutionary Blockchain-Adjacent Technology</p>
-            <p><em>"Where Market Cap Meets Comedy Cap"</em></p>
-        </footer>
-    </div>
-
-    {% if request.endpoint != 'auth.session_expired' and request.endpoint != 'auth.register' %}
-    <script src="{{ url_for('static', filename='js/session.js') }}"></script>
-    <script>
+        {% if request.endpoint != 'auth.session_expired' and request.endpoint != 'auth.register' %}
+            <script src="{{ url_for('static', filename='js/session.js') }}"></script>
+            <script>
         // Simple session timeout - minimal and working
         let sessionTimer = null;
         let sessionActive = false;
         let timeoutSeconds = {{ config.SESSION_TIMEOUT_SECONDS }};
         let timeRemaining = 0;
         let countdownInterval = null;
-        
+
         console.log('Session timeout set to:', timeoutSeconds, 'seconds');
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -83,7 +79,7 @@
         function startSessionTimer() {
             sessionActive = true;
             timeRemaining = timeoutSeconds;
-            
+
             // Clear existing timers
             if (sessionTimer) {
                 clearTimeout(sessionTimer);
@@ -93,22 +89,22 @@
             }
 
             console.log('Starting session timer for', timeoutSeconds, 'seconds');
-            
+
             // Start countdown display
             countdownInterval = setInterval(function() {
                 timeRemaining--;
                 updateBannerWithCountdown();
-                
+
                 if (timeRemaining <= 0) {
                     clearInterval(countdownInterval);
                 }
             }, 1000);
-            
+
             // Set timeout for session expiration
             sessionTimer = setTimeout(function() {
                 console.log('Session timer expired - redirecting to session expired page');
                 sessionActive = false;
-                
+
                 // Logout from server and redirect
                 fetch('/logout', { method: 'POST' })
                     .catch(() => {}) // Ignore errors
@@ -116,7 +112,7 @@
                         window.location.href = '/session-expired';
                     });
             }, timeoutSeconds * 1000);
-            
+
             // Initial banner update
             updateBannerWithCountdown();
         }
@@ -125,15 +121,15 @@
             const banner = document.getElementById('session-banner');
             const sessionText = document.getElementById('session-text');
             const extendButton = document.getElementById('extend-session');
-            
+
             if (sessionText) {
                 sessionText.textContent = text;
             }
-            
+
             if (banner) {
                 banner.className = 'session-banner ' + cssClass;
             }
-            
+
             if (extendButton) {
                 extendButton.style.display = sessionActive ? 'inline' : 'none';
             }
@@ -141,21 +137,21 @@
 
         function updateBannerWithCountdown() {
             if (!sessionActive) return;
-            
+
             const minutes = Math.floor(timeRemaining / 60);
             const seconds = timeRemaining % 60;
             const timeText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            
+
             let cssClass = 'session-active';
             let displayText = `Session expires in ${timeText}`;
-            
+
             // Change colors based on time remaining
             if (timeRemaining <= 10) {
                 cssClass = 'session-critical';
             } else if (timeRemaining <= 30) {
                 cssClass = 'session-warning';
             }
-            
+
             updateBanner(displayText, cssClass);
         }
 
@@ -179,9 +175,9 @@
                 clearInterval(countdownInterval);
             }
         });
-    </script>
-    {% else %}
-    <script>
+            </script>
+        {% else %}
+            <script>
         // Minimal script for excluded pages - no session monitoring
         document.addEventListener('DOMContentLoaded', function() {
             const sessionBanner = document.getElementById('session-banner');
@@ -189,7 +185,7 @@
                 sessionBanner.style.display = 'none';
             }
         });
-    </script>
-    {% endif %}
-</body>
+            </script>
+        {% endif %}
+    </body>
 </html>

@@ -1,71 +1,47 @@
 {% extends "base.jinja2" %}
-
 {% block content %}
-<style>
-    .container {
-        padding-top: 20px !important;
-    }
-    #session-banner {
-        display: none !important;
-    }
-</style>
-<div class="registration-section">
-    <div class="registration-header">
-        <h1 class="registration-title">🚀 Join The Revolution</h1>
-        <p class="registration-subtitle">Enter <strong>The Short Straw</strong> comedy tokenization ecosystem</p>
-    </div>
-
-    <div class="registration-form-container">
-        <form id="registrationForm" class="registration-form">
-            <div class="form-group">
-                <label for="username" class="form-label">Choose Your Market Identity:</label>
-                <input 
-                    type="text" 
-                    id="username" 
-                    name="username" 
-                    required
-                    maxlength="20"
-                    class="form-input"
-                    placeholder="Enter username..."
-                    autocomplete="off"
-                    autocapitalize="none"
-                >
+    <div class="registration-section">
+        <div class="registration-header">
+            <h1 class="registration-title">🚀 Join The Revolution</h1>
+            <p class="registration-subtitle">
+                Enter <strong>The Short Straw</strong> comedy tokenization ecosystem
+            </p>
+        </div>
+        <div class="registration-form-container">
+            <form id="registrationForm" class="registration-form">
+                <div class="form-group">
+                    <label for="username" class="form-label">Choose Your Market Identity:</label>
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           required
+                           maxlength="20"
+                           class="form-input"
+                           placeholder="Enter username..."
+                           autocomplete="off"
+                           autocapitalize="none">
+                </div>
+                <button type="submit" id="registerBtn" class="register-btn">🌙 Launch to Moon Mission</button>
+            </form>
+            <div id="errorMessage" class="message error-message">
+                <p class="font-bold"></p>
             </div>
-            
-            <button 
-                type="submit" 
-                id="registerBtn"
-                class="register-btn"
-            >
-                🌙 Launch to Moon Mission
-            </button>
-        </form>
-
-        <div id="errorMessage" class="message error-message">
-            <p class="font-bold"></p>
-        </div>
-
-        <div id="loadingMessage" class="message loading-message">
-            <div class="loading-emoji">⏳</div>
-            <p>Initializing stakeholder account...</p>
-        </div>
-
-        <div id="successMessage" class="message success-message">
-            <p class="font-bold"></p>
+            <div id="loadingMessage" class="message loading-message">
+                <div class="loading-emoji">⏳</div>
+                <p>Initializing stakeholder account...</p>
+            </div>
+            <div id="successMessage" class="message success-message">
+                <p class="font-bold"></p>
+            </div>
         </div>
     </div>
+    {{ m.callout_box(title="💰 Stakeholder Benefits",
+        message="<p class='mb-10'>🎯 <strong>10,000 Straw Coins</strong> instantly credited to your portfolio</p>
+        <p class='mb-10'>💸 <strong>Peer-to-peer trading</strong> with other audience members</p>
+        <p class='mb-10'>📈 <strong>Real-time market participation</strong> during The Short Straw</p>
+        <p class='mb-10'>🏆 <strong>Leaderboard rankings</strong> for competitive stakeholders</p>
+        <p>🌙 <strong>Maximum ROI potential</strong> through market-driven comedy valuation</p>",
+        class="benefits-section") }}
 </div>
-
-{{ m.callout_box(
-    title="💰 Stakeholder Benefits",
-    message="<p class='mb-10'>🎯 <strong>10,000 Straw Coins</strong> instantly credited to your portfolio</p>
-             <p class='mb-10'>💸 <strong>Peer-to-peer trading</strong> with other audience members</p>
-             <p class='mb-10'>📈 <strong>Real-time market participation</strong> during The Short Straw</p>
-             <p class='mb-10'>🏆 <strong>Leaderboard rankings</strong> for competitive stakeholders</p>
-             <p>🌙 <strong>Maximum ROI potential</strong> through market-driven comedy valuation</p>",
-    class="benefits-section")}}
-
-</div>
-
 <script src="{{ url_for('static', filename='js/register.js') }}"></script>
 {% endblock %}

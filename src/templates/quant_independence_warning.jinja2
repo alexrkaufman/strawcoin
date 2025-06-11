@@ -1,87 +1,124 @@
 {% extends "base.jinja2" %}
-
 {% block content %}
-<div style="min-height: 80vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a1a, #1b2d1b);">
-    <div style="max-width: 600px; text-align: center; padding: 40px; background: linear-gradient(135deg, #1b2d1b, #154a15); border: 2px solid #FFA726; border-radius: 20px; box-shadow: 0 10px 30px rgba(255, 167, 38, 0.3);">
-
-        <!-- Independence Icon -->
-        <div style="font-size: 4rem; margin-bottom: 20px; animation: glow 3s ease-in-out infinite alternate;">
-            🏛️⚖️🏛️
-        </div>
-
-        <!-- Main Warning -->
-        <h1 style="color: #FFA726; font-size: 2.5rem; margin-bottom: 20px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
-            <strong>CHANCELLOR</strong> INDEPENDENCE PROTOCOL
-        </h1>
-
-        <!-- Independence Notice -->
-        <div style="background: rgba(255, 167, 38, 0.1); border: 1px solid #FFA726; border-radius: 10px; padding: 20px; margin-bottom: 30px;">
-            <h2 style="color: #ffffff; font-size: 1.3rem; margin-bottom: 15px;">
-                🔒 MARKET OVERSIGHT PROTECTION ACTIVATED
-            </h2>
-            <p style="color: #ffffff; font-size: 1.1rem; line-height: 1.6; margin-bottom: 15px;">
-                <strong>{{ username }}</strong>, your attempt to transfer <strong>{{ amount | default(0) }} Straw Coins</strong> to <span style="color: #FFA726; font-weight: bold;">CHANCELLOR</span> has been <strong>BLOCKED</strong>.
-            </p>
-            <p style="color: #00D084; font-size: 1rem; line-height: 1.6;">
-                CHANCELLOR cannot accept direct payments to maintain <strong>REGULATORY INDEPENDENCE</strong> and prevent conflicts of interest.
-            </p>
-        </div>
-
-        <!-- Enforcement Notice -->
-        {{ m.callout_box(
-            title="🚨 REGULATORY ENFORCEMENT NOTICE",
-            message="Attempts to circumvent CHANCELLOR's independence protocols are monitored and may
-            result in regulatory action. CHANCELLOR maintains neutrality through
-            strict payment restrictions.",
-            class="warning"
-        ) }}
-
-        <!-- Independence Explanation -->
-        {{ m.callout_box(
-            title="🛡️ WHY QUANT INDEPENDENCE MATTERS",
-            message="<p>🏦 <strong>Regulatory Oversight:</strong> CHANCELLOR must remain impartial to enforce market rules</p>
-                     <p>⚖️ <strong>Conflict Prevention:</strong> Direct payments could compromise enforcement decisions</p>
-                     <p>🔍 <strong>Market Integrity:</strong> Independence ensures fair treatment of all traders</p>
-                     <p>📊 <strong>Platform Administration:</strong> Neutral oversight protects all participants</p>
-                     <p>🚫 <strong>Anti-Corruption:</strong> No bribes, gifts, or influence attempts allowed</p>",
-            class="info_box"
-            ) }}
-
-        <!-- Alternative Actions -->
-        <div style="background: linear-gradient(135deg, #1b2d1b, #154a15); border: 1px solid #00D084; border-radius: 10px; padding: 20px; margin-bottom: 30px;">
-            <h4 style="color: #00D084; font-size: 1.1rem; margin-bottom: 15px;">
-                💡 ALTERNATIVE TRADING OPTIONS
-            </h4>
-            <div style="text-align: left; color: #ffffff; font-size: 0.95rem; line-height: 1.6;">
-                <p>✅ <strong>Trade with other participants:</strong> Send coins to performers or audience members</p>
-                <p>✅ <strong>Participate in market activities:</strong> Engage in legitimate trading behavior</p>
-                <p>✅ <strong>Build your portfolio:</strong> Focus on maximizing your Straw Coin holdings</p>
-                <p>⚠️ <strong>Note:</strong> CHANCELLOR maintains strict independence protocols</p>
+    <div style="min-height: 80vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, #1a1a1a, #1b2d1b)">
+        <div style="max-width: 600px;
+                    text-align: center;
+                    padding: 40px;
+                    background: linear-gradient(135deg, #1b2d1b, #154a15);
+                    border: 2px solid #FFA726;
+                    border-radius: 20px;
+                    box-shadow: 0 10px 30px rgba(255, 167, 38, 0.3)">
+            <!-- Independence Icon -->
+            <div style="font-size: 4rem;
+                        margin-bottom: 20px;
+                        animation: glow 3s ease-in-out infinite alternate">🏛️⚖️🏛️</div>
+            <!-- Main Warning -->
+            <h1 style="color: #FFA726;
+                       font-size: 2.5rem;
+                       margin-bottom: 20px;
+                       font-weight: bold;
+                       text-shadow: 2px 2px 4px rgba(0,0,0,0.5)">
+                <strong>CHANCELLOR</strong> INDEPENDENCE PROTOCOL
+            </h1>
+            <!-- Independence Notice -->
+            <div style="background: rgba(255, 167, 38, 0.1);
+                        border: 1px solid #FFA726;
+                        border-radius: 10px;
+                        padding: 20px;
+                        margin-bottom: 30px">
+                <h2 style="color: #ffffff; font-size: 1.3rem; margin-bottom: 15px;">🔒 MARKET OVERSIGHT PROTECTION ACTIVATED</h2>
+                <p style="color: #ffffff;
+                          font-size: 1.1rem;
+                          line-height: 1.6;
+                          margin-bottom: 15px">
+                    <strong>{{ username }}</strong>, your attempt to transfer <strong>{{ amount | default(0) }} Straw Coins</strong> to <span style="color: #FFA726; font-weight: bold;">CHANCELLOR</span> has been <strong>BLOCKED</strong>.
+                </p>
+                <p style="color: #00D084; font-size: 1rem; line-height: 1.6;">
+                    CHANCELLOR cannot accept direct payments to maintain <strong>REGULATORY INDEPENDENCE</strong> and prevent conflicts of interest.
+                </p>
+            </div>
+            <!-- Enforcement Notice -->
+            {{ m.callout_box(title="🚨 REGULATORY ENFORCEMENT NOTICE",
+                        message="Attempts to circumvent CHANCELLOR's independence protocols are monitored and may
+                        result in regulatory action. CHANCELLOR maintains neutrality through
+                        strict payment restrictions.",
+                        class="warning") }}
+            <!-- Independence Explanation -->
+            {{ m.callout_box(title="🛡️ WHY QUANT INDEPENDENCE MATTERS",
+                        message="<p>🏦 <strong>Regulatory Oversight:</strong> CHANCELLOR must remain impartial to enforce market rules</p>
+                        <p>⚖️ <strong>Conflict Prevention:</strong> Direct payments could compromise enforcement decisions</p>
+                        <p>🔍 <strong>Market Integrity:</strong> Independence ensures fair treatment of all traders</p>
+                        <p>📊 <strong>Platform Administration:</strong> Neutral oversight protects all participants</p>
+                        <p>🚫 <strong>Anti-Corruption:</strong> No bribes, gifts, or influence attempts allowed</p>",
+                        class="info_box") }}
+            <!-- Alternative Actions -->
+            <div style="background: linear-gradient(135deg, #1b2d1b, #154a15);
+                        border: 1px solid #00D084;
+                        border-radius: 10px;
+                        padding: 20px;
+                        margin-bottom: 30px">
+                <h4 style="color: #00D084; font-size: 1.1rem; margin-bottom: 15px;">💡 ALTERNATIVE TRADING OPTIONS</h4>
+                <div style="text-align: left;
+                            color: #ffffff;
+                            font-size: 0.95rem;
+                            line-height: 1.6">
+                    <p>
+                        ✅ <strong>Trade with other participants:</strong> Send coins to performers or audience members
+                    </p>
+                    <p>
+                        ✅ <strong>Participate in market activities:</strong> Engage in legitimate trading behavior
+                    </p>
+                    <p>
+                        ✅ <strong>Build your portfolio:</strong> Focus on maximizing your Straw Coin holdings
+                    </p>
+                    <p>
+                        ⚠️ <strong>Note:</strong> CHANCELLOR maintains strict independence protocols
+                    </p>
+                </div>
+            </div>
+            <!-- Action Buttons -->
+            <div style="display: flex;
+                        gap: 20px;
+                        justify-content: center;
+                        flex-wrap: wrap">
+                <a href="/"
+                   style="background: linear-gradient(135deg, #4a90e2, #357abd);
+                          color: white;
+                          padding: 15px 30px;
+                          border-radius: 10px;
+                          text-decoration: none;
+                          font-weight: bold;
+                          transition: all 0.3s;
+                          box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3)">📊 Return to Trading Platform</a>
+                <a href="/leaderboard"
+                   style="background: linear-gradient(135deg, #00D084, #00A66B);
+                          color: white;
+                          padding: 15px 30px;
+                          border-radius: 10px;
+                          text-decoration: none;
+                          font-weight: bold;
+                          transition: all 0.3s;
+                          box-shadow: 0 4px 15px rgba(0, 208, 132, 0.3)">📈 View Market Leaders</a>
+            </div>
+            <!-- Footer Notice -->
+            <div style="margin-top: 30px;
+                        padding-top: 20px;
+                        border-top: 1px solid rgba(255,255,255,0.2)">
+                <p style="color: #b0b0b0; font-size: 0.8rem; line-height: 1.4;">
+                    <strong>CHANCELLOR - Independent Market Oversight</strong>
+                    <br>
+                    Maintaining Market Integrity Through Regulatory Independence
+                    <br>
+                    <em>"Impartial • Incorruptible • Indispensable"</em>
+                </p>
             </div>
         </div>
-
-        <!-- Action Buttons -->
-        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
-            <a href="/" style="background: linear-gradient(135deg, #4a90e2, #357abd); color: white; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: bold; transition: all 0.3s; box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);">
-                📊 Return to Trading Platform
-            </a>
-            <a href="/leaderboard" style="background: linear-gradient(135deg, #00D084, #00A66B); color: white; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: bold; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0, 208, 132, 0.3);">
-                📈 View Market Leaders
-            </a>
-        </div>
-
-        <!-- Footer Notice -->
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
-            <p style="color: #b0b0b0; font-size: 0.8rem; line-height: 1.4;">
-                <strong>CHANCELLOR - Independent Market Oversight</strong><br>
-                Maintaining Market Integrity Through Regulatory Independence<br>
-                <em>"Impartial • Incorruptible • Indispensable"</em>
-            </p>
-        </div>
     </div>
-</div>
-
-<style>
+    <style>
 @keyframes glow {
     from { text-shadow: 0 0 10px #FFA726, 0 0 20px #FFA726, 0 0 30px #FFA726; }
     to { text-shadow: 0 0 20px #FFA726, 0 0 30px #FFA726, 0 0 40px #FFA726; }
@@ -91,5 +128,5 @@ a:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
 }
-</style>
+    </style>
 {% endblock %}
