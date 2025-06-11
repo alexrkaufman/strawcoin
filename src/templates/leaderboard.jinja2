@@ -1,8 +1,8 @@
 {% extends "base.jinja2" %}
 {% block content %}
     <div class="content-section content-section--center">
-        <h1 class="page-title">📈 STRAW COIN TRADING PLATFORM</h1>
-        <p class="subtitle">Live Market Data • Real-Time Trading Analytics • Comedy Futures</p>
+        <h1 class="page-title">🎭 STRAW COIN LEADERBOARD</h1>
+        <p class="subtitle">Live Market Data • Performance Requests • Wealth Rankings</p>
     </div>
     <!-- Market Status Bar -->
     <div class="market-status-bar">
@@ -25,146 +25,53 @@
             </div>
         </div>
     </div>
-    <div class="portfolio-section">
-        {% if current_username %}
-            <div class="card card--gradient-primary"
-                 data-username="{{ current_username }}">
-                <div class="portfolio-header">
-                    <h3>PORTFOLIO POSITION</h3>
-                    <span id="userPosition" class="position-badge">Calculating...</span>
+    <!-- TV Display Grid -->
+    <div class="tv-display-grid">
+        <!-- Left Column: Recent Offers -->
+        <div class="tv-column">
+            <div class="content-section content-section--dark">
+                <div class="tv-section-header">
+                    <h2 class="tv-section-title">🎭 Recent Approved Offers</h2>
                 </div>
-                <div class="portfolio-stats">
-                    <div>
-                        <p class="portfolio-balance">{{ "{:,}".format(current_user_balance) }}</p>
-                        <p class="portfolio-label">STRAW COINS</p>
-                    </div>
-                    <div class="portfolio-change">
-                        <p id="portfolioChange" class="change-value">+0.00%</p>
-                        <p class="change-label">24H CHANGE</p>
-                    </div>
+                <div id="recentOffers" class="tv-offers-list">
+                    <div class="text-center opacity-70">Loading offers...</div>
                 </div>
             </div>
-            <!-- Trading Controls -->
-            <div class="trading-actions">
-                <a href="/" class="button button--trading">📊 TRADING TERMINAL</a>
-                <button id="watchlistBtn" class="button button--primary">⭐ WATCHLIST</button>
-            </div>
-        {% endif %}
-    </div>
-    <!-- Trading Chart Controls -->
-    <div class="content-section content-section--dark">
-        <div class="chart-controls">
-            <div class="chart-controls-left">
-                <div>
-                    <label class="market-label">TIMEFRAME:</label>
-                    <select id="timeRangeSelect" class="timeframe-select">
-                        <option value="0.5" selected>30M</option>
-                        <option value="1">1H</option>
-                        <option value="1.5">1.5H</option>
-                        <option value="2">2H</option>
-                        <option value="3">3H</option>
-                    </select>
+        </div>
+
+        <!-- Right Column: Rich and Poor Lists -->
+        <div class="tv-column">
+            <!-- Richest Users -->
+            <div class="content-section content-section--dark">
+                <div class="tv-section-header">
+                    <h2 class="tv-section-title">💰 The 1%</h2>
                 </div>
-                <div class="chart-type-buttons">
-                    <button class="button button--small active" data-type="line">LINE</button>
-                    <button class="button button--small" data-type="candle">CANDLE</button>
+                <div id="richestUsers" class="tv-ranking-list">
+                    <div class="text-center opacity-70">Loading...</div>
                 </div>
             </div>
-            <div class="chart-controls-right">
-                <button id="refreshBtn" class="button button--trading">🔄 REFRESH</button>
-                <div class="live-indicator">
-                    <div class="live-dot"></div>
-                    <span class="live-text">LIVE</span>
+
+            <!-- Poorest Users -->
+            <div class="content-section content-section--dark">
+                <div class="tv-section-header">
+                    <h2 class="tv-section-title">🥺 Bottom Quintile</h2>
                 </div>
-                <div id="lastUpdate" class="update-time">
-                    Updated: <span id="updateTime">--</span>
+                <div id="poorestUsers" class="tv-ranking-list">
+                    <div class="text-center opacity-70">Loading...</div>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Professional Trading Chart Container -->
-    <div class="content-section content-section--dark">
-        <div class="chart-header">
-            <h3 class="chart-title">STRAW COIN MARKET DEPTH</h3>
-            <div class="chart-tools">
-                <span class="chart-tool-label">Price Scale:</span>
-                <button id="autoScale" class="button button--small button--primary">AUTO</button>
-            </div>
+    <!-- Auto-refresh indicator -->
+    <div class="tv-refresh-indicator">
+        <div class="live-indicator">
+            <div class="live-dot"></div>
+            <span class="live-text">LIVE</span>
         </div>
-        <div class="chart-container trading">
-            <canvas id="leaderboardChart"></canvas>
-            <div id="chartStatus" class="text-center opacity-70">Loading market data...</div>
-            <!-- Trading Crosshair Info -->
-            <div id="crosshairInfo" class="crosshair-info">
-                <div id="crosshairPrice">Price: --</div>
-                <div id="crosshairTime">Time: --</div>
-            </div>
-        </div>
+        <span id="updateTime" class="update-time">Auto-refresh every 10s</span>
     </div>
-    <!-- Market Leaders & Order Book Style -->
-    <div class="content-section content-section--dark">
-        <div class="leaderboard-header">
-            <h2 class="leaderboard-title">💎 TOP PERFORMERS</h2>
-            <div class="leaderboard-subtitle">Real-time rankings • Updated every 30s</div>
-        </div>
-        <!-- Order Book Style Headers -->
-        <div class="leaderboard-table-header">
-            <div class="leaderboard-col">RANK</div>
-            <div class="leaderboard-col">TRADER</div>
-            <div class="leaderboard-col right">HOLDINGS</div>
-            <div class="leaderboard-col right">24H %</div>
-        </div>
-        <div id="currentLeaderboard" class="item-list">
-            <!-- Will be populated by JavaScript -->
-        </div>
-    </div>
-    <!-- Trading Statistics Dashboard -->
-    <div class="responsive-grid responsive-grid--wide">
-        <div class="card">
-            <div class="stat-header">
-                <h3 class="text-success font-bold">📈 TOP GAINER</h3>
-                <span class="text-success">24H</span>
-            </div>
-            <div id="biggestGainer">
-                <p class="stat-value">--</p>
-                <p class="text-success">+-- coins</p>
-            </div>
-        </div>
-        <div class="card">
-            <div class="stat-header">
-                <h3 class="text-danger font-bold">📉 TOP LOSER</h3>
-                <span class="text-danger">24H</span>
-            </div>
-            <div id="biggestLoser">
-                <p class="stat-value">--</p>
-                <p class="text-danger">-- coins</p>
-            </div>
-        </div>
-        <div class="card">
-            <div class="stat-header">
-                <h3 class="text-warning font-bold">⚡ VOLUME LEADER</h3>
-                <span class="text-warning">24H</span>
-            </div>
-            <div id="mostActive">
-                <p class="stat-value">--</p>
-                <p class="text-warning">-- transactions</p>
-            </div>
-        </div>
-        <div class="card">
-            <div class="stat-header">
-                <h3 class="text-info font-bold">📊 MARKET DATA</h3>
-                <span class="text-info">LIVE</span>
-            </div>
-            <div id="dataStats">
-                <p class="stat-value" id="totalDataPoints">--</p>
-                <p class="text-info">Data points tracked</p>
-            </div>
-        </div>
-    </div>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.1/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+
     <script>
     // Pass current username to JavaScript
     window.currentUsername = '{{ current_username }}';

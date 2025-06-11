@@ -17,6 +17,9 @@ CREATE TABLE transactions (
     sender_id INTEGER NOT NULL,
     recipient_id INTEGER NOT NULL,
     amount INTEGER NOT NULL,
+    request_text TEXT,
+    transaction_type TEXT DEFAULT 'tip',
+    status TEXT DEFAULT 'approved',
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES users (id),
     FOREIGN KEY (recipient_id) REFERENCES users (id)
@@ -27,6 +30,8 @@ CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_transactions_sender ON transactions(sender_id);
 CREATE INDEX idx_transactions_recipient ON transactions(recipient_id);
 CREATE INDEX idx_transactions_timestamp ON transactions(timestamp);
+CREATE INDEX idx_transactions_status ON transactions(status);
+CREATE INDEX idx_transactions_type ON transactions(transaction_type);
 
 -- Balance snapshots for real-time leaderboard tracking
 CREATE TABLE balance_snapshots (
@@ -54,8 +59,9 @@ CREATE INDEX idx_balance_snapshots_timestamp ON balance_snapshots(timestamp);
 -- );
 
 -- Market analytics view for real-time portfolio tracking
+DROP VIEW IF EXISTS user_stats;
 CREATE VIEW user_stats AS
-SELECT 
+SELECT
     u.username,
     u.coin_balance,
     u.created_at,

@@ -117,14 +117,16 @@ const StrawCoinUtils = (function() {
             const response = await fetch(url, defaultOptions);
             const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || data.message || `HTTP ${response.status}`);
-            }
-
             // Handle redirects (e.g., quant independence, insider trading)
+            // Check for redirect in data first, regardless of status code
             if (data.redirect) {
                 window.location.href = data.redirect;
                 return null;
+            }
+
+            // Now check if response is not ok (but after handling redirects)
+            if (!response.ok && response.status !== 302) {
+                throw new Error(data.error || data.message || `HTTP ${response.status}`);
             }
 
             return data;

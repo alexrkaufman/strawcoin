@@ -1,4 +1,5 @@
 from functools import wraps
+from datetime import datetime, timedelta
 
 from flask import (
     Blueprint,
@@ -18,7 +19,25 @@ bp = Blueprint("auth", __name__)
 
 def is_authenticated():
     # Check if user has a username in session
-    return "username" in session
+    if "username" not in session:
+        return False
+    
+    # Check if session has a timestamp
+    if "session_created" not in session:
+        # No timestamp, invalid session
+        session.clear()
+        return False
+    
+    # Check if session is older than 60 seconds
+    session_created = datetime.fromisoformat(session["session_created"])
+    session_age = datetime.now() - session_created
+    
+    if session_age > timedelta(seconds=60):
+        # Session expired
+        session.clear()
+        return False
+    
+    return True
 
 
 def require_auth(f):
@@ -112,8 +131,9 @@ def login():
         balance = 10000
         performer_status = is_performer
 
-    # Set Flask session
+    # Set Flask session with timestamp
     session["username"] = username
+    session["session_created"] = datetime.now().isoformat()
     session.permanent = False  # Use non-permanent session cookies
 
     user_type = "performer" if performer_status else "audience member"
@@ -134,11 +154,17 @@ def session_status():
     if not is_authenticated():
         return jsonify({"authenticated": False, "status": "session_expired"}), 401
 
+    # Calculate remaining session time
+    session_created = datetime.fromisoformat(session["session_created"])
+    session_age = datetime.now() - session_created
+    remaining_seconds = max(0, 60 - int(session_age.total_seconds()))
+    
     return jsonify(
         {
             "authenticated": True,
             "username": session["username"],
             "status": "session_active",
+            "remaining_seconds": remaining_seconds,
         }
     ), 200
 

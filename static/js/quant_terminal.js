@@ -20,6 +20,12 @@ function initializeQuantTerminal() {
 
   // Initialize market data refresh
   refreshMarketData();
+  
+  // Load current redistribution rate
+  loadCurrentRedistributionRate();
+  
+  // Load pending offers
+  loadPendingOffers();
 
   // Log terminal initialization
   logQuantAction(
@@ -45,12 +51,12 @@ function bindControlButtons() {
     forceTransferBtn.addEventListener("click", executeUniversalTransfer);
   }
 
-  // Force Redistribution
-  const forceRedistributionBtn = document.getElementById(
-    "forceRedistributionBtn",
+  // Update Redistribution Rate
+  const updateRedistributionBtn = document.getElementById(
+    "updateRedistributionBtn",
   );
-  if (forceRedistributionBtn) {
-    forceRedistributionBtn.addEventListener("click", forceMarketRedistribution);
+  if (updateRedistributionBtn) {
+    updateRedistributionBtn.addEventListener("click", updateRedistributionRate);
   }
 
   // Market Intelligence Controls
@@ -67,6 +73,18 @@ function bindControlButtons() {
   const getMarketStatsBtn = document.getElementById("getMarketStatsBtn");
   if (getMarketStatsBtn) {
     getMarketStatsBtn.addEventListener("click", getDetailedMarketStats);
+  }
+
+  // Market Control
+  const toggleMarketBtn = document.getElementById("toggleMarketBtn");
+  if (toggleMarketBtn) {
+    toggleMarketBtn.addEventListener("click", toggleMarketStatus);
+  }
+  
+  // Pending Offers
+  const refreshOffersBtn = document.getElementById("refreshOffersBtn");
+  if (refreshOffersBtn) {
+    refreshOffersBtn.addEventListener("click", loadPendingOffers);
   }
 }
 
@@ -242,60 +260,73 @@ function getTransferSuccessMessage(data, type) {
   }
 }
 
-async function forceMarketRedistribution() {
-  const multiplier =
-    parseFloat(document.getElementById("redistributionMultiplier").value) || 1;
-  const reason =
-    document.getElementById("redistributionReason").value.trim() ||
-    "Forced redistribution by The CHANCELLOR";
+async function updateRedistributionRate() {
+  const amount = parseInt(document.getElementById("redistributionAmount").value);
 
-  if (multiplier <= 0 || multiplier > 10) {
-    showQuantStatus("Multiplier must be between 0.1 and 10", "error");
+  if (isNaN(amount) || amount < 0 || amount > 1000) {
+    showQuantStatus("Amount must be between 0 and 1000", "error");
     return;
   }
 
   try {
-    showQuantStatus("⚡ Forcing market redistribution...", "info");
+    showQuantStatus("⚡ Updating redistribution rate...", "info");
 
-    const data = await StrawCoinUtils.apiRequest("/api/quant/force-redistribution", {
+    const data = await StrawCoinUtils.apiRequest("/api/quant/update-redistribution-amount", {
       method: "POST",
       body: JSON.stringify({
-        multiplier: multiplier,
-        reason: reason,
+        amount: amount,
       }),
     });
 
     if (data) {
+      // Update the display
+      const currentRateEl = document.getElementById("currentRedistributionRate");
+      if (currentRateEl) {
+        currentRateEl.textContent = amount;
+      }
+
       logQuantAction(
-        "FORCED_REDISTRIBUTION",
-        `Forced ${data.redistributions?.length || 0} redistribution cycles (${multiplier}x)`,
+        "REDISTRIBUTION_RATE_CHANGE",
+        `Changed redistribution rate to ${amount} coins per performer per minute`,
         "manipulation",
       );
       showQuantStatus(
-        `✅ Successfully forced redistribution (${multiplier}x multiplier, ${data.total_redistributed || 0} coins redistributed)`,
+        `✅ Redistribution rate updated to ${amount} coins per minute`,
         "success",
       );
-
-      // Clear form
-      document.getElementById("redistributionReason").value = "";
-      document.getElementById("redistributionMultiplier").value = "1";
-
-      // Refresh market data
-      setTimeout(refreshMarketData, 1000);
     } else {
-      throw new Error(data.error || "Forced redistribution failed");
+      throw new Error(data.error || "Failed to update redistribution rate");
     }
   } catch (error) {
-    console.error("Forced redistribution error:", error);
+    console.error("Redistribution rate update error:", error);
     logQuantAction(
       "ERROR",
-      `Forced redistribution failed: ${error.message}`,
+      `Redistribution rate update failed: ${error.message}`,
       "error",
     );
     showQuantStatus(
-      `❌ Forced redistribution failed: ${error.message}`,
+      `❌ Failed to update redistribution rate: ${error.message}`,
       "error",
     );
+  }
+}
+
+async function loadCurrentRedistributionRate() {
+  try {
+    const data = await StrawCoinUtils.apiRequest("/api/quant/get-redistribution-amount");
+    if (data && data.amount !== undefined) {
+      const amountInput = document.getElementById("redistributionAmount");
+      const currentRateEl = document.getElementById("currentRedistributionRate");
+      
+      if (amountInput) {
+        amountInput.value = data.amount;
+      }
+      if (currentRateEl) {
+        currentRateEl.textContent = data.amount;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load redistribution rate:", error);
   }
 }
 
@@ -312,6 +343,22 @@ async function refreshMarketData() {
         "Market data refreshed successfully",
         "info",
       );
+    }
+    
+    // Also refresh market status
+    const marketData = await StrawCoinUtils.apiRequest("/api/market-status");
+    if (marketData && marketData.market_status) {
+      const marketStatusIndicator = document.getElementById("marketStatusIndicator");
+      if (marketStatusIndicator) {
+        marketStatusIndicator.textContent = marketData.market_status.status_text;
+        marketStatusIndicator.style.color = marketData.market_status.status_color;
+      }
+      
+      // Update the select dropdown
+      const marketStateSelect = document.getElementById("marketStateSelect");
+      if (marketStateSelect) {
+        marketStateSelect.value = marketData.market_status.is_open ? "open" : "closed";
+      }
     }
   } catch (error) {
     console.error("Market data refresh error:", error);
@@ -462,6 +509,64 @@ function showQuantStatus(message, type = "info") {
   StrawCoinUtils.showMessage(message, type, '#quantStatus');
 }
 
+async function toggleMarketStatus() {
+  const marketStateSelect = document.getElementById("marketStateSelect");
+  const newState = marketStateSelect.value;
+  
+  try {
+    showQuantStatus("⚡ Updating market status...", "info");
+    
+    const data = await StrawCoinUtils.apiRequest("/api/quant/toggle-market", {
+      method: "POST",
+      body: JSON.stringify({
+        state: newState
+      }),
+    });
+    
+    if (data) {
+      // Update the display
+      const marketStatusIndicator = document.getElementById("marketStatusIndicator");
+      if (marketStatusIndicator) {
+        marketStatusIndicator.textContent = data.market_status.status_text;
+        marketStatusIndicator.style.color = data.market_status.status_color;
+      }
+      
+      logQuantAction(
+        "MARKET_CONTROL",
+        `Market status changed to ${data.market_status.status_text}`,
+        "manipulation"
+      );
+      
+      showQuantStatus(
+        `✅ ${data.message}`,
+        "success"
+      );
+      
+      // Update other market status displays if present
+      updateMarketStatusDisplays(data.market_status);
+    } else {
+      throw new Error("Failed to update market status");
+    }
+  } catch (error) {
+    console.error("Market toggle error:", error);
+    logQuantAction(
+      "ERROR",
+      `Market toggle failed: ${error.message}`,
+      "error"
+    );
+    showQuantStatus(`❌ Failed to update market status: ${error.message}`, "error");
+  }
+}
+
+function updateMarketStatusDisplays(marketStatus) {
+  // Update any other market status displays on the page
+  const statusElements = document.querySelectorAll('[data-market-status]');
+  statusElements.forEach(element => {
+    element.textContent = marketStatus.status_text;
+    element.style.color = marketStatus.status_color;
+  });
+}
+
 // Enhanced error handling for The Quant's operations
 window.addEventListener("error", function (event) {
   logQuantAction(
@@ -489,3 +594,167 @@ const sessionRefresh = StrawCoinUtils.createAutoRefresh(
   120000 // 2 minutes
 );
 sessionRefresh.start();
+
+// Auto-refresh pending offers every 30 seconds
+const offersRefresh = StrawCoinUtils.createAutoRefresh(
+  loadPendingOffers,
+  30000 // 30 seconds
+);
+offersRefresh.start();
+
+// Pending Offers Functions
+async function loadPendingOffers() {
+  try {
+    const container = document.getElementById("pendingOffersContainer");
+    if (!container) return;
+    
+    const data = await StrawCoinUtils.apiRequest("/api/quant/pending-offers");
+    
+    if (data && data.offers) {
+      displayPendingOffers(data.offers);
+      
+      // Log if there are new offers
+      if (data.offers.length > 0) {
+        logQuantAction(
+          "OFFERS_CHECK",
+          `Found ${data.offers.length} pending offers`,
+          "info"
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load pending offers:", error);
+    const container = document.getElementById("pendingOffersContainer");
+    if (container) {
+      container.innerHTML = '<div class="text-center opacity-70">Failed to load offers</div>';
+    }
+  }
+}
+
+function displayPendingOffers(offers) {
+  const container = document.getElementById("pendingOffersContainer");
+  if (!container) return;
+  
+  if (!offers || offers.length === 0) {
+    container.innerHTML = '<div class="text-center opacity-70">No pending offers</div>';
+    return;
+  }
+  
+  const offersHtml = offers.map(offer => `
+    <div class="pending-offer-card" data-offer-id="${offer.id}">
+      <div class="pending-offer-header">
+        <div class="pending-offer-info">
+          <div class="pending-offer-sender">From: ${offer.sender}</div>
+          <div class="pending-offer-recipient">To: ${offer.recipient}</div>
+          <div class="text-xs opacity-70">${new Date(offer.timestamp).toLocaleString()}</div>
+        </div>
+        <div class="pending-offer-amount">
+          ${StrawCoinUtils.formatNumber(offer.amount)} coins
+        </div>
+      </div>
+      <div class="pending-offer-request">
+        "${offer.request_text}"
+      </div>
+      <div class="pending-offer-actions">
+        <button class="button button--success" onclick="approveOffer(${offer.id})">
+          ✅ Approve
+        </button>
+        <button class="button button--danger" onclick="denyOffer(${offer.id})">
+          ❌ Deny
+        </button>
+      </div>
+    </div>
+  `).join('');
+  
+  container.innerHTML = offersHtml;
+}
+
+async function approveOffer(offerId) {
+  try {
+    showQuantStatus("⚡ Approving offer...", "info");
+    
+    const data = await StrawCoinUtils.apiRequest("/api/quant/approve-offer", {
+      method: "POST",
+      body: JSON.stringify({ offer_id: offerId })
+    });
+    
+    if (data) {
+      logQuantAction(
+        "OFFER_APPROVED",
+        `Approved offer #${offerId}`,
+        "success"
+      );
+      showQuantStatus(`✅ ${data.message}`, "success");
+      
+      // Remove the offer card with animation
+      const offerCard = document.querySelector(`[data-offer-id="${offerId}"]`);
+      if (offerCard) {
+        offerCard.style.opacity = '0';
+        offerCard.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          offerCard.remove();
+          // Check if no offers left
+          const container = document.getElementById("pendingOffersContainer");
+          if (container && container.children.length === 0) {
+            container.innerHTML = '<div class="text-center opacity-70">No pending offers</div>';
+          }
+        }, 300);
+      }
+    }
+  } catch (error) {
+    console.error("Failed to approve offer:", error);
+    logQuantAction(
+      "ERROR",
+      `Failed to approve offer #${offerId}: ${error.message}`,
+      "error"
+    );
+    showQuantStatus(`❌ Failed to approve offer: ${error.message}`, "error");
+  }
+}
+
+async function denyOffer(offerId) {
+  try {
+    showQuantStatus("⚡ Denying offer...", "info");
+    
+    const data = await StrawCoinUtils.apiRequest("/api/quant/deny-offer", {
+      method: "POST",
+      body: JSON.stringify({ offer_id: offerId })
+    });
+    
+    if (data) {
+      logQuantAction(
+        "OFFER_DENIED",
+        `Denied offer #${offerId}`,
+        "warning"
+      );
+      showQuantStatus(`✅ ${data.message}`, "success");
+      
+      // Remove the offer card with animation
+      const offerCard = document.querySelector(`[data-offer-id="${offerId}"]`);
+      if (offerCard) {
+        offerCard.style.opacity = '0';
+        offerCard.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          offerCard.remove();
+          // Check if no offers left
+          const container = document.getElementById("pendingOffersContainer");
+          if (container && container.children.length === 0) {
+            container.innerHTML = '<div class="text-center opacity-70">No pending offers</div>';
+          }
+        }, 300);
+      }
+    }
+  } catch (error) {
+    console.error("Failed to deny offer:", error);
+    logQuantAction(
+      "ERROR",
+      `Failed to deny offer #${offerId}: ${error.message}`,
+      "error"
+    );
+    showQuantStatus(`❌ Failed to deny offer: ${error.message}`, "error");
+  }
+}
+
+// Make functions globally available
+window.approveOffer = approveOffer;
+window.denyOffer = denyOffer;

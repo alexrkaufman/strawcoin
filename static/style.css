@@ -281,6 +281,17 @@ header {
     transform: none;
 }
 
+.button--disabled {
+    background: rgba(128, 128, 128, 0.5) !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+}
+
+.button--disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
 /* Button Variants */
 .button--primary { background: var(--btn-primary); }
 .button--success { background: var(--btn-success); }
@@ -388,6 +399,49 @@ header {
 
 .list-item--received {
     border-left: 3px solid var(--text-success);
+}
+
+/* Transaction request text */
+.transaction-request {
+    font-style: italic;
+    opacity: 0.8;
+    margin-top: var(--spacing-xs);
+    font-size: 0.9rem;
+}
+
+/* Transaction Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-left: var(--spacing-xs);
+    text-transform: uppercase;
+}
+
+.status-success {
+    background: rgba(46, 204, 113, 0.2);
+    color: var(--text-success);
+    border: 1px solid rgba(46, 204, 113, 0.5);
+}
+
+.status-pending {
+    background: rgba(241, 196, 15, 0.2);
+    color: var(--text-warning);
+    border: 1px solid rgba(241, 196, 15, 0.5);
+}
+
+.status-approved {
+    background: rgba(46, 204, 113, 0.2);
+    color: var(--text-success);
+    border: 1px solid rgba(46, 204, 113, 0.5);
+}
+
+.status-denied {
+    background: rgba(231, 76, 60, 0.2);
+    color: var(--text-danger);
+    border: 1px solid rgba(231, 76, 60, 0.5);
 }
 
 /* List styles */
@@ -572,6 +626,98 @@ header {
     gap: var(--spacing-lg);
 }
 
+/* Form Buttons Container */
+.form-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+}
+
+.form-buttons .button {
+    flex: 1;
+    max-width: 200px;
+}
+
+/* Transaction Type Selector */
+.transaction-type-selector {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.transaction-type-label {
+    flex: 1;
+    max-width: 200px;
+    cursor: pointer;
+}
+
+.transaction-type-label input[type="radio"] {
+    display: none;
+}
+
+.type-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-lg);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-md);
+    background: var(--overlay-bg);
+    transition: all 0.3s ease;
+}
+
+.type-card--offer {
+    border-color: rgba(155, 89, 182, 0.5);
+}
+
+.type-card--tip {
+    border-color: rgba(46, 204, 113, 0.5);
+}
+
+.transaction-type-label input[type="radio"]:checked + .type-card {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--text-primary);
+    transform: scale(1.05);
+}
+
+.transaction-type-label input[type="radio"]:checked + .type-card--offer {
+    background: rgba(155, 89, 182, 0.2);
+    border-color: #9b59b6;
+}
+
+.transaction-type-label input[type="radio"]:checked + .type-card--tip {
+    background: rgba(46, 204, 113, 0.2);
+    border-color: #2ecc71;
+}
+
+.type-icon {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.type-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.type-desc {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* Request Field */
+.request-field {
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+.request-field textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
 /* Market Status Bar */
 .market-status-bar {
     background: var(--dark-gradient);
@@ -647,6 +793,253 @@ header {
     align-items: center;
     flex-wrap: wrap;
     gap: var(--spacing-md);
+}
+
+/* Offers Display */
+.offers-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.offers-title {
+    font-size: 1.8rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.offers-subtitle {
+    opacity: 0.8;
+    margin-bottom: var(--spacing-lg);
+}
+
+.offers-list {
+    display: grid;
+    gap: var(--spacing-lg);
+}
+
+.offer-card {
+    background: var(--overlay-bg);
+    border: 1px solid rgba(155, 89, 182, 0.3);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    transition: all 0.3s ease;
+}
+
+.offer-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(155, 89, 182, 0.3);
+    border-color: rgba(155, 89, 182, 0.5);
+}
+
+.offer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+}
+
+.offer-participants {
+    flex: 1;
+}
+
+.offer-sender {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.offer-recipient {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #9b59b6;
+}
+
+.offer-amount {
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    color: var(--text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-pill);
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.offer-request {
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid #9b59b6;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    font-style: italic;
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.offer-timestamp {
+    text-align: right;
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.offer-empty {
+    text-align: center;
+    padding: var(--spacing-xxl);
+    opacity: 0.7;
+    font-size: 1.1rem;
+}
+
+/* TV Display Styles */
+.tv-display-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.tv-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.tv-section-header {
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.tv-section-title {
+    font-size: 2rem;
+    margin: 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* TV Offers List */
+.tv-offers-list {
+    display: grid;
+    gap: var(--spacing-md);
+    min-height: 400px;
+}
+
+.tv-offer-card {
+    background: rgba(155, 89, 182, 0.15);
+    border: 2px solid rgba(155, 89, 182, 0.5);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    font-size: 1.2rem;
+    animation: slideIn 0.5s ease-out;
+}
+
+.tv-offer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.tv-offer-users {
+    font-size: 1.3rem;
+}
+
+.tv-offer-sender {
+    color: var(--text-secondary);
+}
+
+.tv-offer-recipient {
+    color: #9b59b6;
+    font-weight: bold;
+    margin-left: var(--spacing-sm);
+}
+
+.tv-offer-amount {
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    color: var(--text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-pill);
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+.tv-offer-request {
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 4px solid #9b59b6;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    font-style: italic;
+    font-size: 1.3rem;
+    margin-top: var(--spacing-md);
+}
+
+/* TV Ranking Lists */
+.tv-ranking-list {
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+.tv-ranking-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--overlay-bg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    font-size: 1.4rem;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tv-ranking-item--rich {
+    border-color: rgba(46, 204, 113, 0.3);
+    background: rgba(46, 204, 113, 0.1);
+}
+
+.tv-ranking-item--poor {
+    border-color: rgba(231, 76, 60, 0.3);
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.tv-ranking-position {
+    font-size: 1.8rem;
+    margin-right: var(--spacing-md);
+}
+
+.tv-ranking-user {
+    flex: 1;
+    font-weight: bold;
+}
+
+.tv-ranking-balance {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.tv-ranking-balance--rich {
+    color: var(--text-success);
+}
+
+.tv-ranking-balance--poor {
+    color: var(--text-danger);
+}
+
+/* TV Refresh Indicator */
+.tv-refresh-indicator {
+    position: fixed;
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
+    background: var(--overlay-bg-darker);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-pill);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-size: 1.1rem;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 /* Leaderboard Table */
@@ -725,6 +1118,117 @@ header {
     font-weight: bold;
     margin: var(--spacing-xs);
     text-transform: uppercase;
+}
+
+/* Market Control */
+.market-control-status {
+    margin-bottom: var(--spacing-lg);
+}
+
+.market-status-display {
+    text-align: center;
+    padding: var(--spacing-lg);
+    background: var(--overlay-bg-darker);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.market-status-indicator {
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: inline-block;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-pill);
+}
+
+/* Redistribution Rate Display */
+.redistribution-rate-display {
+    text-align: center;
+    padding: var(--spacing-md);
+    background: var(--overlay-bg-darker);
+    border-radius: var(--radius-md);
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--text-warning);
+    border: 1px solid rgba(243, 156, 18, 0.3);
+}
+
+#currentRedistributionRate {
+    font-size: 1.5rem;
+    color: var(--text-warning);
+}
+
+/* Pending Offers */
+.offers-container {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: var(--spacing-sm);
+}
+
+.pending-offer-card {
+    background: var(--overlay-bg);
+    border: 1px solid rgba(155, 89, 182, 0.3);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+    transition: all 0.3s ease;
+}
+
+.pending-offer-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(155, 89, 182, 0.3);
+}
+
+.pending-offer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.pending-offer-info {
+    flex: 1;
+}
+
+.pending-offer-sender {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.pending-offer-recipient {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #9b59b6;
+    margin: var(--spacing-xs) 0;
+}
+
+.pending-offer-amount {
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    color: var(--text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-pill);
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.pending-offer-request {
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid #9b59b6;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    font-style: italic;
+    margin-bottom: var(--spacing-md);
+}
+
+.pending-offer-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+}
+
+.pending-offer-actions .button {
+    min-width: 100px;
 }
 
 /* Footer */
@@ -806,10 +1310,51 @@ header {
         max-width: 250px;
     }
     
+    /* Transaction type selector mobile */
+    .transaction-type-selector {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    /* TV Display Mobile (single column) */
+    .tv-display-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tv-section-title {
+        font-size: 1.5rem;
+    }
+    
+    .tv-offer-card,
+    .tv-ranking-item {
+        font-size: 1rem;
+    }
+    
+    .tv-offer-amount,
+    .tv-ranking-balance {
+        font-size: 1.1rem;
+    }
+    
+    .transaction-type-label {
+        max-width: 300px;
+        width: 100%;
+    }
+    
     /* Buttons */
     .quick-send-buttons {
         flex-direction: column;
         align-items: center;
+    }
+    
+    .form-buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .form-buttons .button {
+        max-width: 100%;
+        width: 100%;
     }
     
     .session-expired-actions {

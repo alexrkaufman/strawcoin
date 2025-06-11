@@ -13,10 +13,11 @@
     </div>
     <!-- Send Coins Feature -->
     <div class="content-section">
-        <h2 class="section-title">💸 Send Coins to Fellow Shareholders</h2>
+        <h2 class="section-title">💸 Send Coins to Performers</h2>
+
         <!-- Quick Send Buttons -->
         <div class="quick-send-section">
-            <p>Quick Send:</p>
+            <p>Quick Amounts:</p>
             <div class="quick-send-buttons">
                 <button class="quickSend button button--secondary" data-amount="100">100 coins</button>
                 <button class="quickSend button button--secondary" data-amount="500">500 coins</button>
@@ -32,13 +33,15 @@
                            name="recipient"
                            class="form-input"
                            list="recipientList"
-                           placeholder="Type or select a shareholder..."
+                           placeholder="Select a user..."
                            autocomplete="off"
                            required>
                     <datalist id="recipientList">
-                        {% for user in available_recipients %}<option value="{{ user.username }}">{{ user.username }}</option>{% endfor %}
+                        {% for user in available_recipients %}
+                            <option value="{{ user.username }}" data-performer="{{ 'true' if user.is_performer else 'false' }}">{{ user.username }}{% if user.is_performer %} (Performer){% endif %}</option>
+                        {% endfor %}
                     </datalist>
-                    <small>💡 Start typing to see suggestions or click the dropdown arrow</small>
+                    <small>💡 Tips can be sent to anyone, but only performers can receive offers</small>
                 </div>
                 <div>
                     <label class="form-label">Amount:</label>
@@ -51,7 +54,24 @@
                            placeholder="Enter amount..."
                            required>
                 </div>
-                <button type="submit" class="button button--danger">🚀 Send Coins</button>
+                <div class="request-field">
+                    <label class="form-label">Your Request (for offers):</label>
+                    <textarea id="requestText"
+                              name="requestText"
+                              class="form-input"
+                              rows="3"
+                              maxlength="200"
+                              placeholder="What would you like the performer to do? (Leave blank for tips)"></textarea>
+                    <small>Be creative but respectful! The Chancellor will review all offers.</small>
+                </div>
+                <div class="form-buttons">
+                    <button type="button" id="makeOfferBtn" class="button button--danger">
+                        🎭 Make Offer
+                    </button>
+                    <button type="button" id="sendTipBtn" class="button button--success">
+                        💰 Send Tip
+                    </button>
+                </div>
             </form>
         </div>
         <!-- Status Display -->
@@ -66,15 +86,50 @@
                     <div class="list-item{% if transaction.sender == current_username %} list-item--sent{% else %} list-item--received{% endif %}">
                         <div>
                             {% if transaction.sender == current_username %}
-                                <span class="transaction-label">📤 Sent to {{ transaction.recipient }}</span>
+                                {% if transaction.transaction_type == 'offer' and transaction.status == 'pending' %}
+                                    <span class="transaction-label">🎭 Offer to {{ transaction.recipient }} <span class="status-badge status-pending">Pending</span></span>
+                                {% elif transaction.transaction_type == 'offer' and transaction.status == 'approved' %}
+                                    <span class="transaction-label">🎭 Offer to {{ transaction.recipient }} <span class="status-badge status-approved">✓ Approved</span></span>
+                                {% elif transaction.transaction_type == 'offer' and transaction.status == 'denied' %}
+                                    <span class="transaction-label">🎭 Offer to {{ transaction.recipient }} <span class="status-badge status-denied">✗ Denied</span></span>
+                                {% elif transaction.transaction_type == 'tip' and transaction.status == 'denied' %}
+                                    <span class="transaction-label">💰 Tip to {{ transaction.recipient }} <span class="status-badge status-denied">✗ Denied</span></span>
+                                {% elif transaction.transaction_type == 'tip' %}
+                                    <span class="transaction-label">💰 Tip to {{ transaction.recipient }} <span class="status-badge status-success">✓ Success</span></span>
+                                {% elif transaction.transaction_type == 'redistribution' %}
+                                    <span class="transaction-label">🔄 Redistribution to {{ transaction.recipient }} <span class="status-badge status-success">✓ Success</span></span>
+                                {% elif transaction.transaction_type == 'forced_transfer' %}
+                                    <span class="transaction-label">⚡ Forced transfer to {{ transaction.recipient }} <span class="status-badge status-success">✓ Success</span></span>
+                                {% else %}
+                                    <span class="transaction-label">📤 Sent to {{ transaction.recipient }} <span class="status-badge status-success">✓ Success</span></span>
+                                {% endif %}
                             {% else %}
-                                <span class="transaction-label">📥 Received from {{ transaction.sender }}</span>
+                                {% if transaction.transaction_type == 'offer' and transaction.status == 'approved' %}
+                                    <span class="transaction-label">🎭 Offer from {{ transaction.sender }} <span class="status-badge status-success">✓ Completed</span></span>
+                                {% elif transaction.transaction_type == 'tip' %}
+                                    <span class="transaction-label">💰 Tip from {{ transaction.sender }} <span class="status-badge status-success">✓ Received</span></span>
+                                {% elif transaction.transaction_type == 'redistribution' %}
+                                    <span class="transaction-label">🔄 Redistribution from {{ transaction.sender }} <span class="status-badge status-success">✓ Received</span></span>
+                                {% elif transaction.transaction_type == 'forced_transfer' %}
+                                    <span class="transaction-label">⚡ Forced transfer from {{ transaction.sender }} <span class="status-badge status-success">✓ Received</span></span>
+                                {% else %}
+                                    <span class="transaction-label">📥 Received from {{ transaction.sender }} <span class="status-badge status-success">✓ Success</span></span>
+                                {% endif %}
                             {% endif %}
                             <div class="transaction-timestamp">{{ transaction.timestamp.strftime("%Y-%m-%d %H:%M") }}</div>
+                            {% if transaction.request_text %}
+                                <div class="transaction-request">"{{ transaction.request_text }}"</div>
+                            {% endif %}
                         </div>
                         <span class="transaction-amount">
                             {% if transaction.sender == current_username %}
-                                -{{ "{:,}".format(transaction.amount) }}
+                                {% if transaction.status == 'pending' %}
+                                    <span style="opacity: 0.6;">-{{ "{:,}".format(transaction.amount) }}</span>
+                                {% elif transaction.status == 'denied' %}
+                                    <span style="text-decoration: line-through; opacity: 0.5;">-{{ "{:,}".format(transaction.amount) }}</span>
+                                {% else %}
+                                    -{{ "{:,}".format(transaction.amount) }}
+                                {% endif %}
                             {% else %}
                                 +{{ "{:,}".format(transaction.amount) }}
                             {% endif %}

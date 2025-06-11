@@ -38,6 +38,10 @@ def init_db():
         # Create initial snapshots for any existing users (shouldn't be any in fresh DB)
         create_balance_snapshots_for_all_users()
         click.echo("Created fresh database with all tables")
+    
+        # Create initial users
+        click.echo("\nCreating initial users...")
+        _create_initial_users()
     else:
         # Existing database - check for missing tables and migrate
         required_tables = [
@@ -157,10 +161,16 @@ def reset_db_command():
     """Reset the database by dropping all tables and recreating them."""
     db = get_db()
 
-    # Drop all tables
+    # Drop all views first
+    views = db.execute("SELECT name FROM sqlite_master WHERE type='view'").fetchall()
+    for view in views:
+        db.execute(f"DROP VIEW IF EXISTS {view['name']}")
+
+    # Drop all tables (except SQLite system tables)
     tables = db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
     for table in tables:
-        db.execute(f"DROP TABLE IF EXISTS {table['name']}")
+        if not table['name'].startswith('sqlite_'):  # Skip SQLite system tables
+            db.execute(f"DROP TABLE IF EXISTS {table['name']}")
 
     # Drop all indexes
     indexes = db.execute("SELECT name FROM sqlite_master WHERE type='index'").fetchall()
@@ -175,6 +185,10 @@ def reset_db_command():
         db.executescript(f.read().decode("utf8"))
 
     click.echo("🗑️  Database reset complete - all data deleted and tables recreated")
+    
+    # Create initial users
+    click.echo("\n🎭 Creating initial users...")
+    _create_initial_users()
 
 
 @click.command("reset-balances")
@@ -319,7 +333,7 @@ def get_user_balance(username):
     return user["coin_balance"] if user else None
 
 
-def transfer_coins(sender_username, recipient_username, amount):
+def transfer_coins(sender_username, recipient_username, amount, transaction_type="tip", request_text=None):
     if amount <= 0:
         return "invalid_amount"
 
@@ -347,34 +361,168 @@ def transfer_coins(sender_username, recipient_username, amount):
     if sender["coin_balance"] < amount:
         return "insufficient_funds"
 
+    # Determine status based on transaction type
+    status = "pending" if transaction_type == "offer" else "approved"
+
     try:
+        # For offers, we don't transfer coins immediately
+        if transaction_type != "offer":
+            db.execute(
+                "UPDATE users SET coin_balance = coin_balance - ? WHERE username = ?",
+                (amount, sender_username),
+            )
+            db.execute(
+                "UPDATE users SET coin_balance = coin_balance + ? WHERE username = ?",
+                (amount, recipient_username),
+            )
+
+        # Insert transaction with new fields
         db.execute(
-            "UPDATE users SET coin_balance = coin_balance - ? WHERE username = ?",
-            (amount, sender_username),
-        )
-        db.execute(
-            "UPDATE users SET coin_balance = coin_balance + ? WHERE username = ?",
-            (amount, recipient_username),
-        )
-        db.execute(
-            "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
-            (sender["id"], recipient["id"], amount),
+            "INSERT INTO transactions (sender_id, recipient_id, amount, transaction_type, request_text, status) VALUES (?, ?, ?, ?, ?, ?)",
+            (sender["id"], recipient["id"], amount, transaction_type, request_text, status),
         )
         db.commit()
 
-        # Create balance snapshots after successful transaction
-        sender_new_balance = sender["coin_balance"] - amount
-        recipient_new_balance = db.execute(
-            "SELECT coin_balance FROM users WHERE username = ?", (recipient_username,)
-        ).fetchone()["coin_balance"]
+        # Create balance snapshots only for completed transactions
+        if transaction_type != "offer":
+            sender_new_balance = sender["coin_balance"] - amount
+            recipient_new_balance = db.execute(
+                "SELECT coin_balance FROM users WHERE username = ?", (recipient_username,)
+            ).fetchone()["coin_balance"]
 
-        create_balance_snapshot(sender["id"], sender_new_balance)
-        create_balance_snapshot(recipient["id"], recipient_new_balance)
+            create_balance_snapshot(sender["id"], sender_new_balance)
+            create_balance_snapshot(recipient["id"], recipient_new_balance)
 
-        return "success"
+        return "offer_pending" if transaction_type == "offer" else "success"
     except sqlite3.Error:
         db.rollback()
         return "transaction_failed"
+
+
+def approve_or_deny_offer(transaction_id, approved, approver_username=None):
+    """Approve or deny a pending offer. If approved, execute the coin transfer."""
+    db = get_db()
+    
+    # Get the pending transaction
+    transaction = db.execute(
+        """
+        SELECT t.*, s.username as sender_username, r.username as recipient_username,
+               s.coin_balance as sender_balance
+        FROM transactions t
+        JOIN users s ON t.sender_id = s.id
+        JOIN users r ON t.recipient_id = r.id
+        WHERE t.id = ? AND t.status = 'pending' AND t.transaction_type = 'offer'
+        """,
+        (transaction_id,)
+    ).fetchone()
+    
+    if not transaction:
+        return "offer_not_found"
+    
+    try:
+        if approved:
+            # Check if sender still has sufficient funds
+            if transaction["sender_balance"] < transaction["amount"]:
+                # Auto-deny if insufficient funds
+                db.execute(
+                    "UPDATE transactions SET status = 'denied' WHERE id = ?",
+                    (transaction_id,)
+                )
+                db.commit()
+                return "insufficient_funds"
+            
+            # Execute the transfer
+            db.execute(
+                "UPDATE users SET coin_balance = coin_balance - ? WHERE id = ?",
+                (transaction["amount"], transaction["sender_id"])
+            )
+            db.execute(
+                "UPDATE users SET coin_balance = coin_balance + ? WHERE id = ?",
+                (transaction["amount"], transaction["recipient_id"])
+            )
+            db.execute(
+                "UPDATE transactions SET status = 'approved' WHERE id = ?",
+                (transaction_id,)
+            )
+            
+            # Create balance snapshots
+            sender_new_balance = transaction["sender_balance"] - transaction["amount"]
+            recipient_new_balance = db.execute(
+                "SELECT coin_balance FROM users WHERE id = ?", 
+                (transaction["recipient_id"],)
+            ).fetchone()["coin_balance"]
+            
+            create_balance_snapshot(transaction["sender_id"], sender_new_balance)
+            create_balance_snapshot(transaction["recipient_id"], recipient_new_balance)
+        else:
+            # Deny the offer
+            db.execute(
+                "UPDATE transactions SET status = 'denied' WHERE id = ?",
+                (transaction_id,)
+            )
+        
+        db.commit()
+        return "success"
+    except sqlite3.Error:
+        db.rollback()
+        return "approval_failed"
+
+
+def get_pending_offers(performer_username=None):
+    """Get all pending offers, optionally filtered by performer."""
+    db = get_db()
+    
+    if performer_username:
+        performer_username = performer_username.upper()
+        offers = db.execute(
+            """
+            SELECT t.id, t.amount, t.timestamp, t.request_text,
+                   s.username as sender, r.username as recipient
+            FROM transactions t
+            JOIN users s ON t.sender_id = s.id
+            JOIN users r ON t.recipient_id = r.id
+            WHERE t.status = 'pending' AND t.transaction_type = 'offer' 
+                  AND r.username = ?
+            ORDER BY t.timestamp DESC
+            """,
+            (performer_username,)
+        ).fetchall()
+    else:
+        offers = db.execute(
+            """
+            SELECT t.id, t.amount, t.timestamp, t.request_text,
+                   s.username as sender, r.username as recipient
+            FROM transactions t
+            JOIN users s ON t.sender_id = s.id
+            JOIN users r ON t.recipient_id = r.id
+            WHERE t.status = 'pending' AND t.transaction_type = 'offer'
+            ORDER BY t.timestamp DESC
+            """
+        ).fetchall()
+    
+    return [dict(offer) for offer in offers]
+
+
+def get_recent_approved_offers(limit=5):
+    """Get the most recent approved offers with requests."""
+    db = get_db()
+    
+    offers = db.execute(
+        """
+        SELECT t.amount, t.timestamp, t.request_text,
+               s.username as sender, r.username as recipient
+        FROM transactions t
+        JOIN users s ON t.sender_id = s.id
+        JOIN users r ON t.recipient_id = r.id
+        WHERE t.status = 'approved' AND t.transaction_type = 'offer' 
+              AND t.request_text IS NOT NULL
+        ORDER BY t.timestamp DESC
+        LIMIT ?
+        """,
+        (limit,)
+    ).fetchall()
+    
+    return [dict(offer) for offer in offers]
 
 
 def get_all_users():
@@ -392,7 +540,8 @@ def get_transaction_history(username=None, limit=50):
         username = username.upper()
         transactions = db.execute(
             """
-            SELECT t.amount, t.timestamp, sender.username as sender, recipient.username as recipient
+            SELECT t.amount, t.timestamp, t.transaction_type, t.request_text, t.status, 
+                   sender.username as sender, recipient.username as recipient
             FROM transactions t
             JOIN users sender ON t.sender_id = sender.id
             JOIN users recipient ON t.recipient_id = recipient.id
@@ -405,7 +554,8 @@ def get_transaction_history(username=None, limit=50):
     else:
         transactions = db.execute(
             """
-            SELECT t.amount, t.timestamp, sender.username as sender, recipient.username as recipient
+            SELECT t.amount, t.timestamp, t.transaction_type, t.request_text, t.status,
+                   sender.username as sender, recipient.username as recipient
             FROM transactions t
             JOIN users sender ON t.sender_id = sender.id
             JOIN users recipient ON t.recipient_id = recipient.id
@@ -583,7 +733,22 @@ def performer_redistribution():
 
     audience_count = len(audience)
     performer_count = len(performers)
-    coins_per_performer_to_each_audience = 5
+    
+    # Get redistribution amount from config or file
+    coins_per_performer_to_each_audience = 5  # Default
+    try:
+        import os
+        instance_path = current_app.instance_path
+        redistribution_file = os.path.join(instance_path, "redistribution_amount.txt")
+        
+        if os.path.exists(redistribution_file):
+            with open(redistribution_file, "r") as f:
+                coins_per_performer_to_each_audience = int(f.read().strip())
+        else:
+            coins_per_performer_to_each_audience = current_app.config.get("CURRENT_REDISTRIBUTION_AMOUNT", 5)
+    except Exception:
+        coins_per_performer_to_each_audience = current_app.config.get("PERFORMER_COIN_LOSS_PER_INTERVAL", 5)
+    
     total_coins_needed_per_performer = (
         coins_per_performer_to_each_audience * audience_count
     )
@@ -612,11 +777,13 @@ def performer_redistribution():
 
                 # Create transaction record
                 db.execute(
-                    "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
+                    "INSERT INTO transactions (sender_id, recipient_id, amount, transaction_type, status) VALUES (?, ?, ?, ?, ?)",
                     (
                         performer["id"],
                         audience_member["id"],
                         coins_per_performer_to_each_audience,
+                        "redistribution",
+                        "approved",
                     ),
                 )
 
@@ -919,6 +1086,59 @@ def market_status_command():
         click.echo(
             "💡 Use 'flask reset-market' to remove override and use time-based status"
         )
+
+
+def _create_initial_users():
+    """Create initial users: ALEX1, SPEED, ELI (performers) and CHANCELLOR (audience)."""
+    db = get_db()
+    
+    # Check if users already exist
+    existing_users = db.execute(
+        "SELECT username FROM users WHERE username IN ('ALEX1', 'SPEED', 'ELI', 'CHANCELLOR')"
+    ).fetchall()
+    existing_usernames = [user['username'] for user in existing_users]
+    
+    created_users = []
+    
+    # Create performers
+    performers = [
+        ('ALEX1', True),
+        ('SPEED', True),
+        ('ELI', True)
+    ]
+    
+    for username, is_performer in performers:
+        if username not in existing_usernames:
+            user_id = create_user(username, is_performer=is_performer)
+            if user_id:
+                created_users.append(f"✅ Created {username} (Performer)")
+            else:
+                click.echo(f"❌ Failed to create {username}")
+        else:
+            click.echo(f"ℹ️  {username} already exists")
+    
+    # Create CHANCELLOR (audience member with 0 coins)
+    if 'CHANCELLOR' not in existing_usernames:
+        user_id = create_user('CHANCELLOR', is_performer=False)
+        if user_id:
+            # Set CHANCELLOR balance to 0
+            db.execute(
+                "UPDATE users SET coin_balance = 0 WHERE username = 'CHANCELLOR'"
+            )
+            db.commit()
+            created_users.append("✅ Created CHANCELLOR (Audience, 0 coins)")
+        else:
+            click.echo("❌ Failed to create CHANCELLOR")
+    else:
+        click.echo("ℹ️  CHANCELLOR already exists")
+    
+    # Summary
+    if created_users:
+        click.echo("\n🎭 Initial users created:")
+        for msg in created_users:
+            click.echo(f"   {msg}")
+    else:
+        click.echo("ℹ️  All initial users already exist")
 
 
 @click.command("create-fake-users")

@@ -1,11 +1,12 @@
 import os
 
-from flask import Flask, abort, current_app, redirect, render_template, session, url_for
+from flask import Flask, abort, current_app, redirect, render_template, session, url_for, request, jsonify
 
 from .auth import require_auth
 from .config import DevelopmentConfig, ProductionConfig
 from .db import get_db, get_market_status, get_transaction_history, get_user_balance
 from .scheduler import init_scheduler
+from datetime import datetime, timedelta
 
 
 def create_app(test_config=None):
@@ -30,6 +31,35 @@ def create_app(test_config=None):
     @app.context_processor
     def inject_sitename():
         return {"site_name": app.config["SITE_NAME"], "tagline": app.config["TAGLINE"]}
+
+    @app.before_request
+    def check_session_timeout():
+        # Skip session check for static files and auth endpoints
+        if request.endpoint and (
+            request.endpoint.startswith('static') or 
+            request.endpoint in ['auth.register', 'auth.login', 'auth.session_expired']
+        ):
+            return
+        
+        # Check if user has a session
+        if 'username' in session:
+            # Check if session has a timestamp
+            if 'session_created' not in session:
+                session.clear()
+                if request.is_json:
+                    return jsonify({"error": "Session expired", "status": "session_expired"}), 401
+                return redirect(url_for('auth.register'))
+            
+            # Check if session is older than 60 seconds
+            session_created = datetime.fromisoformat(session['session_created'])
+            session_age = datetime.now() - session_created
+            
+            if session_age > timedelta(seconds=60):
+                # Session expired
+                session.clear()
+                if request.is_json:
+                    return jsonify({"error": "Session expired", "status": "session_expired"}), 401
+                return redirect(url_for('auth.register'))
 
     @app.route("/")
     @require_auth
@@ -63,10 +93,9 @@ def create_app(test_config=None):
                 get_transaction_history(current_username, 5) if current_username else []
             )
 
-            # Get all users for recipient dropdown (excluding current user)
+            # Get all users for recipient dropdown (including current user for self-dealing detection)
             all_users = db.execute(
-                "SELECT username FROM users WHERE username != ? ORDER BY username",
-                (current_username,),
+                "SELECT username, is_performer FROM users ORDER BY username"
             ).fetchall()
             available_recipients = (
                 [dict(user) for user in all_users] if all_users else []
@@ -229,6 +258,7 @@ def create_app(test_config=None):
             redistribution_enabled=app.config.get(
                 "ENABLE_PERFORMER_REDISTRIBUTION", False
             ),
+            market_status=get_market_status(),
         )
 
     @app.errorhandler(404)

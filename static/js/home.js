@@ -8,52 +8,107 @@ document.addEventListener("DOMContentLoaded", function () {
   const recipientInput = document.getElementById("recipient");
   const recipientList = document.getElementById("recipientList");
   const currentUsername = StrawCoinUtils.getCurrentUsername();
+  const requestText = document.getElementById("requestText");
+  const makeOfferBtn = document.getElementById("makeOfferBtn");
+  const sendTipBtn = document.getElementById("sendTipBtn");
 
-  // Get list of valid recipients for validation
-  const validRecipients = [];
+  // Get list of valid recipients and their performer status
+  const recipientData = {};
   if (recipientList) {
     const options = recipientList.querySelectorAll("option");
     options.forEach((option) => {
       if (option.value) {
-        validRecipients.push(option.value);
+        const performerAttr = option.getAttribute("data-performer");
+        recipientData[option.value.toUpperCase()] = {
+          username: option.value,
+          isPerformer: performerAttr === "true"
+        };
       }
+    });
+  }
+
+  // Handle Make Offer button
+  if (makeOfferBtn) {
+    makeOfferBtn.addEventListener("click", function() {
+      handleSubmit("offer");
+    });
+  }
+
+  // Handle Send Tip button
+  if (sendTipBtn) {
+    sendTipBtn.addEventListener("click", function() {
+      handleSubmit("tip");
     });
   }
 
   // Add recipient input validation and feedback
   if (recipientInput) {
     recipientInput.addEventListener("input", function () {
-      const value = this.value.trim();
+      const value = this.value.trim().toUpperCase();
 
       // Remove any special styling first
       this.style.borderColor = "";
 
-      if (value.length > 0) {
-        // Check if the entered value matches a valid recipient
-        const isValid = validRecipients.some(
-          (recipient) => recipient.toLowerCase() === value.toLowerCase(),
+      // Check if recipient is a performer and update offer button
+      if (recipientData[value]) {
+        const userData = recipientData[value];
+        const isPerformer = userData.isPerformer;
+        
+        if (isPerformer) {
+          makeOfferBtn.disabled = false;
+          makeOfferBtn.classList.remove("button--disabled");
+          makeOfferBtn.title = "";
+        } else {
+          makeOfferBtn.disabled = true;
+          makeOfferBtn.classList.add("button--disabled");
+          makeOfferBtn.title = "Offers can only be made to performers";
+        }
+        
+        this.style.borderColor = "#2ecc71"; // Green for valid
+      } else if (value.length === 0) {
+        // Reset when input is empty
+        makeOfferBtn.disabled = true;
+        makeOfferBtn.classList.add("button--disabled");
+        makeOfferBtn.title = "Select a performer to make an offer";
+      } else {
+        // Check if it's a partial match
+        const partialMatch = Object.keys(recipientData).some(key =>
+          key.startsWith(value)
         );
 
-        if (isValid) {
-          this.style.borderColor = "#2ecc71"; // Green for valid
-        } else {
-          // Check if it's a partial match
-          const partialMatch = validRecipients.some((recipient) =>
-            recipient.toLowerCase().startsWith(value.toLowerCase()),
-          );
-
-          if (partialMatch) {
-            this.style.borderColor = "#f39c12"; // Orange for partial match
-          } else {
-            this.style.borderColor = "#e74c3c"; // Red for no match
-          }
+        if (partialMatch) {
+          this.style.borderColor = "#f39c12"; // Orange for partial match
+        } else if (value.length > 0) {
+          this.style.borderColor = "#e74c3c"; // Red for no match
         }
+        
+        // Disable offer button if no valid recipient
+        makeOfferBtn.disabled = true;
+        makeOfferBtn.classList.add("button--disabled");
+        makeOfferBtn.title = "Select a valid performer to make an offer";
       }
     });
 
     // Clear validation styling on focus
     recipientInput.addEventListener("focus", function () {
       this.style.borderColor = "#3498db";
+    });
+    
+    // Also check on blur to update button state
+    recipientInput.addEventListener("blur", function () {
+      const value = this.value.trim().toUpperCase();
+      if (recipientData[value]) {
+        const isPerformer = recipientData[value].isPerformer;
+        if (isPerformer) {
+          makeOfferBtn.disabled = false;
+          makeOfferBtn.classList.remove("button--disabled");
+          makeOfferBtn.title = "";
+        } else {
+          makeOfferBtn.disabled = true;
+          makeOfferBtn.classList.add("button--disabled");
+          makeOfferBtn.title = "Offers can only be made to performers";
+        }
+      }
     });
   }
 
@@ -71,29 +126,36 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // Form submission
-  if (sendForm) {
-    sendForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
+  // Handle form submission
+  async function handleSubmit(transactionType) {
+    const recipient = recipientInput.value;
+    const amount = parseInt(amountInput.value);
+    const request = requestText.value.trim();
 
-      const recipient = recipientInput.value;
-      const amount = parseInt(amountInput.value);
+    if (!recipient || !amount || amount <= 0) {
+      showStatus("Please enter a recipient and a valid amount", "error");
+      return;
+    }
 
-      if (!recipient || !amount || amount <= 0) {
-        showStatus("Please enter a recipient and a valid amount", "error");
+    if (transactionType === "offer" && (!request || request.length === 0)) {
+      showStatus("Please enter what you'd like the performer to do", "error");
+      requestText.focus();
+      return;
+    }
+
+      // Validate that the recipient exists in the list
+      const trimmedRecipient = recipient.trim().toUpperCase();
+      const recipientInfo = recipientData[trimmedRecipient];
+
+      if (!recipientInfo) {
+        showStatus("Please enter a valid recipient username", "error");
+        recipientInput.style.borderColor = "#e74c3c";
         return;
       }
 
-      // Validate that the recipient exists in the list (case-insensitive)
-      const trimmedRecipient = recipient.trim();
-      const isValidRecipient = validRecipients.some(
-        (validRecipient) =>
-          validRecipient.toLowerCase() === trimmedRecipient.toLowerCase(),
-      );
-
-      if (!isValidRecipient) {
-        showStatus("Please enter a valid recipient username", "error");
-        recipientInput.style.borderColor = "#e74c3c";
+      // For offers, check if recipient is a performer
+      if (transactionType === "offer" && !recipientInfo.isPerformer) {
+        showStatus("Offers can only be made to performers", "error");
         return;
       }
 
@@ -111,36 +173,54 @@ document.addEventListener("DOMContentLoaded", function () {
           "error",
         );
         return;
-      }
+    }
 
-      try {
-        // Disable form during request
-        const submitButton = sendForm.querySelector('button[type="submit"]');
-        const originalText = submitButton.textContent;
-        submitButton.textContent = "🚀 Sending...";
-        submitButton.disabled = true;
+    try {
+      // Disable buttons during request
+      makeOfferBtn.disabled = true;
+      sendTipBtn.disabled = true;
+      
+      const activeButton = transactionType === "offer" ? makeOfferBtn : sendTipBtn;
+      const originalText = activeButton.textContent;
+      activeButton.textContent = "🚀 Sending...";
 
-        // Use the exact case from the valid recipients list
-        const exactRecipient =
-          validRecipients.find(
-            (validRecipient) =>
-              validRecipient.toLowerCase() === trimmedRecipient.toLowerCase(),
-          ) || trimmedRecipient;
+        // Use the exact case from the recipient data
+        const exactRecipient = recipientInfo.username;
+
+        const requestBody = {
+          sender: currentUsername,
+          recipient: exactRecipient,
+          amount: amount,
+          transaction_type: transactionType
+        };
+
+        if (transactionType === "offer" && request) {
+          requestBody.request_text = request;
+        }
 
         const data = await StrawCoinUtils.apiRequest("/api/transfer", {
           method: "POST",
-          body: JSON.stringify({
-            sender: currentUsername,
-            recipient: exactRecipient,
-            amount: amount,
-          }),
+          body: JSON.stringify(requestBody),
         });
 
-        if (data && data.status === "success") {
-          StrawCoinUtils.showSuccess(
-            `🎉 Successfully sent ${StrawCoinUtils.formatNumber(amount)} coins to ${recipient}!`,
-            "#transferStatus",
-          );
+        // If data is null, a redirect happened (e.g., self-dealing warning)
+        if (data === null) {
+          // Redirect was handled by apiRequest, nothing more to do
+          return;
+        }
+
+        if (data && (data.status === "success" || data.status === "offer_pending")) {
+          if (data.status === "offer_pending") {
+            StrawCoinUtils.showSuccess(
+              `🎭 Offer sent! ${StrawCoinUtils.formatNumber(amount)} coins will be transferred if The Chancellor approves your request.`,
+              "#transferStatus",
+            );
+          } else {
+            StrawCoinUtils.showSuccess(
+              `💰 Successfully tipped ${StrawCoinUtils.formatNumber(amount)} coins to ${recipient}!`,
+              "#transferStatus",
+            );
+          }
 
           // Reset form
           sendForm.reset();
@@ -159,9 +239,10 @@ document.addEventListener("DOMContentLoaded", function () {
           );
         }
 
-        // Re-enable form
-        submitButton.textContent = originalText;
-        submitButton.disabled = false;
+        // Re-enable buttons
+        activeButton.textContent = originalText;
+        makeOfferBtn.disabled = false;
+        sendTipBtn.disabled = false;
       } catch (error) {
         StrawCoinUtils.showError(
           error.message || "Network error. Please try again.",
@@ -172,13 +253,21 @@ document.addEventListener("DOMContentLoaded", function () {
         // Re-enable form
         const submitButton = sendForm.querySelector('button[type="submit"]');
         submitButton.textContent = "🚀 Send Coins";
-        submitButton.disabled = false;
-      }
-    });
+      activeButton.textContent = originalText;
+      makeOfferBtn.disabled = false;
+      sendTipBtn.disabled = false;
+    }
   }
 
   function showStatus(message, type) {
     StrawCoinUtils.showMessage(message, type, "#transferStatus");
+  }
+
+  // Initial state - disable offer button until a performer is selected
+  if (makeOfferBtn) {
+    makeOfferBtn.disabled = true;
+    makeOfferBtn.classList.add("button--disabled");
+    makeOfferBtn.title = "Select a performer to make an offer";
   }
 
   // Auto-refresh market stats

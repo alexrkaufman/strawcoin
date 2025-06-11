@@ -4,10 +4,13 @@ from flask import Blueprint, current_app, jsonify, request
 
 from .auth import require_auth, require_quant
 from .db import (
+    approve_or_deny_offer,
     create_user,
     get_all_users,
     get_audience_members,
+    get_pending_offers,
     get_performers,
+    get_recent_approved_offers,
     get_transaction_history,
     get_user_balance,
     get_user_performer_status,
@@ -87,6 +90,8 @@ def execute_transfer():
 
     sender = data["sender"].strip()
     recipient = data["recipient"].strip()
+    transaction_type = data.get("transaction_type", "tip")
+    request_text = data.get("request_text")
 
     try:
         amount = int(data["amount"])
@@ -104,32 +109,73 @@ def execute_transfer():
         # Transfer the attempted amount to CHANCELLOR as penalty
         quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
 
+        # Log the self-dealing attempt for debugging
+        current_app.logger.warning(
+            f"Self-dealing attempt: {sender} tried to send {amount} coins to themselves"
+        )
+
         # Execute the insider trading penalty transfer
         penalty_result = transfer_coins(sender, quant_username, amount)
 
+        # Log the penalty result for debugging
+        current_app.logger.info(
+            f"Self-dealing penalty transfer result: {penalty_result}"
+        )
+
+        # Even if the penalty transfer fails (e.g., user not found), still redirect to self-dealing warning
+        # The self-dealing attempt is the violation, not the success of the penalty
         return jsonify(
             {
                 "redirect": "/self-dealing-warning",
                 "status": "self_dealing_violation",
             }
-        ), 302
+        ), 200
 
     # Check if trying to pay CHANCELLOR directly (violates independence)
     quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR")
     if recipient == quant_username.upper():
+        # Create a denied transaction record for transparency
+        from .db import get_db
+
+        db = get_db()
+
+        # Get sender and recipient IDs
+        sender_user = db.execute(
+            "SELECT id FROM users WHERE username = ?", (sender,)
+        ).fetchone()
+        recipient_user = db.execute(
+            "SELECT id FROM users WHERE username = ?", (recipient,)
+        ).fetchone()
+
+        if sender_user and recipient_user:
+            # Create denied transaction record
+            db.execute(
+                "INSERT INTO transactions (sender_id, recipient_id, amount, transaction_type, request_text, status) VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    sender_user["id"],
+                    recipient_user["id"],
+                    amount,
+                    transaction_type,
+                    request_text,
+                    "denied",
+                ),
+            )
+            db.commit()
+
         return jsonify(
             {
-                "redirect": "/market-manipulation-warning",
+                "redirect": "/market-manipulation",
                 "status": "market_manipulation_warning",
             }
-        ), 302
+        ), 200
 
-    result = transfer_coins(sender, recipient, amount)
+    result = transfer_coins(sender, recipient, amount, transaction_type, request_text)
 
     status_codes = {
         "success": 200,
-        "insider_trading_violation": 302,
-        "quant_independence_violation": 302,
+        "offer_pending": 200,
+        "insider_trading_violation": 200,
+        "quant_independence_violation": 200,
         "insufficient_funds": 400,
         "invalid_amount": 400,
         "user_not_found": 404,
@@ -137,6 +183,7 @@ def execute_transfer():
     }
     messages = {
         "success": f"Transferred {amount} coins from {sender} to {recipient}",
+        "offer_pending": f"Offer of {amount} coins sent to {recipient} - awaiting approval",
         "insufficient_funds": f"{sender} has insufficient funds",
         "user_not_found": "User not found",
         "invalid_amount": "Amount must be positive",
@@ -160,6 +207,14 @@ def execute_transfer():
 @bp.route("/leaderboard", methods=["GET"])
 @require_auth
 def get_leaderboard():
+    # Now returns recent approved offers instead of user rankings
+    offers = get_recent_approved_offers(5)
+    return jsonify({"offers": offers, "status": "success"})
+
+
+@bp.route("/users", methods=["GET"])
+@require_auth
+def get_users():
     users = get_all_users()
     return jsonify(
         {"leaderboard": users, "total_users": len(users), "status": "success"}
@@ -182,6 +237,86 @@ def get_transactions():
             "status": "success",
         }
     )
+
+
+@bp.route("/quant/pending-offers", methods=["GET"])
+@require_quant
+def quant_get_pending_offers():
+    """Get all pending offers for The Chancellor to review."""
+    performer_username = request.args.get("performer")
+    offers = get_pending_offers(performer_username)
+
+    return jsonify({"offers": offers, "count": len(offers), "status": "success"})
+
+
+@bp.route("/quant/approve-offer", methods=["POST"])
+@require_quant
+def quant_approve_offer():
+    """Approve a pending offer."""
+    data = request.get_json()
+
+    if not data or "offer_id" not in data:
+        return jsonify(
+            {"error": "offer_id required", "status": "validation_error"}
+        ), 400
+
+    try:
+        offer_id = int(data["offer_id"])
+    except (ValueError, TypeError):
+        return jsonify(
+            {"error": "offer_id must be integer", "status": "validation_error"}
+        ), 400
+
+    result = approve_or_deny_offer(offer_id, approved=True)
+
+    if result == "success":
+        return jsonify(
+            {
+                "message": f"Offer {offer_id} approved and coins transferred",
+                "status": "offer_approved",
+            }
+        ), 200
+    elif result == "insufficient_funds":
+        return jsonify(
+            {
+                "error": "Sender has insufficient funds - offer auto-denied",
+                "status": "insufficient_funds",
+            }
+        ), 400
+    else:
+        return jsonify(
+            {"error": f"Failed to approve offer: {result}", "status": result}
+        ), 500
+
+
+@bp.route("/quant/deny-offer", methods=["POST"])
+@require_quant
+def quant_deny_offer():
+    """Deny a pending offer."""
+    data = request.get_json()
+
+    if not data or "offer_id" not in data:
+        return jsonify(
+            {"error": "offer_id required", "status": "validation_error"}
+        ), 400
+
+    try:
+        offer_id = int(data["offer_id"])
+    except (ValueError, TypeError):
+        return jsonify(
+            {"error": "offer_id must be integer", "status": "validation_error"}
+        ), 400
+
+    result = approve_or_deny_offer(offer_id, approved=False)
+
+    if result == "success":
+        return jsonify(
+            {"message": f"Offer {offer_id} denied", "status": "offer_denied"}
+        ), 200
+    else:
+        return jsonify(
+            {"error": f"Failed to deny offer: {result}", "status": result}
+        ), 500
 
 
 @bp.route("/market-stats", methods=["GET"])
@@ -560,8 +695,8 @@ def quant_set_performer_status(username):
     db = get_db()
     try:
         db.execute(
-            "INSERT INTO transactions (sender_id, recipient_id, amount, timestamp) VALUES (?, ?, ?, datetime('now')) ",
-            (0, 0, 0),  # Special transaction for logging
+            "INSERT INTO transactions (sender_id, recipient_id, amount, transaction_type, status, timestamp) VALUES (?, ?, ?, ?, ?, datetime('now')) ",
+            (0, 0, 0, "manipulation", "approved"),  # Special transaction for logging
         )
     except:
         pass  # Don't fail if logging fails
@@ -741,8 +876,14 @@ def quant_force_transfer():
 
         # Create transaction record with special note
         db.execute(
-            "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
-            (sender_user["id"], recipient_user["id"], amount),
+            "INSERT INTO transactions (sender_id, recipient_id, amount, transaction_type, status) VALUES (?, ?, ?, ?, ?)",
+            (
+                sender_user["id"],
+                recipient_user["id"],
+                amount,
+                "forced_transfer",
+                "approved",
+            ),
         )
 
         db.commit()
@@ -850,8 +991,14 @@ def quant_performers_to_audience():
                     (amount_per_transfer, audience_member["id"]),
                 )
                 db.execute(
-                    "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
-                    (performer["id"], audience_member["id"], amount_per_transfer),
+                    "INSERT INTO transactions (sender_id, recipient_id, amount, transaction_type, status) VALUES (?, ?, ?, ?, ?)",
+                    (
+                        performer["id"],
+                        audience_member["id"],
+                        amount_per_transfer,
+                        "forced_transfer",
+                        "approved",
+                    ),
                 )
 
                 transfers.append(
@@ -962,8 +1109,14 @@ def quant_audience_to_performers():
                     (amount_per_transfer, performer["id"]),
                 )
                 db.execute(
-                    "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
-                    (audience_member["id"], performer["id"], amount_per_transfer),
+                    "INSERT INTO transactions (sender_id, recipient_id, amount, transaction_type, status) VALUES (?, ?, ?, ?, ?)",
+                    (
+                        audience_member["id"],
+                        performer["id"],
+                        amount_per_transfer,
+                        "forced_transfer",
+                        "approved",
+                    ),
                 )
 
                 transfers.append(
@@ -1178,8 +1331,14 @@ def quant_group_transfer():
                     (amount, recipient_user["id"]),
                 )
                 db.execute(
-                    "INSERT INTO transactions (sender_id, recipient_id, amount) VALUES (?, ?, ?)",
-                    (sender_user["id"], recipient_user["id"], amount),
+                    "INSERT INTO transactions (sender_id, recipient_id, amount, transaction_type, status) VALUES (?, ?, ?, ?, ?)",
+                    (
+                        sender_user["id"],
+                        recipient_user["id"],
+                        amount,
+                        "forced_transfer",
+                        "approved",
+                    ),
                 )
 
                 transfers.append(
@@ -1219,6 +1378,115 @@ def quant_group_transfer():
                 "status": "group_transfer_failed",
             }
         ), 500
+
+
+@bp.route("/quant/toggle-market", methods=["POST"])
+@require_quant
+def quant_toggle_market():
+    """Toggle market open/closed status."""
+    data = request.get_json()
+
+    if not data or "state" not in data:
+        return jsonify(
+            {
+                "error": "state field required (open/closed)",
+                "status": "validation_error",
+            }
+        ), 400
+
+    new_state = data["state"].lower()
+    if new_state not in ["open", "closed"]:
+        return jsonify(
+            {"error": "state must be 'open' or 'closed'", "status": "validation_error"}
+        ), 400
+
+    # Import market control functions
+    from .db import _write_market_override, get_market_status
+
+    # Set the market state
+    _write_market_override(True if new_state == "open" else False)
+
+    # Get updated status
+    market_status = get_market_status()
+
+    return jsonify(
+        {
+            "message": f"Market status changed to {market_status['status_text']}",
+            "market_status": market_status,
+            "status": "market_updated",
+        }
+    ), 200
+
+
+@bp.route("/quant/update-redistribution-amount", methods=["POST"])
+@require_quant
+def quant_update_redistribution_amount():
+    """Update the performer redistribution amount per minute."""
+    data = request.get_json()
+
+    if not data or "amount" not in data:
+        return jsonify(
+            {"error": "amount field required", "status": "validation_error"}
+        ), 400
+
+    try:
+        amount = int(data["amount"])
+    except (ValueError, TypeError):
+        return jsonify(
+            {"error": "amount must be an integer", "status": "validation_error"}
+        ), 400
+
+    if amount < 0 or amount > 1000:
+        return jsonify(
+            {"error": "amount must be between 0 and 1000", "status": "validation_error"}
+        ), 400
+
+    # Update the configuration
+    current_app.config["CURRENT_REDISTRIBUTION_AMOUNT"] = amount
+
+    # Store in a file for persistence
+    import os
+
+    instance_path = current_app.instance_path
+    redistribution_file = os.path.join(instance_path, "redistribution_amount.txt")
+
+    try:
+        os.makedirs(instance_path, exist_ok=True)
+        with open(redistribution_file, "w") as f:
+            f.write(str(amount))
+    except Exception as e:
+        current_app.logger.error(f"Failed to save redistribution amount: {e}")
+
+    return jsonify(
+        {
+            "message": f"Redistribution amount updated to {amount} coins per minute",
+            "amount": amount,
+            "status": "redistribution_updated",
+        }
+    ), 200
+
+
+@bp.route("/quant/get-redistribution-amount", methods=["GET"])
+@require_quant
+def quant_get_redistribution_amount():
+    """Get the current performer redistribution amount."""
+    # Try to read from file first
+    import os
+
+    instance_path = current_app.instance_path
+    redistribution_file = os.path.join(instance_path, "redistribution_amount.txt")
+
+    amount = 5  # Default
+
+    try:
+        if os.path.exists(redistribution_file):
+            with open(redistribution_file, "r") as f:
+                amount = int(f.read().strip())
+                current_app.config["CURRENT_REDISTRIBUTION_AMOUNT"] = amount
+    except Exception:
+        amount = current_app.config.get("CURRENT_REDISTRIBUTION_AMOUNT", 5)
+
+    return jsonify({"amount": amount, "status": "success"}), 200
 
 
 @bp.route("/quant/market-stats", methods=["GET"])

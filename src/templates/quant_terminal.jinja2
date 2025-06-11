@@ -28,11 +28,6 @@
                 <p class="stat-value" data-stat="volume">{{ "{:,}".format(volume) }}</p>
                 <p>Total Coins Transferred</p>
             </div>
-            <div class="card">
-                <h3>🔄 Total Transactions</h3>
-                <p class="stat-value" data-stat="tx-count">{{ tx_count }}</p>
-                <p>Market Activity</p>
-            </div>
         </div>
     </div>
     <!-- Performer Economy Status -->
@@ -48,11 +43,6 @@
                 <h3>👥 Audience</h3>
                 <p class="stat-value">{{ audience_count }}</p>
                 <p>Market Participants</p>
-            </div>
-            <div class="card">
-                <h3>⚡ Redistribution</h3>
-                <p class="stat-value">{{ "ON" if redistribution_enabled else "OFF" }}</p>
-                <p>{{ "5 coins from each performer to each audience member/min" if redistribution_enabled else "Disabled" }}</p>
             </div>
         </div>
     </div>
@@ -129,13 +119,6 @@
                             <option value="false">👥 Make Audience</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Reason:</label>
-                        <input type="text"
-                               id="statusReason"
-                               class="form-input"
-                               placeholder="Market manipulation reason...">
-                    </div>
                     <button id="changeStatusBtn" class="button button--primary button--full-width">⚡ MANIPULATE STATUS</button>
                 </div>
                 <div class="card">
@@ -178,13 +161,6 @@
                                placeholder="Enter amount per transfer...">
                         <small class="text-xs opacity-70">For group transfers: amount each sender gives to each recipient</small>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Reason:</label>
-                        <input type="text"
-                               id="transferReason"
-                               class="form-input"
-                               placeholder="Transfer reason...">
-                    </div>
                     <button id="forceTransferBtn" class="button button--danger button--full-width">💸 EXECUTE TRANSFER</button>
                     <div class="text-sm opacity-80">
                         <strong>Examples:</strong>
@@ -198,37 +174,59 @@
                 </div>
             </div>
         </div>
+        <!-- Pending Offers Section -->
+        <div class="content-section content-section--dark">
+            <h3 class="section-title">🎭 Pending Offers</h3>
+            <div id="pendingOffersContainer" class="offers-container">
+                <div class="text-center opacity-70">Loading pending offers...</div>
+            </div>
+            <div class="text-center mt-lg">
+                <button id="refreshOffersBtn" class="button button--info">🔄 Refresh Offers</button>
+            </div>
+        </div>
         <!-- Transfer Manipulation Panel -->
         <div class="content-section content-section--dark">
             <h3 class="section-title">📈 Advanced Transfer Controls</h3>
             <div class="responsive-grid responsive-grid--narrow">
                 <div class="card">
-                    <h4>🔄 Force Redistribution</h4>
-                    <div class="form-group">
-                        <label class="form-label">Multiplier:</label>
-                        <input type="number"
-                               id="redistributionMultiplier"
-                               class="form-input"
-                               value="1"
-                               min="0.1"
-                               max="10"
-                               step="0.1">
-                        <small class="text-xs opacity-70">How many redistribution cycles (0.1 - 10x)</small>
+                    <h4>🏛️ Market Control</h4>
+                    <div class="market-control-status">
+                        <p class="text-center mb-md">Current Status:</p>
+                        <div id="marketStatusDisplay" class="market-status-display">
+                            <span class="market-status-indicator" id="marketStatusIndicator">{{ market_status.status_text if market_status else '🟢 OPEN' }}</span>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Reason:</label>
-                        <input type="text"
-                               id="redistributionReason"
-                               class="form-input"
-                               placeholder="Redistribution reason...">
+                        <label class="form-label">Market State:</label>
+                        <select id="marketStateSelect" class="form-input">
+                            <option value="open" {% if market_status and market_status.is_open %}selected{% endif %}>🟢 OPEN - Redistributions Active</option>
+                            <option value="closed" {% if market_status and not market_status.is_open %}selected{% endif %}>🔴 CLOSED - Redistributions Paused</option>
+                        </select>
                     </div>
-                    <button id="forceRedistributionBtn" class="button button--warning button--full-width">⚡ FORCE REDISTRIBUTION</button>
+                    <button id="toggleMarketBtn" class="button button--warning button--full-width">⚡ UPDATE MARKET STATUS</button>
+                    <small class="text-xs opacity-70">Controls performer redistribution cycles</small>
                 </div>
                 <div class="card">
-                    <h4>📊 Market Intelligence</h4>
-                    <button id="refreshStatsBtn" class="button button--info button--full-width">🔄 Refresh Market Data</button>
-                    <button id="getAllUsersBtn" class="button button--info button--full-width">👥 Get All Users</button>
-                    <button id="getMarketStatsBtn" class="button button--info button--full-width">📈 Detailed Market Stats</button>
+                    <h4>🎪 Performer Redistribution Settings</h4>
+                    <div class="form-group">
+                        <label class="form-label">Coins per Performer per Minute:</label>
+                        <input type="number"
+                               id="redistributionAmount"
+                               class="form-input"
+                               value="5"
+                               min="0"
+                               max="1000"
+                               step="1">
+                        <small class="text-xs opacity-70">Amount each performer loses to each audience member per minute</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Current Rate:</label>
+                        <div class="redistribution-rate-display">
+                            <span id="currentRedistributionRate">5</span> coins/minute
+                        </div>
+                    </div>
+                    <button id="updateRedistributionBtn" class="button button--warning button--full-width">⚡ UPDATE REDISTRIBUTION RATE</button>
+                    <small class="text-xs opacity-70 text-center">Changes take effect on next redistribution cycle</small>
                 </div>
             </div>
         </div>
@@ -271,10 +269,6 @@
                     <div class="card">
                         <h4>💰 Total Coins</h4>
                         <p class="stat-value" id="totalCoins">{{ "{:,}".format(market_cap) }}</p>
-                    </div>
-                    <div class="card">
-                        <h4>👥 Total Users</h4>
-                        <p class="stat-value" id="totalUsers">{{ stakeholder_count }}</p>
                     </div>
                     <div class="card">
                         <h4>🎪 Performers</h4>

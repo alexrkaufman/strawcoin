@@ -27,6 +27,8 @@ class Config:
     PERFORMER_COIN_LOSS_PER_INTERVAL = (
         5  # coins from each performer to each audience member per interval
     )
+    # Dynamic redistribution amount (can be updated at runtime)
+    CURRENT_REDISTRIBUTION_AMOUNT = 5  # Default amount
 
     # The Chancellor - Special market manipulation user
     QUANT_USERNAME = "CHANCELLOR"
