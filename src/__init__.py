@@ -37,7 +37,7 @@ def create_app(test_config=None):
         # Skip session check for static files and auth endpoints
         if request.endpoint and (
             request.endpoint.startswith('static') or 
-            request.endpoint in ['auth.register', 'auth.login', 'auth.session_expired']
+            request.endpoint in ['auth.register', 'auth.login']
         ):
             return
         
@@ -48,7 +48,7 @@ def create_app(test_config=None):
                 session.clear()
                 if request.is_json:
                     return jsonify({"error": "Session expired", "status": "session_expired"}), 401
-                return redirect(url_for('auth.register'))
+                return redirect(url_for('auth.register', expired=1))
             
             # Check if session is older than 60 seconds
             session_created = datetime.fromisoformat(session['session_created'])
@@ -59,7 +59,7 @@ def create_app(test_config=None):
                 session.clear()
                 if request.is_json:
                     return jsonify({"error": "Session expired", "status": "session_expired"}), 401
-                return redirect(url_for('auth.register'))
+                return redirect(url_for('auth.register', expired=1))
 
     @app.route("/")
     @require_auth

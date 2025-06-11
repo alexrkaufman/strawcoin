@@ -5,7 +5,8 @@
         <p class="subtitle">
             Disrupting <strong>The Short Straw</strong> through cutting-edge comedy tokenization
         </p>
-        <div class="card card--gradient-success" data-username="{{ current_username }}">
+        <div class="card card--gradient-success"
+             data-username="{{ current_username }}">
             <h3>💰 Welcome back, {{ current_username }}!</h3>
             <p class="balance-amount">{{ current_user_balance }} Straw Coins</p>
         </div>
@@ -14,7 +15,6 @@
     <!-- Send Coins Feature -->
     <div class="content-section">
         <h2 class="section-title">💸 Send Coins to Performers</h2>
-
         <!-- Quick Send Buttons -->
         <div class="quick-send-section">
             <p>Quick Amounts:</p>
@@ -38,7 +38,11 @@
                            required>
                     <datalist id="recipientList">
                         {% for user in available_recipients %}
-                            <option value="{{ user.username }}" data-performer="{{ 'true' if user.is_performer else 'false' }}">{{ user.username }}{% if user.is_performer %} (Performer){% endif %}</option>
+                            <option value="{{ user.username }}"
+                                    data-performer="{{ 'true' if user.is_performer else 'false' }}">
+                                {{ user.username }}
+                                {% if user.is_performer %}(Performer){% endif %}
+                            </option>
                         {% endfor %}
                     </datalist>
                     <small>💡 Tips can be sent to anyone, but only performers can receive offers</small>
@@ -65,12 +69,8 @@
                     <small>Be creative but respectful! The Chancellor will review all offers.</small>
                 </div>
                 <div class="form-buttons">
-                    <button type="button" id="makeOfferBtn" class="button button--danger">
-                        🎭 Make Offer
-                    </button>
-                    <button type="button" id="sendTipBtn" class="button button--success">
-                        💰 Send Tip
-                    </button>
+                    <button type="button" id="makeOfferBtn" class="button button--danger">🎭 Make Offer</button>
+                    <button type="button" id="sendTipBtn" class="button button--success">💰 Send Tip</button>
                 </div>
             </form>
         </div>
@@ -117,9 +117,7 @@
                                 {% endif %}
                             {% endif %}
                             <div class="transaction-timestamp">{{ transaction.timestamp.strftime("%Y-%m-%d %H:%M") }}</div>
-                            {% if transaction.request_text %}
-                                <div class="transaction-request">"{{ transaction.request_text }}"</div>
-                            {% endif %}
+                            {% if transaction.request_text %}<div class="transaction-request">"{{ transaction.request_text }}"</div>{% endif %}
                         </div>
                         <span class="transaction-amount">
                             {% if transaction.sender == current_username %}

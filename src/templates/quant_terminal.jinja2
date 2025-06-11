@@ -119,7 +119,8 @@
                             <option value="false">👥 Make Audience</option>
                         </select>
                     </div>
-                    <button id="changeStatusBtn" class="button button--primary button--full-width">⚡ MANIPULATE STATUS</button>
+                    <button id="changeStatusBtn"
+                            class="button button--primary button--full-width">⚡ MANIPULATE STATUS</button>
                 </div>
                 <div class="card">
                     <h4>💸 Universal Force Transfer</h4>
@@ -161,7 +162,8 @@
                                placeholder="Enter amount per transfer...">
                         <small class="text-xs opacity-70">For group transfers: amount each sender gives to each recipient</small>
                     </div>
-                    <button id="forceTransferBtn" class="button button--danger button--full-width">💸 EXECUTE TRANSFER</button>
+                    <button id="forceTransferBtn"
+                            class="button button--danger button--full-width">💸 EXECUTE TRANSFER</button>
                     <div class="text-sm opacity-80">
                         <strong>Examples:</strong>
                         <br>
@@ -199,11 +201,18 @@
                     <div class="form-group">
                         <label class="form-label">Market State:</label>
                         <select id="marketStateSelect" class="form-input">
-                            <option value="open" {% if market_status and market_status.is_open %}selected{% endif %}>🟢 OPEN - Redistributions Active</option>
-                            <option value="closed" {% if market_status and not market_status.is_open %}selected{% endif %}>🔴 CLOSED - Redistributions Paused</option>
+                            <option value="open"
+                                    {% if market_status and market_status.is_open %}selected{% endif %}>
+                                🟢 OPEN - Redistributions Active
+                            </option>
+                            <option value="closed"
+                                    {% if market_status and not market_status.is_open %}selected{% endif %}>
+                                🔴 CLOSED - Redistributions Paused
+                            </option>
                         </select>
                     </div>
-                    <button id="toggleMarketBtn" class="button button--warning button--full-width">⚡ UPDATE MARKET STATUS</button>
+                    <button id="toggleMarketBtn"
+                            class="button button--warning button--full-width">⚡ UPDATE MARKET STATUS</button>
                     <small class="text-xs opacity-70">Controls performer redistribution cycles</small>
                 </div>
                 <div class="card">
@@ -225,7 +234,8 @@
                             <span id="currentRedistributionRate">5</span> coins/minute
                         </div>
                     </div>
-                    <button id="updateRedistributionBtn" class="button button--warning button--full-width">⚡ UPDATE REDISTRIBUTION RATE</button>
+                    <button id="updateRedistributionBtn"
+                            class="button button--warning button--full-width">⚡ UPDATE REDISTRIBUTION RATE</button>
                     <small class="text-xs opacity-70 text-center">Changes take effect on next redistribution cycle</small>
                 </div>
             </div>

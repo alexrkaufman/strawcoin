@@ -94,8 +94,11 @@ def register():
     if is_authenticated():
         return redirect(url_for("home_page"))
 
+    expired = request.args.get('expired', False)
     return render_template(
-        "register.jinja2", title="Join The Revolution - Straw Coin Registration"
+        "register.jinja2", 
+        title="Join The Revolution - Straw Coin Registration",
+        expired=expired
     )
 
 
@@ -169,11 +172,7 @@ def session_status():
     ), 200
 
 
-@bp.route("/session-expired")
-def session_expired():
-    return render_template(
-        "session_expired.jinja2", title="Session Expired - Straw Coin"
-    )
+
 
 
 

@@ -18,6 +18,12 @@
                 <div class="tagline">{{ tagline or "Revolutionary Comedy Market Dynamics" }}</div>
                 {% if session.get('username') %}
                     <div class="header-actions">
+                        <a href="{{ url_for("home_page") }}">
+                            <button class="button">
+                                <span>🏠</span>
+                                <span>Home</span>
+                            </button>
+                        </a>
                         <button class="button button--danger button--logout" onclick="handleLogout()">
                             <span class="logout-icon">🚪</span>
                             <span class="logout-text">Logout</span>
@@ -42,7 +48,6 @@
                 {% endblock %}
             </footer>
         </div>
-
         {% if session.get('username') %}<script src="{{ url_for('static', filename='js/logout.js') }}"></script>{% endif %}
     </body>
 </html>

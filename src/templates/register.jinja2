@@ -1,5 +1,13 @@
 {% extends "base.jinja2" %}
 {% block content %}
+    {% if expired %}
+    <div class="callout-box callout-box--warning" style="margin-bottom: var(--spacing-lg);">
+        <div class="callout-box__title">🔒 Logged Out for Market Safety</div>
+        <div class="callout-box__content">
+            <p>Your session expired to protect your Straw Coins. Please log in again to continue trading.</p>
+        </div>
+    </div>
+    {% endif %}
     <div class="content-section content-section--center">
         <div>
             <h1 class="page-title">🚀 Join The Revolution</h1>
