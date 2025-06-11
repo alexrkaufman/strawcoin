@@ -22,6 +22,12 @@ def is_authenticated():
     if "username" not in session:
         return False
     
+    # Check if user is CHANCELLOR - they never expire
+    current_username = session.get('username', '').upper()
+    quant_username = current_app.config.get("QUANT_USERNAME", "CHANCELLOR").upper()
+    if current_username == quant_username:
+        return True  # CHANCELLOR is always authenticated
+    
     # Check if session has a timestamp
     if "session_created" not in session:
         # No timestamp, invalid session

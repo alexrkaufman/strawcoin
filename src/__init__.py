@@ -43,6 +43,12 @@ def create_app(test_config=None):
         
         # Check if user has a session
         if 'username' in session:
+            # Check if user is CHANCELLOR - they never expire
+            current_username = session.get('username', '').upper()
+            quant_username = app.config.get("QUANT_USERNAME", "CHANCELLOR").upper()
+            if current_username == quant_username:
+                return  # Skip all timeout checks for CHANCELLOR
+            
             # Check if session has a timestamp
             if 'session_created' not in session:
                 session.clear()
