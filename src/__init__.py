@@ -35,10 +35,6 @@ def create_app(test_config=None):
     @app.route("/")
     @require_auth
     def home_page():
-        from flask import session
-
-        from .db import get_transaction_history, get_user_balance
-
         db = get_db()
         current_username = session.get("username")
 
@@ -133,10 +129,6 @@ def create_app(test_config=None):
 
     @app.route("/leaderboard")
     def leaderboard_page():
-        from flask import session
-
-        from .db import get_market_status, get_user_balance
-
         current_username = session.get("username")
         current_user_balance = (
             get_user_balance(current_username) if current_username else 0
@@ -157,10 +149,6 @@ def create_app(test_config=None):
     @app.route("/quant")
     @require_auth
     def quant_terminal():
-        from flask import session
-
-        from .db import get_transaction_history, get_user_balance
-
         current_username = session.get("username")
         quant_username = app.config.get("QUANT_USERNAME", "CHANCELLOR")
         quant_enabled = app.config.get("QUANT_ENABLED", False)
@@ -246,42 +234,52 @@ def create_app(test_config=None):
 
     @app.errorhandler(404)
     def page_not_found(error):
-        return render_template("error.jinja2", error_icon="🚀💥", error_number=404), 404
+        return render_template(
+            "error.jinja2",
+            page_class="error",
+            error_icon="🚀💥",
+            error_title="404 - Stock not found",
+            error_description="The requested resource has been volatilized by market forces.",
+        ), 404
 
     @app.errorhandler(403)
     def forbidden(error):
-        return render_template("error.jinja2", error_icon="🚫⚡", error_number=403), 403
-
-    @app.route("/insider-trading-warning")
-    @require_auth
-    def insider_trading_warning():
-        """Display insider trading violation warning page."""
-        from datetime import datetime
-
-        from flask import request, session
-
-        username = session.get("username", "Unknown")
-        amount = request.args.get("amount", 0)
-
         return render_template(
-            "insider_trading_warning.jinja2",
-            username=username,
-            amount=amount,
-            timestamp=int(datetime.now().timestamp()),
-            current_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "error.jinja2",
+            page_class="error",
+            error_icon="🚫⚡",
+            error_title="403 - Unknown User",
+            error_description="Straw coin maintains regulatory compliance through know your customer procedures. Please log in.",
+        ), 403
+
+    @app.errorhandler(400)
+    def insufficient_funds(error):
+        return render_template(
+            "error.jinja2",
+            page_class="error",
+            error_icon="🚫🪙🚫",
+            error_title="400 - Insufficient Funds",
+        ), 400
+
+    @app.route("/self-dealing-warning")
+    def self_dealing_warning():
+        return render_template(
+            "error.jinja2",
+            page_class="error",
+            error_icon="🏛️⚖️🏛️",
+            error_title="SELF DEALING DETECTED",
+            error_description="Your coins have been sent to the CHANCELLOR to fund market integrity efforts.",
         )
 
-    @app.route("/quant-independence-warning")
-    @require_auth
-    def quant_independence_warning():
-        """Display Quant independence protection warning page."""
-        from flask import request, session
-
-        username = session.get("username", "Unknown")
-        amount = request.args.get("amount", 0)
-
+    @app.route("/market-manipulation")
+    def market_manipulation_warning():
         return render_template(
-            "quant_independence_warning.jinja2", username=username, amount=amount
+            "error.jinja2",
+            page_class="error",
+            error_icon="🏛️⚖️🏛️",
+            error_title="MARKET MANIPULATION DETECTED",
+            error_description="""To maintain CHANCELLOR independence your transfer has been blocked.
+            Other market maipulation such as self-dealing will result in confiscation.""",
         )
 
     @app.route("/debug/config")

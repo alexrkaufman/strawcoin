@@ -41,3 +41,13 @@
         <a href="/leaderboard" class="leaderboard-link button">📊 Real-Time Leaderboard</a>
     </div>
 {%- endmacro %}
+{% macro recovery_box() -%}
+    {{ callout_box(title="🔍 Navigation Recovery Protocol",
+        message='<p>Return to authorized areas of the platform</p>
+        <div class="session-expired-actions">
+            <a href="/" class="session-expired-btn button">🏠 Return to Home</a>
+            <a href="/leaderboard" class="session-expired-btn button secondary">📊 View Leaderboard</a>
+        </div>',
+        class="info-box large") 
+    }}
+{%- endmacro %}

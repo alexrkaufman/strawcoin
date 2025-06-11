@@ -29,15 +29,17 @@
                 {% block content %}{{ content|safe }}{% endblock %}
             </main>
             <footer class="footer">
-                <div>
-                    {{ m.crypto_badge("To The Moon! 🌙") }}
-                    {{ m.crypto_badge("Diamond Hands 💎") }}
-                    {{ m.crypto_badge("HODL 🔥") }}
-                </div>
-                <p>Powered by Revolutionary Blockchain-Adjacent Technology</p>
-                <p>
-                    <em>"Where Market Cap Meets Comedy Cap"</em>
-                </p>
+                {% block footer %}
+                    <div>
+                        {{ m.crypto_badge("To The Moon! 🌙") }}
+                        {{ m.crypto_badge("Diamond Hands 💎") }}
+                        {{ m.crypto_badge("HODL 🔥") }}
+                    </div>
+                    <p>Powered by Revolutionary Blockchain-Adjacent Technology</p>
+                    <p>
+                        <em>"Where Market Cap Meets Comedy Cap"</em>
+                    </p>
+                {% endblock %}
             </footer>
         </div>
         {% if request.endpoint != 'auth.session_expired' and request.endpoint != 'auth.register' %}

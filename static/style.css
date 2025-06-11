@@ -41,9 +41,9 @@ header {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 15px;
     padding: 40px;
-    backdrop-filter: blur(10px);
     box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
     border: 1px solid rgba(255, 255, 255, 0.18);
+    text-align: center;
 }
 /* Home Page Styles */
 .welcome-section {
@@ -836,6 +836,9 @@ header {
     margin-top: 10px;
 }
 
+.warning {
+    text-align: center;
+}
 .warning-text {
     color: #ffa726;
     font-size: 0.9rem;
@@ -930,14 +933,25 @@ header {
 }
 
 /* Error Page Styles */
-.error-page-section {
+.error-container {
     text-align: center;
     padding: 60px 20px;
+    max-width: 600px;
+    margin: auto;
+    padding: 40px;
+}
+
+.error .error-container {
+    background: linear-gradient(135deg, #2d1b1b, #4a1515);
+    border: 2px solid #f23645;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(242, 54, 69, 0.3);
 }
 
 .error-icon {
     font-size: 8rem;
     margin-bottom: 20px;
+    animation: pulse 2s infinite;
 }
 
 .error-title {
@@ -954,6 +968,13 @@ header {
 
 .error-actions {
     margin-bottom: 40px;
+}
+
+.warning .error-container {
+    background: linear-gradient(135deg, #ffe500, #ffbf00);
+    border: 2px solid #ffdd00;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(255, 221, 0, 0.3);
 }
 
 .action-btn {
@@ -1023,7 +1044,7 @@ header {
 }
 
 /* Regulatory Warning Page Styles */
-.regulatory-warning-page {
+.warning-page {
     min-height: 80vh;
     display: flex;
     align-items: center;
@@ -1031,7 +1052,7 @@ header {
     background: linear-gradient(135deg, #1a1a1a, #2d1b1b);
 }
 
-.regulatory-warning-container {
+.warning .container {
     max-width: 600px;
     text-align: center;
     padding: 40px;
@@ -1041,13 +1062,7 @@ header {
     box-shadow: 0 10px 30px rgba(242, 54, 69, 0.3);
 }
 
-.warning-icon-animated {
-    font-size: 4rem;
-    margin-bottom: 20px;
-    animation: pulse 2s infinite;
-}
-
-.regulatory-warning-title {
+.warning-title {
     color: #f23645;
     font-size: 2.5rem;
     margin-bottom: 20px;
@@ -1079,7 +1094,7 @@ header {
     font-weight: bold;
 }
 
-.regulatory-warning-text {
+.warning-text {
     color: #ffa726;
     font-size: 1rem;
     line-height: 1.6;
@@ -1184,30 +1199,18 @@ header {
     box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
 }
 
-.regulatory-footer {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.regulatory-footer-text {
-    color: #b0b0b0;
-    font-size: 0.8rem;
-    line-height: 1.4;
-}
-
 /* Independence Warning Specific Styles */
-.regulatory-warning-page.independence {
+.warning-page.independence {
     background: linear-gradient(135deg, #1a1a1a, #1b2d1b);
 }
 
-.regulatory-warning-container.independence {
+.warning-container.independence {
     background: linear-gradient(135deg, #1b2d1b, #154a15);
     border-color: #ffa726;
     box-shadow: 0 10px 30px rgba(255, 167, 38, 0.3);
 }
 
-.regulatory-warning-title.independence {
+.warning-title.independence {
     color: #ffa726;
 }
 
@@ -1253,7 +1256,7 @@ header {
     margin-bottom: 0;
 }
 
-.regulatory-warning-page.independence .warning-icon-animated {
+.warning-page.independence .warning-icon-animated {
     animation: glow 3s ease-in-out infinite alternate;
 }
 

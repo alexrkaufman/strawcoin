@@ -1,20 +1,24 @@
 {% extends "base.jinja2" %}
 {% block content %}
-    <div class="error-page-section">
+    <div class="error-container">
         <div class="error-icon">{{ error_icon }}</div>
-        <h1 class="error-title">{{ error_number }} - Market Disruption Detected!</h1>
-        <p class="error-description">The requested resource has been volatilized by market forces</p>
+        <h1 class="error-title">{{ error_title }}</h1>
+        <p class="error-description">{{ error_description }}</p>
         {% if error_number == 403 %}
             {{ m.callout_box(title="",
                         message="The Short Straw maintains strict access controls for market integrity.",
                         class="error-box") }}
         {% endif %}
-        {{ m.callout_box(title="🔍 Navigation Recovery Protocol",
-                message='<p>Return to authorized areas of the platform</p>
-                <div class="session-expired-actions">
-                    <a href="/" class="session-expired-btn button">🏠 Return to Home</a>
-                    <a href="/leaderboard" class="session-expired-btn button secondary">📊 View Leaderboard</a>
-                </div>',
-                class="info-box large") }}
+        {{ m.recovery_box() }}
     </div>
+{% endblock %}
+{% block footer %}
+    <!-- Footer Notice -->
+    <p class="regulatory-footer">
+        <strong>Straw Coin Regulatory Commission</strong>
+        <br>
+        Protecting Market Integrity Since June 2025
+        <br>
+        <em>"Where Shareholder Value Meets Regulatory Compliance"</em>
+    </p>
 {% endblock %}
