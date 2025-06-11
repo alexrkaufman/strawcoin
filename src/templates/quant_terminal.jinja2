@@ -1,34 +1,34 @@
 {% extends "base.jinja2" %}
 {% block content %}
-    <div class="welcome-section">
-        <h1 class="welcome-title">🎛️ The CHANCELLOR Terminal</h1>
-        <p class="welcome-subtitle">Market Transfer Manipulation Command Center</p>
-        <div class="user-balance-card quant-authority">
+    <div class="content-section content-section--center">
+        <h1 class="page-title">🎛️ The CHANCELLOR Terminal</h1>
+        <p class="subtitle">Market Transfer Manipulation Command Center</p>
+        <div class="card card--gradient-primary">
             <h3>🎯 Welcome, {{ current_username }}</h3>
             <p class="balance-amount">{{ "{:,}".format(current_user_balance) }} Authority Coins</p>
-            <p class="status-subtitle">TRANSFER MANIPULATION ACTIVE</p>
+            <p class="text-secondary">TRANSFER MANIPULATION ACTIVE</p>
         </div>
     </div>
     <!-- Market Overview Dashboard -->
-    <div class="quant-panel">
-        <h2 class="quant-panel-title">📊 Market Intelligence Dashboard</h2>
-        <div class="market-stats-grid">
-            <div class="stat-card">
+    <div class="content-section">
+        <h2 class="section-title">📊 Market Intelligence Dashboard</h2>
+        <div class="responsive-grid">
+            <div class="card">
                 <h3>💰 Market Cap</h3>
                 <p class="stat-value" data-stat="market-cap">{{ "{:,}".format(market_cap) }}</p>
                 <p>Total Straw Coins</p>
             </div>
-            <div class="stat-card">
+            <div class="card">
                 <h3>👥 Active Stakeholders</h3>
                 <p class="stat-value" data-stat="user-count">{{ stakeholder_count }}</p>
                 <p>Market Participants</p>
             </div>
-            <div class="stat-card">
+            <div class="card">
                 <h3>📊 Trading Volume</h3>
                 <p class="stat-value" data-stat="volume">{{ "{:,}".format(volume) }}</p>
                 <p>Total Coins Transferred</p>
             </div>
-            <div class="stat-card">
+            <div class="card">
                 <h3>🔄 Total Transactions</h3>
                 <p class="stat-value" data-stat="tx-count">{{ tx_count }}</p>
                 <p>Market Activity</p>
@@ -36,20 +36,20 @@
         </div>
     </div>
     <!-- Performer Economy Status -->
-    <div class="quant-panel">
-        <h2 class="quant-panel-title">🎭 Performer Economy Monitor</h2>
-        <div class="performer-stats-grid">
-            <div class="stat-card">
+    <div class="content-section">
+        <h2 class="section-title">🎭 Performer Economy Monitor</h2>
+        <div class="responsive-grid">
+            <div class="card">
                 <h3>🎪 Performers</h3>
                 <p class="stat-value">{{ performer_count }}</p>
                 <p>Active on Stage</p>
             </div>
-            <div class="stat-card">
+            <div class="card">
                 <h3>👥 Audience</h3>
                 <p class="stat-value">{{ audience_count }}</p>
                 <p>Market Participants</p>
             </div>
-            <div class="stat-card">
+            <div class="card">
                 <h3>⚡ Redistribution</h3>
                 <p class="stat-value">{{ "ON" if redistribution_enabled else "OFF" }}</p>
                 <p>{{ "5 coins from each performer to each audience member/min" if redistribution_enabled else "Disabled" }}</p>
@@ -57,29 +57,29 @@
         </div>
     </div>
     <!-- Market Leaders -->
-    <div class="quant-panel">
-        <h2 class="quant-panel-title">🏆 Market Leaders</h2>
-        <div class="leaderboard-grid">
+    <div class="content-section">
+        <h2 class="section-title">🏆 Market Leaders</h2>
+        <div class="item-list">
             {% if top_performers %}
                 {% for performer in top_performers %}
                     {% set medals = ["🥇", "🥈", "🥉", "🎖️", "🏅"] %}
-                    <div class="leaderboard-item{% if performer.username == current_username %} current-user{% endif %}">
+                    <div class="list-item{% if performer.username == current_username %} list-item--highlight{% endif %}">
                         <span>{{ medals[loop.index0] if loop.index0 < 5 else "👤" }} {{ performer.username }}</span>
                         <span>{{ "{:,}".format(performer.coin_balance) }} Straw Coins</span>
                     </div>
                 {% endfor %}
             {% else %}
-                <p class="empty-state">No stakeholders yet</p>
+                <p class="text-center opacity-70">No stakeholders yet</p>
             {% endif %}
         </div>
     </div>
     <!-- Recent Market Activity -->
     {% if recent_transactions %}
-        <div class="quant-panel">
-            <h2 class="quant-panel-title">📈 Recent Market Activity</h2>
-            <div class="transaction-list">
+        <div class="content-section">
+            <h2 class="section-title">📈 Recent Market Activity</h2>
+            <div class="item-list">
                 {% for transaction in recent_transactions %}
-                    <div class="transaction-item{% if transaction.sender == current_username %} sent{% else %} received{% endif %}">
+                    <div class="list-item{% if transaction.sender == current_username %} list-item--sent{% else %} list-item--received{% endif %}">
                         <div>
                             {% if transaction.sender == current_username %}
                                 <span class="transaction-label">📤 Sent to {{ transaction.recipient }}</span>
@@ -101,13 +101,13 @@
         </div>
     {% endif %}
     <!-- Market Transfer Controls -->
-    <div class="quant-terminal-section">
-        <h2 class="quant-terminal-title">🕹️ Transfer Control Panel</h2>
+    <div class="content-section">
+        <h2 class="section-title">🕹️ Transfer Control Panel</h2>
         <!-- User Management Panel -->
-        <div class="quant-panel">
-            <h3 class="quant-panel-title">👥 User Status Management</h3>
-            <div class="quant-control-grid">
-                <div class="quant-control-card">
+        <div class="content-section content-section--dark">
+            <h3 class="section-title">👥 User Status Management</h3>
+            <div class="responsive-grid responsive-grid--narrow">
+                <div class="card">
                     <h4>🎭 Performer Status Control</h4>
                     <div class="form-group">
                         <label class="form-label">Target User:</label>
@@ -136,9 +136,9 @@
                                class="form-input"
                                placeholder="Market manipulation reason...">
                     </div>
-                    <button id="changeStatusBtn" class="button primary full-width">⚡ MANIPULATE STATUS</button>
+                    <button id="changeStatusBtn" class="button button--primary button--full-width">⚡ MANIPULATE STATUS</button>
                 </div>
-                <div class="quant-control-card">
+                <div class="card">
                     <h4>💸 Universal Force Transfer</h4>
                     <div class="form-group">
                         <label class="form-label">From (Sender):</label>
@@ -176,7 +176,7 @@
                                id="transferAmount"
                                class="form-input"
                                placeholder="Enter amount per transfer...">
-                        <small class="form-hint">For group transfers: amount each sender gives to each recipient</small>
+                        <small class="text-xs opacity-70">For group transfers: amount each sender gives to each recipient</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Reason:</label>
@@ -185,8 +185,8 @@
                                class="form-input"
                                placeholder="Transfer reason...">
                     </div>
-                    <button id="forceTransferBtn" class="button danger full-width">💸 EXECUTE TRANSFER</button>
-                    <div class="help-text">
+                    <button id="forceTransferBtn" class="button button--danger button--full-width">💸 EXECUTE TRANSFER</button>
+                    <div class="text-sm opacity-80">
                         <strong>Examples:</strong>
                         <br>
                         • Individual: "performer1" → "audience2" (100 coins)
@@ -199,10 +199,10 @@
             </div>
         </div>
         <!-- Transfer Manipulation Panel -->
-        <div class="quant-panel">
-            <h3 class="quant-panel-title">📈 Advanced Transfer Controls</h3>
-            <div class="quant-control-grid">
-                <div class="quant-control-card">
+        <div class="content-section content-section--dark">
+            <h3 class="section-title">📈 Advanced Transfer Controls</h3>
+            <div class="responsive-grid responsive-grid--narrow">
+                <div class="card">
                     <h4>🔄 Force Redistribution</h4>
                     <div class="form-group">
                         <label class="form-label">Multiplier:</label>
@@ -213,7 +213,7 @@
                                min="0.1"
                                max="10"
                                step="0.1">
-                        <small class="form-hint">How many redistribution cycles (0.1 - 10x)</small>
+                        <small class="text-xs opacity-70">How many redistribution cycles (0.1 - 10x)</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Reason:</label>
@@ -222,24 +222,24 @@
                                class="form-input"
                                placeholder="Redistribution reason...">
                     </div>
-                    <button id="forceRedistributionBtn" class="button warning full-width">⚡ FORCE REDISTRIBUTION</button>
+                    <button id="forceRedistributionBtn" class="button button--warning button--full-width">⚡ FORCE REDISTRIBUTION</button>
                 </div>
-                <div class="quant-control-card">
+                <div class="card">
                     <h4>📊 Market Intelligence</h4>
-                    <button id="refreshStatsBtn" class="button info full-width">🔄 Refresh Market Data</button>
-                    <button id="getAllUsersBtn" class="button info full-width">👥 Get All Users</button>
-                    <button id="getMarketStatsBtn" class="button info full-width">📈 Detailed Market Stats</button>
+                    <button id="refreshStatsBtn" class="button button--info button--full-width">🔄 Refresh Market Data</button>
+                    <button id="getAllUsersBtn" class="button button--info button--full-width">👥 Get All Users</button>
+                    <button id="getMarketStatsBtn" class="button button--info button--full-width">📈 Detailed Market Stats</button>
                 </div>
             </div>
         </div>
         <!-- All Users Registry -->
-        <div class="quant-panel">
-            <h3 class="quant-panel-title">👥 Complete User Registry</h3>
-            <div class="quant-users-registry">
+        <div class="content-section">
+            <h3 class="section-title">👥 Complete User Registry</h3>
+            <div class="item-list item-list--scrollable">
                 {% if all_users %}
-                    <div class="user-list">
+                    <div>
                         {% for user in all_users %}
-                            <div class="user-item">
+                            <div class="list-item">
                                 <div>
                                     <span class="user-name">
                                         {% if user.is_performer %}
@@ -249,7 +249,7 @@
                                         {% endif %}
                                         {{ user.username }}
                                     </span>
-                                    <div class="meta-text">
+                                    <div class="text-xs opacity-80">
                                         {{ "Performer" if user.is_performer else "Audience" }} |
                                         Joined: {{ user.created_at.strftime("%Y-%m-%d") if user.created_at else 'Unknown' }}
                                     </div>
@@ -259,28 +259,28 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="empty-state">No users found</p>
+                    <p class="text-center opacity-70">No users found</p>
                 {% endif %}
             </div>
         </div>
         <!-- Live Market Data Display -->
-        <div class="quant-panel">
-            <h3 class="quant-panel-title">📊 Live Market Data</h3>
-            <div id="marketDataDisplay" class="quant-data-display">
-                <div class="market-stats-grid">
-                    <div class="stat-card">
+        <div class="content-section">
+            <h3 class="section-title">📊 Live Market Data</h3>
+            <div id="marketDataDisplay">
+                <div class="responsive-grid">
+                    <div class="card">
                         <h4>💰 Total Coins</h4>
                         <p class="stat-value" id="totalCoins">{{ "{:,}".format(market_cap) }}</p>
                     </div>
-                    <div class="stat-card">
+                    <div class="card">
                         <h4>👥 Total Users</h4>
                         <p class="stat-value" id="totalUsers">{{ stakeholder_count }}</p>
                     </div>
-                    <div class="stat-card">
+                    <div class="card">
                         <h4>🎪 Performers</h4>
                         <p class="stat-value" id="totalPerformers">{{ performer_count }}</p>
                     </div>
-                    <div class="stat-card">
+                    <div class="card">
                         <h4>👁️ Audience</h4>
                         <p class="stat-value" id="totalAudience">{{ audience_count }}</p>
                     </div>
@@ -288,12 +288,12 @@
             </div>
         </div>
         <!-- Terminal Log -->
-        <div class="quant-panel">
-            <h3 class="quant-panel-title">📝 Transfer Manipulation Log</h3>
-            <div id="quantLog" class="quant-terminal-log">
-                <div class="log-entry log-info">
-                    <span class="log-timestamp">[SYSTEM]</span>
-                    <span class="log-message">The CHANCELLOR Terminal initialized successfully</span>
+        <div class="content-section content-section--dark">
+            <h3 class="section-title">📝 Transfer Manipulation Log</h3>
+            <div id="quantLog" class="item-list item-list--scrollable">
+                <div class="list-item">
+                    <span class="text-xs opacity-70">[SYSTEM]</span>
+                    <span>The CHANCELLOR Terminal initialized successfully</span>
                 </div>
             </div>
         </div>

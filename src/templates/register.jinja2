@@ -1,9 +1,9 @@
 {% extends "base.jinja2" %}
 {% block content %}
-    <div class="registration-section">
-        <div class="header">
-            <h1 class="title">🚀 Join The Revolution</h1>
-            <p class="registration-subtitle">
+    <div class="content-section content-section--center">
+        <div>
+            <h1 class="page-title">🚀 Join The Revolution</h1>
+            <p class="subtitle">
                 Enter <strong>The Short Straw</strong> comedy tokenization ecosystem
             </p>
         </div>
@@ -16,6 +16,6 @@
         <p>📈 <strong>Real-time market participation</strong> during The Short Straw</p>
         <p>🏆 <strong>Leaderboard rankings</strong> for competitive stakeholders</p>
         <p>🌙 <strong>Maximum ROI potential</strong> through market-driven comedy valuation</p>",
-        class="info-box") }}
+        class="callout-box--info") }}
     <script src="{{ url_for('static', filename='js/register.js') }}"></script>
 {% endblock %}

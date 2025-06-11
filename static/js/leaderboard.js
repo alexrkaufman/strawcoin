@@ -392,8 +392,8 @@ function updateTradingStats(data) {
     const gainPercent =
       biggestGain > 0 ? ((biggestGain / 10000) * 100).toFixed(2) : "0.00";
     biggestGainerElement.innerHTML = `
-            <p style="color: #ffffff; font-size: 1.4rem; font-weight: bold; margin: 5px 0;">${biggestGainer}</p>
-            <p style="color: #00D084; font-size: 1.1rem; font-weight: bold; margin: 0;">${StrawCoinUtils.formatChange(biggestGain, true)} (+${gainPercent}%)</p>
+            <p class="stat-value">${biggestGainer}</p>
+            <p class="text-success">${StrawCoinUtils.formatChange(biggestGain, true)} (+${gainPercent}%)</p>
         `;
   }
 
@@ -404,8 +404,8 @@ function updateTradingStats(data) {
         ? ((Math.abs(biggestLoss) / 10000) * 100).toFixed(2)
         : "0.00";
     biggestLoserElement.innerHTML = `
-            <p style="color: #ffffff; font-size: 1.4rem; font-weight: bold; margin: 5px 0;">${biggestLoser}</p>
-            <p style="color: #F23645; font-size: 1.1rem; font-weight: bold; margin: 0;">${StrawCoinUtils.formatNumber(biggestLoss)} (-${lossPercent}%)</p>
+            <p class="stat-value">${biggestLoser}</p>
+            <p class="text-danger">${StrawCoinUtils.formatNumber(biggestLoss)} (-${lossPercent}%)</p>
         `;
   }
 
@@ -415,8 +415,8 @@ function updateTradingStats(data) {
     const mockTransactions =
       Math.floor(maxVolatility / 10) + Math.floor(Math.random() * 5) + 1;
     mostActiveElement.innerHTML = `
-            <p style="color: #ffffff; font-size: 1.4rem; font-weight: bold; margin: 5px 0;">${mostVolatile}</p>
-            <p style="color: #FFA726; font-size: 1.1rem; font-weight: bold; margin: 0;">${mockTransactions} trades</p>
+            <p class="stat-value">${mostVolatile}</p>
+            <p class="text-warning">${mockTransactions} trades</p>
         `;
   }
 }

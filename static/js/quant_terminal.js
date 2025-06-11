@@ -385,8 +385,7 @@ function displayUsersList(users) {
     return;
   }
 
-  let html =
-    '<div style="display: grid; gap: 10px; max-height: 400px; overflow-y: auto;">';
+  let html = '<div>';
 
   users.forEach((user) => {
     const userType = user.is_performer ? "🎪 Performer" : "👥 Audience";
@@ -395,14 +394,14 @@ function displayUsersList(users) {
       : "Unknown";
 
     html += `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
+            <div class="list-item">
                 <div>
-                    <span style="font-weight: bold;">${user.is_performer ? "🎪" : "👥"} ${user.username}</span>
-                    <div style="font-size: 0.9rem; opacity: 0.8;">
+                    <span class="user-name">${user.is_performer ? "🎪" : "👥"} ${user.username}</span>
+                    <div class="text-xs opacity-80">
                         ${userType} | Joined: ${createdDate}
                     </div>
                 </div>
-                <span style="font-weight: bold; font-size: 1.1rem;">
+                <span class="user-balance">
                     ${StrawCoinUtils.formatNumber(user.coin_balance, 'coins')}
                 </span>
             </div>
@@ -440,17 +439,17 @@ function logQuantAction(type, message, level = "info") {
   const logClass = `log-${level}`;
 
   const logEntry = document.createElement("div");
-  logEntry.className = `log-entry ${logClass}`;
+  logEntry.className = `list-item`;
   logEntry.innerHTML = `
-        <span class="log-timestamp">[${timestamp}]</span>
-        <span class="log-type">[${type}]</span>
-        <span class="log-message">${message}</span>
+        <span class="text-xs opacity-70">[${timestamp}]</span>
+        <span class="text-xs opacity-70">[${type}]</span>
+        <span class="${level === 'error' ? 'text-danger' : level === 'success' ? 'text-success' : level === 'warning' ? 'text-warning' : 'text-secondary'}">${message}</span>
     `;
 
   logEl.appendChild(logEntry);
 
   // Keep only last 50 log entries
-  const entries = logEl.querySelectorAll(".log-entry");
+  const entries = logEl.querySelectorAll(".list-item");
   if (entries.length > 50) {
     entries[0].remove();
   }

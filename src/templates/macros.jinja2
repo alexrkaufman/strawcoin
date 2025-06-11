@@ -1,7 +1,7 @@
 {% macro callout_box(title, message, class="") -%}
     <div class="callout-box {{ class }}">
-        {% if title %}<h4 class="title">{{ title }}</h4>{% endif %}
-        <div class="content">{{ message|safe }}</div>
+        {% if title %}<h4>{{ title }}</h4>{% endif %}
+        <div>{{ message|safe }}</div>
     </div>
 {%- endmacro %}
 {% macro crypto_badge(message) -%}
@@ -22,32 +22,28 @@
                        autocomplete="off"
                        autocapitalize="none">
             </div>
-            <button type="submit" id="registerBtn" class="button warning large full-width">🌙 Launch to Moon Mission</button>
+            <button type="submit" id="registerBtn" class="button button--warning button--large button--full-width">🌙 Launch to Moon Mission</button>
         </form>
-        <div id="errorMessage" class="message error-message">
-            <p></p>
-        </div>
-        <div id="loadingMessage" class="message loading-message">
+        <div id="errorMessage" class="message message--error"></div>
+        <div id="loadingMessage" class="message message--info">
             <div class="loading-emoji">⏳</div>
             <p>Initializing stakeholder account...</p>
         </div>
-        <div id="successMessage" class="message success-message">
-            <p></p>
-        </div>
+        <div id="successMessage" class="message message--success"></div>
     </div>
 {%- endmacro %}
 {% macro leaderboard_button() -%}
     <div class="nav-links">
-        <a href="/leaderboard" class="button primary">📊 Real-Time Leaderboard</a>
+        <a href="/leaderboard" class="button button--primary">📊 Real-Time Leaderboard</a>
     </div>
 {%- endmacro %}
 {% macro recovery_box() -%}
     {{ callout_box(title="🔍 Navigation Recovery Protocol",
         message='<p>Return to authorized areas of the platform</p>
         <div class="session-expired-actions">
-            <a href="/" class="button success large">🏠 Return to Home</a>
-            <a href="/leaderboard" class="button secondary large">📊 View Leaderboard</a>
+            <a href="/" class="button button--success button--large">🏠 Return to Home</a>
+            <a href="/leaderboard" class="button button--secondary button--large">📊 View Leaderboard</a>
         </div>',
-        class="info-box large") 
+        class="callout-box--info callout-box--large") 
     }}
 {%- endmacro %}

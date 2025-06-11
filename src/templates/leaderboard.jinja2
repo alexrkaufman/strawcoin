@@ -1,8 +1,8 @@
 {% extends "base.jinja2" %}
 {% block content %}
-    <div class="welcome-section">
-        <h1 class="welcome-title">📈 STRAW COIN TRADING PLATFORM</h1>
-        <p class="welcome-subtitle">Live Market Data • Real-Time Trading Analytics • Comedy Futures</p>
+    <div class="content-section content-section--center">
+        <h1 class="page-title">📈 STRAW COIN TRADING PLATFORM</h1>
+        <p class="subtitle">Live Market Data • Real-Time Trading Analytics • Comedy Futures</p>
     </div>
     <!-- Market Status Bar -->
     <div class="market-status-bar">
@@ -27,7 +27,7 @@
     </div>
     <div class="portfolio-section">
         {% if current_username %}
-            <div class="user-balance-card trading-portfolio"
+            <div class="card card--gradient-primary"
                  data-username="{{ current_username }}">
                 <div class="portfolio-header">
                     <h3>PORTFOLIO POSITION</h3>
@@ -46,13 +46,13 @@
             </div>
             <!-- Trading Controls -->
             <div class="trading-actions">
-                <a href="/" class="button trading-green">📊 TRADING TERMINAL</a>
-                <button id="watchlistBtn" class="button primary">⭐ WATCHLIST</button>
+                <a href="/" class="button button--trading">📊 TRADING TERMINAL</a>
+                <button id="watchlistBtn" class="button button--primary">⭐ WATCHLIST</button>
             </div>
         {% endif %}
     </div>
     <!-- Trading Chart Controls -->
-    <div class="trading-dark-panel">
+    <div class="content-section content-section--dark">
         <div class="chart-controls">
             <div class="chart-controls-left">
                 <div>
@@ -66,12 +66,12 @@
                     </select>
                 </div>
                 <div class="chart-type-buttons">
-                    <button class="button chart-type active" data-type="line">LINE</button>
-                    <button class="button chart-type" data-type="candle">CANDLE</button>
+                    <button class="button button--small active" data-type="line">LINE</button>
+                    <button class="button button--small" data-type="candle">CANDLE</button>
                 </div>
             </div>
             <div class="chart-controls-right">
-                <button id="refreshBtn" class="button trading-green">🔄 REFRESH</button>
+                <button id="refreshBtn" class="button button--trading">🔄 REFRESH</button>
                 <div class="live-indicator">
                     <div class="live-dot"></div>
                     <span class="live-text">LIVE</span>
@@ -83,17 +83,17 @@
         </div>
     </div>
     <!-- Professional Trading Chart Container -->
-    <div class="trading-dark-panel">
+    <div class="content-section content-section--dark">
         <div class="chart-header">
             <h3 class="chart-title">STRAW COIN MARKET DEPTH</h3>
             <div class="chart-tools">
                 <span class="chart-tool-label">Price Scale:</span>
-                <button id="autoScale" class="button small primary">AUTO</button>
+                <button id="autoScale" class="button button--small button--primary">AUTO</button>
             </div>
         </div>
         <div class="chart-container trading">
             <canvas id="leaderboardChart"></canvas>
-            <div id="chartStatus" class="chart-status">Loading market data...</div>
+            <div id="chartStatus" class="text-center opacity-70">Loading market data...</div>
             <!-- Trading Crosshair Info -->
             <div id="crosshairInfo" class="crosshair-info">
                 <div id="crosshairPrice">Price: --</div>
@@ -102,7 +102,7 @@
         </div>
     </div>
     <!-- Market Leaders & Order Book Style -->
-    <div class="trading-dark-panel">
+    <div class="content-section content-section--dark">
         <div class="leaderboard-header">
             <h2 class="leaderboard-title">💎 TOP PERFORMERS</h2>
             <div class="leaderboard-subtitle">Real-time rankings • Updated every 30s</div>
@@ -114,50 +114,50 @@
             <div class="leaderboard-col right">HOLDINGS</div>
             <div class="leaderboard-col right">24H %</div>
         </div>
-        <div id="currentLeaderboard" class="leaderboard-list">
+        <div id="currentLeaderboard" class="item-list">
             <!-- Will be populated by JavaScript -->
         </div>
     </div>
     <!-- Trading Statistics Dashboard -->
-    <div class="trading-stats-grid">
-        <div class="trading-stat-card">
+    <div class="responsive-grid responsive-grid--wide">
+        <div class="card">
             <div class="stat-header">
-                <h3 class="stat-title gain">📈 TOP GAINER</h3>
-                <span class="stat-period gain">24H</span>
+                <h3 class="text-success font-bold">📈 TOP GAINER</h3>
+                <span class="text-success">24H</span>
             </div>
             <div id="biggestGainer">
                 <p class="stat-value">--</p>
-                <p class="stat-change gain">+-- coins</p>
+                <p class="text-success">+-- coins</p>
             </div>
         </div>
-        <div class="trading-stat-card">
+        <div class="card">
             <div class="stat-header">
-                <h3 class="stat-title loss">📉 TOP LOSER</h3>
-                <span class="stat-period loss">24H</span>
+                <h3 class="text-danger font-bold">📉 TOP LOSER</h3>
+                <span class="text-danger">24H</span>
             </div>
             <div id="biggestLoser">
                 <p class="stat-value">--</p>
-                <p class="stat-change loss">-- coins</p>
+                <p class="text-danger">-- coins</p>
             </div>
         </div>
-        <div class="trading-stat-card">
+        <div class="card">
             <div class="stat-header">
-                <h3 class="stat-title volume">⚡ VOLUME LEADER</h3>
-                <span class="stat-period volume">24H</span>
+                <h3 class="text-warning font-bold">⚡ VOLUME LEADER</h3>
+                <span class="text-warning">24H</span>
             </div>
             <div id="mostActive">
                 <p class="stat-value">--</p>
-                <p class="stat-change volume">-- transactions</p>
+                <p class="text-warning">-- transactions</p>
             </div>
         </div>
-        <div class="trading-stat-card">
+        <div class="card">
             <div class="stat-header">
-                <h3 class="stat-title data">📊 MARKET DATA</h3>
-                <span class="stat-period data">LIVE</span>
+                <h3 class="text-info font-bold">📊 MARKET DATA</h3>
+                <span class="text-info">LIVE</span>
             </div>
             <div id="dataStats">
                 <p class="stat-value" id="totalDataPoints">--</p>
-                <p class="stat-change data">Data points tracked</p>
+                <p class="text-info">Data points tracked</p>
             </div>
         </div>
     </div>
