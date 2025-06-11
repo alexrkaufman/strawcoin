@@ -120,8 +120,6 @@ document.addEventListener("DOMContentLoaded", function () {
         submitButton.textContent = "🚀 Sending...";
         submitButton.disabled = true;
 
-
-
         // Use the exact case from the valid recipients list
         const exactRecipient =
           validRecipients.find(
@@ -141,7 +139,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (data && data.status === "success") {
           StrawCoinUtils.showSuccess(
             `🎉 Successfully sent ${StrawCoinUtils.formatNumber(amount)} coins to ${recipient}!`,
-            '#transferStatus'
+            "#transferStatus",
           );
 
           // Reset form
@@ -155,14 +153,20 @@ document.addEventListener("DOMContentLoaded", function () {
             window.location.reload();
           }, 2000);
         } else {
-          StrawCoinUtils.showError(`Error: ${data.message || "Transfer failed"}`, '#transferStatus');
+          StrawCoinUtils.showError(
+            `Error: ${data.message || "Transfer failed"}`,
+            "#transferStatus",
+          );
         }
 
         // Re-enable form
         submitButton.textContent = originalText;
         submitButton.disabled = false;
       } catch (error) {
-        StrawCoinUtils.showError(error.message || "Network error. Please try again.", '#transferStatus');
+        StrawCoinUtils.showError(
+          error.message || "Network error. Please try again.",
+          "#transferStatus",
+        );
         console.error("Transfer error:", error);
 
         // Re-enable form
@@ -174,25 +178,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function showStatus(message, type) {
-    StrawCoinUtils.showMessage(message, type, '#transferStatus');
+    StrawCoinUtils.showMessage(message, type, "#transferStatus");
   }
-
-  // Initialize tooltips for performer status
-  const performerCards = document.querySelectorAll(".performer-status-card");
-  performerCards.forEach((card) => {
-    card.addEventListener("mouseenter", function () {
-      this.style.transform = "scale(1.02)";
-    });
-
-    card.addEventListener("mouseleave", function () {
-      this.style.transform = "scale(1)";
-    });
-  });
 
   // Auto-refresh market stats
   const marketRefresh = StrawCoinUtils.createAutoRefresh(
     updateMarketStats,
-    StrawCoinUtils.REFRESH_INTERVALS.marketStats
+    StrawCoinUtils.REFRESH_INTERVALS.marketStats,
   );
   marketRefresh.start();
 

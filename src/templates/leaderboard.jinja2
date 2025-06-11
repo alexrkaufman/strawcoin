@@ -5,129 +5,58 @@
         <p class="welcome-subtitle">Live Market Data • Real-Time Trading Analytics • Comedy Futures</p>
     </div>
     <!-- Market Status Bar -->
-    <div style="background: linear-gradient(90deg, #1a1a1a, #2d2d2d);
-                padding: 15px;
-                border-radius: 10px;
-                margin-bottom: 20px;
-                border: 1px solid #333">
-        <div style="display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    flex-wrap: wrap;
-                    gap: 20px">
-            <div style="color: {{ market_status.status_color if market_status else '#00D084' }};
-                        font-weight: bold">
-                <span style="font-size: 0.9rem; opacity: 0.8;">MARKET STATUS:</span>
-                <span style="margin-left: 8px; font-size: 1.1rem;">{{ market_status.status_text if market_status else '🟢 OPEN' }}</span>
+    <div class="market-status-bar">
+        <div class="market-status-grid">
+            <div class="market-status-item status" style="color: {{ market_status.status_color if market_status else '#00D084' }};">
+                <span class="market-label">MARKET STATUS:</span>
+                <span class="market-value">{{ market_status.status_text if market_status else '🟢 OPEN' }}</span>
             </div>
-            <div style="color: #ffffff;">
-                <span style="font-size: 0.9rem; opacity: 0.8;">TOTAL MARKET CAP:</span>
-                <span id="marketCap"
-                      style="margin-left: 8px;
-                             font-size: 1.1rem;
-                             font-weight: bold">Loading...</span>
+            <div class="market-status-item">
+                <span class="market-label">TOTAL MARKET CAP:</span>
+                <span id="marketCap" class="market-value">Loading...</span>
             </div>
-            <div style="color: #FFA726;">
-                <span style="font-size: 0.9rem; opacity: 0.8;">24H VOLUME:</span>
-                <span id="volume24h"
-                      style="margin-left: 8px;
-                             font-size: 1.1rem;
-                             font-weight: bold">Loading...</span>
+            <div class="market-status-item volume">
+                <span class="market-label">24H VOLUME:</span>
+                <span id="volume24h" class="market-value">Loading...</span>
             </div>
-            <div style="color: #42A5F5;">
-                <span style="font-size: 0.9rem; opacity: 0.8;">ACTIVE TRADERS:</span>
-                <span id="activeTraders"
-                      style="margin-left: 8px;
-                             font-size: 1.1rem;
-                             font-weight: bold">17</span>
+            <div class="market-status-item traders">
+                <span class="market-label">ACTIVE TRADERS:</span>
+                <span id="activeTraders" class="market-value">17</span>
             </div>
         </div>
     </div>
     <div class="portfolio-section">
         {% if current_username %}
-            <div class="user-balance-card"
-                 data-username="{{ current_username }}"
-                 style="background: linear-gradient(135deg, #1e3c72, #2a5298);
-                        border: 1px solid #4a90e2;
-                        box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3)">
-                <div style="display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                            margin-bottom: 10px">
-                    <h3 style="margin: 0; color: #ffffff;">PORTFOLIO POSITION</h3>
-                    <span id="userPosition"
-                          style="background: #00D084;
-                                 color: #000;
-                                 padding: 4px 12px;
-                                 border-radius: 20px;
-                                 font-weight: bold;
-                                 font-size: 0.9rem">Calculating...</span>
+            <div class="user-balance-card trading-portfolio" data-username="{{ current_username }}">
+                <div class="portfolio-header">
+                    <h3>PORTFOLIO POSITION</h3>
+                    <span id="userPosition" class="position-badge">Calculating...</span>
                 </div>
-                <div style="display: flex;
-                            justify-content: space-between;
-                            align-items: center">
+                <div class="portfolio-stats">
                     <div>
-                        <p style="margin: 0;
-                                  color: #ffffff;
-                                  font-size: 1.8rem;
-                                  font-weight: bold">{{ "{:,}".format(current_user_balance) }}</p>
-                        <p style="margin: 0; color: #b0b0b0; font-size: 0.9rem;">STRAW COINS</p>
+                        <p class="portfolio-balance">{{ "{:,}".format(current_user_balance) }}</p>
+                        <p class="portfolio-label">STRAW COINS</p>
                     </div>
-                    <div style="text-align: right;">
-                        <p id="portfolioChange"
-                           style="margin: 0;
-                                  font-size: 1.2rem;
-                                  font-weight: bold;
-                                  color: #00D084">+0.00%</p>
-                        <p style="margin: 0; color: #b0b0b0; font-size: 0.8rem;">24H CHANGE</p>
+                    <div class="portfolio-change">
+                        <p id="portfolioChange" class="change-value">+0.00%</p>
+                        <p class="change-label">24H CHANGE</p>
                     </div>
                 </div>
             </div>
             <!-- Trading Controls -->
-            <div style="display: flex;
-                        gap: 15px;
-                        justify-content: center;
-                        margin-top: 15px">
-                <a href="/"
-                   style="background: linear-gradient(135deg, #00D084, #00A66B);
-                          color: white;
-                          padding: 12px 24px;
-                          border-radius: 8px;
-                          text-decoration: none;
-                          font-weight: bold;
-                          transition: all 0.3s">📊 TRADING TERMINAL</a>
-                <button id="watchlistBtn"
-                        style="background: linear-gradient(135deg, #4a90e2, #357abd);
-                               color: white;
-                               padding: 12px 24px;
-                               border-radius: 8px;
-                               border: none;
-                               font-weight: bold;
-                               cursor: pointer;
-                               transition: all 0.3s">⭐ WATCHLIST</button>
+            <div class="trading-actions">
+                <a href="/" class="trading-btn primary button">📊 TRADING TERMINAL</a>
+                <button id="watchlistBtn" class="trading-btn secondary button">⭐ WATCHLIST</button>
             </div>
         {% endif %}
     </div>
     <!-- Trading Chart Controls -->
-    <div style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-                padding: 20px;
-                border-radius: 10px;
-                margin-bottom: 20px;
-                border: 1px solid #333">
-        <div style="display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    flex-wrap: wrap;
-                    gap: 15px">
-            <div style="display: flex; align-items: center; gap: 15px;">
+    <div class="trading-dark-panel">
+        <div class="chart-controls">
+            <div class="chart-controls-left">
                 <div>
-                    <label style="color: #b0b0b0; font-size: 0.9rem; margin-right: 8px;">TIMEFRAME:</label>
-                    <select id="timeRangeSelect"
-                            style="background: #333;
-                                   color: #fff;
-                                   border: 1px solid #555;
-                                   padding: 8px 12px;
-                                   border-radius: 5px">
+                    <label class="market-label">TIMEFRAME:</label>
+                    <select id="timeRangeSelect" class="timeframe-select">
                         <option value="0.5" selected>30M</option>
                         <option value="1">1H</option>
                         <option value="1.5">1.5H</option>
@@ -135,256 +64,102 @@
                         <option value="3">3H</option>
                     </select>
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="chart-type-btn active"
-                            data-type="line"
-                            style="background: #4a90e2;
-                                   color: white;
-                                   border: none;
-                                   padding: 6px 12px;
-                                   border-radius: 4px;
-                                   font-size: 0.8rem;
-                                   cursor: pointer">LINE</button>
-                    <button class="chart-type-btn"
-                            data-type="candle"
-                            style="background: #333;
-                                   color: #b0b0b0;
-                                   border: 1px solid #555;
-                                   padding: 6px 12px;
-                                   border-radius: 4px;
-                                   font-size: 0.8rem;
-                                   cursor: pointer">CANDLE</button>
+                <div class="chart-type-buttons">
+                    <button class="chart-type-btn active button" data-type="line">LINE</button>
+                    <button class="chart-type-btn button" data-type="candle">CANDLE</button>
                 </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <button id="refreshBtn"
-                        style="background: linear-gradient(135deg, #00D084, #00A66B);
-                               color: white;
-                               border: none;
-                               padding: 10px 16px;
-                               border-radius: 6px;
-                               font-weight: bold;
-                               cursor: pointer;
-                               transition: all 0.3s">🔄 REFRESH</button>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 8px;
-                                height: 8px;
-                                background: #00D084;
-                                border-radius: 50%;
-                                animation: pulse 2s infinite"></div>
-                    <span style="color: #00D084; font-size: 0.9rem; font-weight: bold;">LIVE</span>
+            <div class="chart-controls-right">
+                <button id="refreshBtn" class="refresh-btn button">🔄 REFRESH</button>
+                <div class="live-indicator">
+                    <div class="live-dot"></div>
+                    <span class="live-text">LIVE</span>
                 </div>
-                <div id="lastUpdate" style="color: #b0b0b0; font-size: 0.9rem;">
+                <div id="lastUpdate" class="update-time">
                     Updated: <span id="updateTime">--</span>
                 </div>
             </div>
         </div>
     </div>
     <!-- Professional Trading Chart Container -->
-    <div style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-                border-radius: 10px;
-                padding: 20px;
-                margin-bottom: 30px;
-                border: 1px solid #333">
-        <div style="display: flex;
-                    justify-content: between;
-                    align-items: center;
-                    margin-bottom: 15px">
-            <h3 style="color: #ffffff; margin: 0; font-size: 1.2rem;">STRAW COIN MARKET DEPTH</h3>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <span style="color: #b0b0b0; font-size: 0.9rem;">Price Scale:</span>
-                <button id="autoScale"
-                        style="background: #4a90e2;
-                               color: white;
-                               border: none;
-                               padding: 4px 8px;
-                               border-radius: 4px;
-                               font-size: 0.8rem;
-                               cursor: pointer">AUTO</button>
+    <div class="trading-dark-panel">
+        <div class="chart-header">
+            <h3 class="chart-title">STRAW COIN MARKET DEPTH</h3>
+            <div class="chart-tools">
+                <span class="chart-tool-label">Price Scale:</span>
+                <button id="autoScale" class="auto-scale-btn button">AUTO</button>
             </div>
         </div>
-        <div class="chart-container" style="height: 450px; position: relative;">
+        <div class="chart-container trading">
             <canvas id="leaderboardChart"></canvas>
-            <div id="chartStatus"
-                 style="position: absolute;
-                        bottom: 15px;
-                        left: 20px;
-                        color: #b0b0b0;
-                        font-size: 0.9rem;
-                        font-style: italic">Loading market data...</div>
+            <div id="chartStatus" class="chart-status">Loading market data...</div>
             <!-- Trading Crosshair Info -->
-            <div id="crosshairInfo"
-                 style="position: absolute;
-                        top: 10px;
-                        right: 10px;
-                        background: rgba(0,0,0,0.8);
-                        color: white;
-                        padding: 8px 12px;
-                        border-radius: 6px;
-                        font-size: 0.8rem;
-                        display: none">
+            <div id="crosshairInfo" class="crosshair-info">
                 <div id="crosshairPrice">Price: --</div>
                 <div id="crosshairTime">Time: --</div>
             </div>
         </div>
     </div>
     <!-- Market Leaders & Order Book Style -->
-    <div style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-                border-radius: 10px;
-                padding: 20px;
-                margin-bottom: 30px;
-                border: 1px solid #333">
-        <div style="display: flex;
-                    justify-content: between;
-                    align-items: center;
-                    margin-bottom: 20px">
-            <h2 style="color: #ffffff; margin: 0; font-size: 1.3rem;">💎 TOP PERFORMERS</h2>
-            <div style="color: #b0b0b0; font-size: 0.9rem;">Real-time rankings • Updated every 30s</div>
+    <div class="trading-dark-panel">
+        <div class="leaderboard-header">
+            <h2 class="leaderboard-title">💎 TOP PERFORMERS</h2>
+            <div class="leaderboard-subtitle">Real-time rankings • Updated every 30s</div>
         </div>
         <!-- Order Book Style Headers -->
-        <div style="display: grid;
-                    grid-template-columns: 60px 2fr 1fr 1fr;
-                    gap: 15px;
-                    padding: 10px 15px;
-                    background: rgba(255,255,255,0.05);
-                    border-radius: 6px;
-                    margin-bottom: 10px">
-            <div style="color: #b0b0b0; font-size: 0.8rem; font-weight: bold;">RANK</div>
-            <div style="color: #b0b0b0; font-size: 0.8rem; font-weight: bold;">TRADER</div>
-            <div style="color: #b0b0b0;
-                        font-size: 0.8rem;
-                        font-weight: bold;
-                        text-align: right">HOLDINGS</div>
-            <div style="color: #b0b0b0;
-                        font-size: 0.8rem;
-                        font-weight: bold;
-                        text-align: right">24H %</div>
+        <div class="leaderboard-table-header">
+            <div class="leaderboard-col">RANK</div>
+            <div class="leaderboard-col">TRADER</div>
+            <div class="leaderboard-col right">HOLDINGS</div>
+            <div class="leaderboard-col right">24H %</div>
         </div>
-        <div id="currentLeaderboard" style="max-height: 400px; overflow-y: auto;">
+        <div id="currentLeaderboard" class="leaderboard-list">
             <!-- Will be populated by JavaScript -->
         </div>
     </div>
     <!-- Trading Statistics Dashboard -->
-    <div style="display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 20px">
-        <div style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-                    border-radius: 10px;
-                    padding: 20px;
-                    border: 1px solid #333">
-            <div style="display: flex;
-                        justify-content: between;
-                        align-items: center;
-                        margin-bottom: 15px">
-                <h3 style="color: #00D084; margin: 0; font-size: 1rem;">📈 TOP GAINER</h3>
-                <span style="color: #00D084; font-size: 0.8rem;">24H</span>
+    <div class="trading-stats-grid">
+        <div class="trading-stat-card">
+            <div class="stat-header">
+                <h3 class="stat-title gain">📈 TOP GAINER</h3>
+                <span class="stat-period gain">24H</span>
             </div>
             <div id="biggestGainer">
-                <p style="color: #ffffff;
-                          font-size: 1.4rem;
-                          font-weight: bold;
-                          margin: 5px 0">--</p>
-                <p style="color: #00D084;
-                          font-size: 1.1rem;
-                          font-weight: bold;
-                          margin: 0">+-- coins</p>
+                <p class="stat-value">--</p>
+                <p class="stat-change gain">+-- coins</p>
             </div>
         </div>
-        <div style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-                    border-radius: 10px;
-                    padding: 20px;
-                    border: 1px solid #333">
-            <div style="display: flex;
-                        justify-content: between;
-                        align-items: center;
-                        margin-bottom: 15px">
-                <h3 style="color: #F23645; margin: 0; font-size: 1rem;">📉 TOP LOSER</h3>
-                <span style="color: #F23645; font-size: 0.8rem;">24H</span>
+        <div class="trading-stat-card">
+            <div class="stat-header">
+                <h3 class="stat-title loss">📉 TOP LOSER</h3>
+                <span class="stat-period loss">24H</span>
             </div>
             <div id="biggestLoser">
-                <p style="color: #ffffff;
-                          font-size: 1.4rem;
-                          font-weight: bold;
-                          margin: 5px 0">--</p>
-                <p style="color: #F23645;
-                          font-size: 1.1rem;
-                          font-weight: bold;
-                          margin: 0">-- coins</p>
+                <p class="stat-value">--</p>
+                <p class="stat-change loss">-- coins</p>
             </div>
         </div>
-        <div style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-                    border-radius: 10px;
-                    padding: 20px;
-                    border: 1px solid #333">
-            <div style="display: flex;
-                        justify-content: between;
-                        align-items: center;
-                        margin-bottom: 15px">
-                <h3 style="color: #FFA726; margin: 0; font-size: 1rem;">⚡ VOLUME LEADER</h3>
-                <span style="color: #FFA726; font-size: 0.8rem;">24H</span>
+        <div class="trading-stat-card">
+            <div class="stat-header">
+                <h3 class="stat-title volume">⚡ VOLUME LEADER</h3>
+                <span class="stat-period volume">24H</span>
             </div>
             <div id="mostActive">
-                <p style="color: #ffffff;
-                          font-size: 1.4rem;
-                          font-weight: bold;
-                          margin: 5px 0">--</p>
-                <p style="color: #FFA726;
-                          font-size: 1.1rem;
-                          font-weight: bold;
-                          margin: 0">-- transactions</p>
+                <p class="stat-value">--</p>
+                <p class="stat-change volume">-- transactions</p>
             </div>
         </div>
-        <div style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-                    border-radius: 10px;
-                    padding: 20px;
-                    border: 1px solid #333">
-            <div style="display: flex;
-                        justify-content: between;
-                        align-items: center;
-                        margin-bottom: 15px">
-                <h3 style="color: #42A5F5; margin: 0; font-size: 1rem;">📊 MARKET DATA</h3>
-                <span style="color: #42A5F5; font-size: 0.8rem;">LIVE</span>
+        <div class="trading-stat-card">
+            <div class="stat-header">
+                <h3 class="stat-title data">📊 MARKET DATA</h3>
+                <span class="stat-period data">LIVE</span>
             </div>
             <div id="dataStats">
-                <p style="color: #ffffff;
-                          font-size: 1.4rem;
-                          font-weight: bold;
-                          margin: 5px 0"
-                   id="totalDataPoints">--</p>
-                <p style="color: #42A5F5;
-                          font-size: 1.1rem;
-                          font-weight: bold;
-                          margin: 0">Data points tracked</p>
+                <p class="stat-value" id="totalDataPoints">--</p>
+                <p class="stat-change data">Data points tracked</p>
             </div>
         </div>
     </div>
-    <!-- Add CSS for animations -->
-    <style>
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-}
-
-.chart-type-btn:hover {
-    background: #4a90e2 !important;
-    color: white !important;
-}
-
-.chart-type-btn.active {
-    background: #4a90e2 !important;
-    color: white !important;
-}
-
-#refreshBtn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(0, 208, 132, 0.4);
-}
-
-#autoScale:hover {
-    background: #357abd !important;
-}
-    </style>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
