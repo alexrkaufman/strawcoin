@@ -8,9 +8,7 @@
             </p>
         </div>
         {{ m.registration_form() }}
-        <div class="nav-links">
-            <a href="/leaderboard" class="leaderboard-link button">📊 Real-Time Leaderboard</a>
-        </div>
+        {{ m.leaderboard_button() }}
     </div>
     {{ m.callout_box(title="💰 Stakeholder Benefits",
         message="<p class='mb-10'>🎯 <strong>10,000 Straw Coins</strong> instantly credited to your portfolio</p>

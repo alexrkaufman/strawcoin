@@ -9,9 +9,7 @@
             <h3>💰 Welcome back, {{ current_username }}!</h3>
             <p class="balance-amount">{{ current_user_balance }} Straw Coins</p>
         </div>
-        <div class="nav-links" style="text-align: center">
-            <a href="/leaderboard" class="leaderboard-link button">📊 Real-Time Leaderboard</a>
-        </div>
+        {{ m.leaderboard_button() }}
     </div>
     <!-- Send Coins Feature -->
     <div class="send-coins-section">
