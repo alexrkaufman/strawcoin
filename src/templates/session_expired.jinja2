@@ -14,33 +14,25 @@
             <h1 class="session-expired-subtitle">Session Expired!</h1>
             <p class="session-expired-message">Your trading session has been terminated due to market inactivity</p>
         </div>
-        {{ m.callout_box(
-            title="🚨 Session Timeout Protocol",
-            message="<p>• Your 5-minute trading window has expired</p>
-            <p>• All positions have been temporarily frozen for security</p>
-            <p>• No Straw Coins have been lost during this process</p>
-            <p>• Maximum stakeholder protection protocols activated</p>",
-            class="info-box"
-        ) }}
-        {{ m.callout_box(
-            title="💡 Recovery Options",
-            message='<p>Choose your path back to market participation:</p>
-            <div class="session-expired-actions">
-                <a href="/register" id="redirectButton" class="session-expired-btn">🔐 Re-authenticate</a>
-            </div>',
-            class="info-box"
-        ) }}
-        {{ m.callout_box(
-            title="⚡ Pro Trading Tip",
-            message='<p class="tip-text">"Stay active during The Short Straw performances to maintain your trading session!"</p>
-            <p class="small-text">Any interaction (scrolling, tapping, trading) resets your 5-minute timer</p>',
-            class="info-box compact"
-        ) }}
-        {{ m.callout_box(
-            title="",
-            message='<p class="session-reminder">🎭 Remember: The Short Straw comedy market never sleeps - but your session does!</p>',
-            class="warning-box"
-        ) }}
+        {{ m.callout_box(title="🚨 Session Timeout Protocol",
+                message="<p>• Your 5-minute trading window has expired</p>
+                <p>• All positions have been temporarily frozen for security</p>
+                <p>• No Straw Coins have been lost during this process</p>
+                <p>• Maximum stakeholder protection protocols activated</p>",
+                class="info-box") }}
+        {{ m.callout_box(title="💡 Recovery Options",
+                message='<p>Choose your path back to market participation:</p>
+                <div class="session-expired-actions">
+                    <a href="/register" id="redirectButton" class="session-expired-btn">🔐 Re-authenticate</a>
+                </div>',
+                class="info-box") }}
+        {{ m.callout_box(title="⚡ Pro Trading Tip",
+                message='<p class="tip-text">"Stay active during The Short Straw performances to maintain your trading session!"</p>
+                <p class="small-text">Any interaction (scrolling, tapping, trading) resets your 5-minute timer</p>',
+                class="info-box compact") }}
+        {{ m.callout_box(title="",
+                message='<p class="session-reminder">🎭 Remember: The Short Straw comedy market never sleeps - but your session does!</p>',
+                class="warning-box") }}
     </div>
     <script src="{{ url_for('static', filename='js/session_expired.js') }}"></script>
 {% endblock %}

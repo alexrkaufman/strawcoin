@@ -7,52 +7,46 @@
             <!-- Main Warning -->
             <h1 class="regulatory-warning-title">INSIDER TRADING DETECTED</h1>
             <!-- Regulatory Notice -->
-            {{ m.callout_box(
-                title="🏛️ STRAW COIN REGULATORY COMMISSION ALERT",
-                message='<p class="regulatory-alert-text"><strong>' ~ username ~ '</strong>, you have been flagged for attempting to execute a <span class="violation-highlight">SELF-TRANSFER</span> of <strong>' ~ (amount | default(0)) ~ ' Straw Coins</strong>.</p>
-                <p class="regulatory-warning-text">This action constitutes <strong>INSIDER TRADING</strong> under Section 420.69 of the Straw Coin Market Regulations Act.</p>',
-                class="regulatory-notice"
+            {{ m.callout_box(title="🏛️ STRAW COIN REGULATORY COMMISSION ALERT",
+                        message='<p class="regulatory-alert-text"><strong>' ~ username ~ '</strong>, you have been flagged for attempting to execute a <span class="violation-highlight">SELF-TRANSFER</span> of <strong>' ~ (amount | default(0) ) ~ ' Straw Coins</strong>.</p>
+            <p class="regulatory-warning-text">This action constitutes <strong>INSIDER TRADING</strong> under Section 420.69 of the Straw Coin Market Regulations Act.</p>',
+            class="regulatory-notice"
             ) }}
             <!-- Enforcement Action -->
-            {{ m.callout_box(
-                title="📊 REGULATORY ENFORCEMENT ACTION",
-                message='<div class="enforcement-details">
-                    <p>✅ <strong>Transaction Blocked:</strong> Self-transfer prevented</p>
-                    <p>🔄 <strong>Funds Seized:</strong> ' ~ (amount | default(0)) ~ ' coins transferred to market oversight</p>
-                    <p>👤 <strong>Enforcement Agent:</strong> CHANCELLOR (Platform Administrator)</p>
-                    <p>📋 <strong>Violation Code:</strong> INSIDER-' ~ (timestamp | default("000")) ~ '</p>
-                    <p>⏰ <strong>Timestamp:</strong> ' ~ (current_time | default("Unknown")) ~ '</p>
-                </div>',
-                class="enforcement-action"
-            ) }}
-            <!-- Warning Message -->
-            {{ m.callout_box(
-                title="",
+            {{ m.callout_box(title="📊 REGULATORY ENFORCEMENT ACTION",
+                        message='<div class="enforcement-details">
+                        <p>✅ <strong>Transaction Blocked:</strong> Self-transfer prevented</p>
+                        <p>🔄 <strong>Funds Seized:</strong> ' ~ (amount | default(0) ) ~ ' coins transferred to market oversight</p>
+            <p>👤 <strong>Enforcement Agent:</strong> CHANCELLOR (Platform Administrator)</p>
+            <p>📋 <strong>Violation Code:</strong> INSIDER-' ~ (timestamp | default("000")) ~ '</p>
+            <p>⏰ <strong>Timestamp:</strong> ' ~ (current_time | default("Unknown")) ~ '</p>
+        </div>',
+        class="enforcement-action"
+        ) }}
+        <!-- Warning Message -->
+        {{ m.callout_box(title="",
                 message='<p class="confiscation-message"><strong>YOUR ATTEMPTED INSIDER TRADING COINS HAVE BEEN CONFISCATED</strong> and transferred to <span class="chancellor-highlight">CHANCELLOR</span> for platform administration and market integrity enforcement.</p>
                 <p class="market-integrity-text">CHANCELLOR maintains market independence and ensures fair trading practices for all Straw Coin participants. This action protects market integrity and prevents artificial price manipulation.</p>',
-                class="confiscation-notice"
-            ) }}
-            <!-- Compliance Notice -->
-            {{ m.callout_box(
-                title="📜 COMPLIANCE REMINDER",
+                class="confiscation-notice") }}
+        <!-- Compliance Notice -->
+        {{ m.callout_box(title="📜 COMPLIANCE REMINDER",
                 message='<p class="compliance-text">All Straw Coin transactions are monitored for regulatory compliance. Self-transfers, wash trading, and market manipulation are strictly prohibited and will result in immediate enforcement action.</p>',
-                class="compliance-notice"
-            ) }}
-            <!-- Action Buttons -->
-            <div class="regulatory-actions">
-                <a href="/" class="regulatory-action-btn primary">📊 Return to Trading Platform</a>
-                <a href="/leaderboard" class="regulatory-action-btn success">📈 View Market Data</a>
-            </div>
-            <!-- Footer Notice -->
-            <div class="regulatory-footer">
-                <p class="regulatory-footer-text">
-                    <strong>Straw Coin Regulatory Commission</strong>
-                    <br>
-                    Protecting Market Integrity Since 2024
-                    <br>
-                    <em>"Where Shareholder Value Meets Regulatory Compliance"</em>
-                </p>
-            </div>
+                class="compliance-notice") }}
+        <!-- Action Buttons -->
+        <div class="regulatory-actions">
+            <a href="/" class="regulatory-action-btn primary">📊 Return to Trading Platform</a>
+            <a href="/leaderboard" class="regulatory-action-btn success">📈 View Market Data</a>
+        </div>
+        <!-- Footer Notice -->
+        <div class="regulatory-footer">
+            <p class="regulatory-footer-text">
+                <strong>Straw Coin Regulatory Commission</strong>
+                <br>
+                Protecting Market Integrity Since 2024
+                <br>
+                <em>"Where Shareholder Value Meets Regulatory Compliance"</em>
+            </p>
         </div>
     </div>
+</div>
 {% endblock %}
