@@ -2,7 +2,7 @@ import os
 
 from flask import Flask, abort, current_app, redirect, render_template, session, url_for, request, jsonify
 
-from .auth import require_auth
+from .auth import require_auth, require_quant
 from .config import DevelopmentConfig, ProductionConfig
 from .db import get_db, get_market_status, get_transaction_history, get_user_balance
 from .scheduler import init_scheduler
@@ -277,6 +277,19 @@ def create_app(test_config=None):
                 "ENABLE_PERFORMER_REDISTRIBUTION", False
             ),
             market_status=get_market_status(),
+        )
+
+    @app.route("/chancellor-graph")
+    @require_quant
+    def chancellor_graph():
+        """Chancellor-only stock graph showing top 5 performers over last 10 minutes."""
+        current_username = session.get("username")
+        
+        return render_template(
+            "chancellor_graph.jinja2",
+            title="Chancellor's Market Oversight - Top 5 Performers",
+            page_class="chancellor-graph",
+            current_username=current_username,
         )
 
     @app.errorhandler(404)

@@ -1489,6 +1489,8 @@ def quant_get_redistribution_amount():
     return jsonify({"amount": amount, "status": "success"}), 200
 
 
+
+
 @bp.route("/quant/market-stats", methods=["GET"])
 @require_quant
 def quant_market_stats():

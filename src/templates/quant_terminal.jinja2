@@ -8,6 +8,11 @@
             <p class="balance-amount">{{ "{:,}".format(current_user_balance) }} Authority Coins</p>
             <p class="text-secondary">TRANSFER MANIPULATION ACTIVE</p>
         </div>
+        <div class="mt-lg text-center">
+            <a href="{{ url_for('chancellor_graph') }}" class="button button--primary">
+                <span>📊</span> View Top 5 Performers Graph
+            </a>
+        </div>
     </div>
     <!-- Market Overview Dashboard -->
     <div class="content-section">
